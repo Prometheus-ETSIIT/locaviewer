@@ -1,4 +1,4 @@
-package com.rti.comunicador;
+package comunicador;
 
 /*
  * Copyright (C) 2014 Prometheus

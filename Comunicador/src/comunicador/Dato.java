@@ -1,6 +1,8 @@
-package com.rti.comunicador;
+package comunicador;
 
 import java.util.Date;
+
+import comunicador.Par;
 
 class Dato {
 	private String ID;//ID del escritor del dato

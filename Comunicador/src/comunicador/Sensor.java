@@ -1,4 +1,4 @@
-package com.rti.comunicador;
+package comunicador;
 
 import java.net.NetworkInterface;
 import java.net.SocketException;

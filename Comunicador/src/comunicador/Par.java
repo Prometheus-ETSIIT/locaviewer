@@ -1,4 +1,4 @@
-package com.rti.comunicador;
+package comunicador;
 
 public class Par<tipoPrimero, tipoSegundo> {
     private tipoPrimero primero;
