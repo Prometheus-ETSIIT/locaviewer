@@ -23,7 +23,7 @@ import bluetooth._bluetooth as bluez # Libreria BlueZ
 from matplotlib.pylab import *  # Libreria para pintar parecido a los plots de matlab
 
 
- 
+mac=sys.argv[1]
 ion()
 potenciay=[0]       # Vector donde se ira anadiendo la señal de potencia
 datox=[0]           # Vector para indicar el numero de medida
@@ -131,13 +131,14 @@ def device_inquiry_with_with_rssi(sock): #Obteccion del
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
                 results.append( ( addr, rssi ) )
                 print "[%s] RSSI: [%d]" % (addr, rssi)
-
-                potenciay.append(rssi) #Anadimos el nuevo valor de RSSI al vector potenciay
-                datox.append(w) #Anadimos el numero de iteracion al vector
-                w=w+1
-                line.set_ydata(potenciay)  # Actualizamos los datos del plot
-                line.set_xdata(datox)
-                draw() #Redibujamos la grafica
+                if addr== mac:
+                    potenciay.append(rssi) #Anadimos el nuevo valor de RSSI al vector potenciay
+                    datox.append(w) #Anadimos el numero de iteracion al vector
+                    w=w+1
+                    line.set_ydata(potenciay)  # Actualizamos los datos del plot
+                    line.set_xdata(datox)
+                    draw() #Redibujamos la grafica
+                
                 
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
