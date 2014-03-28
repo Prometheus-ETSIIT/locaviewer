@@ -27,7 +27,7 @@ mac=sys.argv[1]
 ion()
 potenciay=[0]       # Vector donde se ira anadiendo la señal de potencia
 datox=[0]           # Vector para indicar el numero de medida
-
+rssim=[]
 
 
 def printpacket(pkt):
@@ -132,6 +132,7 @@ def device_inquiry_with_with_rssi(sock): #Obteccion del
                 results.append( ( addr, rssi ) )
                 print "[%s] RSSI: [%d]" % (addr, rssi)
                 if addr== mac:
+                    rssim[w]=rssi
                     potenciay.append(rssi) #Anadimos el nuevo valor de RSSI al vector potenciay
                     datox.append(w) #Anadimos el numero de iteracion al vector
                     w=w+1
@@ -143,6 +144,7 @@ def device_inquiry_with_with_rssi(sock): #Obteccion del
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             savefig('potencia.png') #Guardamos la imagen en un archivo
+            media=sum(rssim)/len(rssim)
             done = True
             
         elif event == bluez.EVT_CMD_STATUS:
@@ -198,5 +200,6 @@ if mode != 1:
 
 print "Empezamos a medir"
 device_inquiry_with_with_rssi(sock)
+print (media)
 
 
