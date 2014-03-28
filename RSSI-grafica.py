@@ -28,6 +28,7 @@ ion()
 potenciay=[0]       # Vector donde se ira anadiendo la señal de potencia
 datox=[0]           # Vector para indicar el numero de medida
 rssim=[0]
+media=0
 
 
 def printpacket(pkt):
@@ -145,6 +146,7 @@ def device_inquiry_with_with_rssi(sock): #Obteccion del
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             savefig('potencia.png') #Guardamos la imagen en un archivo
             media=sum(rssim)/len(rssim)
+            print(media)
             done = True
             
         elif event == bluez.EVT_CMD_STATUS:
