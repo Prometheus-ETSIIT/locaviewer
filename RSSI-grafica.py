@@ -27,7 +27,7 @@ mac=sys.argv[1]
 ion()
 potenciay=[0]       # Vector donde se ira anadiendo la señal de potencia
 datox=[0]           # Vector para indicar el numero de medida
-rssim=[]
+rssim=[0]
 
 
 def printpacket(pkt):
@@ -132,7 +132,7 @@ def device_inquiry_with_with_rssi(sock): #Obteccion del
                 results.append( ( addr, rssi ) )
                 print "[%s] RSSI: [%d]" % (addr, rssi)
                 if addr== mac:
-                    rssim[w]=rssi
+                    rssim.append(rssi)
                     potenciay.append(rssi) #Anadimos el nuevo valor de RSSI al vector potenciay
                     datox.append(w) #Anadimos el numero de iteracion al vector
                     w=w+1
