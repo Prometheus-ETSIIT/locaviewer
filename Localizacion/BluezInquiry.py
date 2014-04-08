@@ -66,7 +66,7 @@ class BluezInquiry:
         # 0x9E8B33 -> General Inquiry Access Code
         # https://www.bluetooth.org/en-us/specification/assigned-numbers/baseband
         LAP = [ 0x33, 0x8B, 0x9E ]
-        cmd_pkt = struct.pack("7B", max_period[0],max_period[1], min_period[0],min_period[1], LAP[0], LAP[1], LAP[2], duration, max_resp)
+        cmd_pkt = struct.pack("9B", max_period[0],max_period[1], min_period[0],min_period[1], LAP[0], LAP[1], LAP[2], duration, max_resp)
         bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
 
         self.inquiring = True
