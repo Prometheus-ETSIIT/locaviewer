@@ -59,13 +59,15 @@ class BluezInquiry:
             
         # TODO: Reemplazar por OCF_PERIODIC_INQUIRY y OCF_EXIT_PERIODIC_INQUIRY
         # Envía el paquete de Inquiry - Pág. 705
+        max_period=[8,0] #Maximo periodo
+        min_period=[7,0] #Minimo periodo
         duration = 6    # Valor óptimo según Tesis de Anne Franssens 
         max_resp = 255  # N. máximo respuestas (info dispositivos en un evento)
         # 0x9E8B33 -> General Inquiry Access Code
         # https://www.bluetooth.org/en-us/specification/assigned-numbers/baseband
         LAP = [ 0x33, 0x8B, 0x9E ]
-        cmd_pkt = struct.pack("5B", LAP[0], LAP[1], LAP[2], duration, max_resp)
-        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_INQUIRY, cmd_pkt)
+        cmd_pkt = struct.pack("7B", max_period[0],max_period[1], min_period[0],min_period[1], LAP[0], LAP[1], LAP[2], duration, max_resp)
+        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
 
         self.inquiring = True
         
