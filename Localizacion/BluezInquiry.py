@@ -93,9 +93,10 @@ class BluezInquiry:
                 print addr, rssi
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
-            self.socket.close()
-            self.socket = None
-            self.inquiring = False
+            pass
+	    #self.socket.close()
+            #self.socket = None
+            #self.inquiring = False
             
         elif event == bluez.EVT_CMD_STATUS:
             status, ncmd, opcode = struct.unpack("BBH", pkt[:4])
@@ -104,8 +105,11 @@ class BluezInquiry:
                 self.socket.close()
                 self.socket = None
                 self.inquiring = False
-                
-        elif event == bluez.EVT_INQUIRY_RESULT:
+        elif event == bluez.EVT_CMD_COMPLETE:
+	    pass        
+        elif event == 255: #Suponemos que no lee ningun evento y por eso devuelve 255
+	    return
+	elif event == bluez.EVT_INQUIRY_RESULT:
             nrsp = struct.unpack("B", pkt[0])[0]    # Número de respuestas
             for i in range(nrsp):
                 addr = bluez.ba2str( pkt[1+6*i:1+6*i+6] )
