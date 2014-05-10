@@ -1,1 +1,4 @@
 *.pyc
+/JuliaComm/nbproject/private/
+/JuliaComm/build/
+/JuliaComm/dist/
