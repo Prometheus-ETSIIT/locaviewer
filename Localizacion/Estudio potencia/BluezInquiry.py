@@ -26,9 +26,22 @@ class BluezInquiry:
         self.mac       = mac
         self.inquiring = False
         self.socket    = None
+        self.samples   = []
 
     def is_inquiring(self):
         return self.inquiring
+
+    def get_samples(self):
+        return self.samples
+       
+    def clear_samples(self):
+        self.samples = []
+        
+    def get_mean(self):
+        if len(self.samples) == 0:
+            return 0
+        else:
+            return sum(self.samples) / len(self.samples)
 
     def create_socket(self):
         try:
@@ -59,17 +72,16 @@ class BluezInquiry:
             
         # TODO: Reemplazar por OCF_PERIODIC_INQUIRY y OCF_EXIT_PERIODIC_INQUIRY
         # Envía el paquete de Inquiry - Pág. 705
-        max_period=[8,0] #Maximo periodo
-        min_period=[7,0] #Minimo periodo
         duration = 6    # Valor óptimo según Tesis de Anne Franssens 
         max_resp = 255  # N. máximo respuestas (info dispositivos en un evento)
         # 0x9E8B33 -> General Inquiry Access Code
         # https://www.bluetooth.org/en-us/specification/assigned-numbers/baseband
         LAP = [ 0x33, 0x8B, 0x9E ]
-        cmd_pkt = struct.pack("9B", max_period[0],max_period[1], min_period[0],min_period[1], LAP[0], LAP[1], LAP[2], duration, max_resp)
-        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
+        cmd_pkt = struct.pack("5B", LAP[0], LAP[1], LAP[2], duration, max_resp)
+        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_INQUIRY, cmd_pkt)
 
         self.inquiring = True
+        #self.samples   = []
         
     def process_event(self):
         if self.inquiring == False:
@@ -90,13 +102,12 @@ class BluezInquiry:
                 
                 # Obtiene el rssi
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
-                print addr, rssi
+                self.samples.append(rssi)
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
-            pass
-	    #self.socket.close()
-            #self.socket = None
-            #self.inquiring = False
+            self.socket.close()
+            self.socket = None
+            self.inquiring = False
             
         elif event == bluez.EVT_CMD_STATUS:
             status, ncmd, opcode = struct.unpack("BBH", pkt[:4])
@@ -105,11 +116,8 @@ class BluezInquiry:
                 self.socket.close()
                 self.socket = None
                 self.inquiring = False
-        elif event == bluez.EVT_CMD_COMPLETE:
-	    pass        
-        elif event == 255: #Suponemos que no lee ningun evento y por eso devuelve 255
-	    return
-	elif event == bluez.EVT_INQUIRY_RESULT:
+                
+        elif event == bluez.EVT_INQUIRY_RESULT:
             nrsp = struct.unpack("B", pkt[0])[0]    # Número de respuestas
             for i in range(nrsp):
                 addr = bluez.ba2str( pkt[1+6*i:1+6*i+6] )
