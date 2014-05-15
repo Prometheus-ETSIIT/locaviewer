@@ -5,6 +5,8 @@
 function pos = triangulacion(x, y, r)
   N = length(x); # Numero de sensores bluetooth
 
+  D = -0.00680102923817849*r.^3 - 1.04905123190747*r.^2 - 59.2087843354658*r - 1106.35595941215;
+  
   # Vectores con dos veces la diferencia entre una coordenada y el resto
   h_len = int((N - 1) * N / 2);
   hx    = zeros(1, h_len);    # Para el tamaño del vector, es igual a: 
@@ -19,7 +21,7 @@ function pos = triangulacion(x, y, r)
       hx[n] = 2 .* (x[j] - x[i]);
       hy[n] = 2 .* (y[j] - y[i]);
       
-      C[n] = r[i].^2 - r[j].^2 + x[j].^2 - x[i].^2 + y[j].^2 - y[i].^2;
+      C[n] = D[i].^2 - D[j].^2 + x[j].^2 - x[i].^2 + y[j].^2 - y[i].^2;
       
     end
   end
