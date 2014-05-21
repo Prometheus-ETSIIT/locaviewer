@@ -39,7 +39,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-shared -m32
+CFLAGS=-shared
 
 # CC Compiler Flags
 CCFLAGS=
@@ -52,20 +52,20 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=
+LDLIBSOPTIONS=-L/home/benito/Programas/julia/usr/lib
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk dist/JuliaNative.dll
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libJuliaNativo.${CND_DLIB_EXT}
 
-dist/JuliaNative.dll: ${OBJECTFILES}
-	${MKDIR} -p dist
-	${LINK.c} -o dist/JuliaNative.dll ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libJuliaNativo.${CND_DLIB_EXT}: ${OBJECTFILES}
+	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
+	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libJuliaNativo.${CND_DLIB_EXT} ${OBJECTFILES} ${LDLIBSOPTIONS} -shared -fPIC
 
 ${OBJECTDIR}/jltriang.o: jltriang.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.c) -g -I/home/benito/Programas/jdk1.7.0_55/include -I/home/benito/Programas/jdk1.7.0_55/include/linux -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/jltriang.o jltriang.c
+	$(COMPILE.c) -g -I/home/benito/Programas/jdk1.7.0_55/include -I/home/benito/Programas/jdk1.7.0_55/include/linux -I/home/benito/Programas/julia/src -I/home/benito/Programas/julia/src/support -I/home/benito/Programas/julia/usr/include -fPIC  -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/jltriang.o jltriang.c
 
 # Subprojects
 .build-subprojects:
@@ -73,7 +73,7 @@ ${OBJECTDIR}/jltriang.o: jltriang.c
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r ${CND_BUILDDIR}/${CND_CONF}
-	${RM} dist/JuliaNative.dll
+	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libJuliaNativo.${CND_DLIB_EXT}
 
 # Subprojects
 .clean-subprojects:

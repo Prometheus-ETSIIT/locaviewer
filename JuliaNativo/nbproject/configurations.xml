@@ -40,11 +40,16 @@
           <incDir>
             <pElem>/home/benito/Programas/jdk1.7.0_55/include</pElem>
             <pElem>/home/benito/Programas/jdk1.7.0_55/include/linux</pElem>
+            <pElem>/home/benito/Programas/julia/src</pElem>
+            <pElem>/home/benito/Programas/julia/src/support</pElem>
+            <pElem>/home/benito/Programas/julia/usr/include</pElem>
           </incDir>
-          <commandLine>-shared -m32</commandLine>
+          <commandLine>-shared</commandLine>
         </cTool>
         <linkerTool>
-          <output>dist/JuliaNative.dll</output>
+          <linkerAddLib>
+            <pElem>/home/benito/Programas/julia/usr/lib</pElem>
+          </linkerAddLib>
         </linkerTool>
       </compileType>
       <item path="jltriang.c" ex="false" tool="0" flavor2="0">

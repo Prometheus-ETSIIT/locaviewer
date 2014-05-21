@@ -26,7 +26,9 @@ package juliacomm;
 public class TriangulacionJulia {
 
     static {
-        System.loadLibrary("jltriang");
+        System.load("/home/benito/Documentos/Universidad/Desafio/locaviewer" +
+                "/JuliaNativo/dist/Debug/GNU-Linux-x86/libJuliaNativo.so");
+        //System.loadLibrary("jltriang");
     }
     
     /**
@@ -53,7 +55,7 @@ public class TriangulacionJulia {
         
         TriangulacionJulia julia = new TriangulacionJulia();
         double[] resultado = julia.triangular(sensorX, sensorY, rssi);
-        System.out.println("X: " + resultado[0] + " Y: " + resultado[1]);
+        System.out.printf("[JAVA] X: %.2f | Y: %.2f\n", resultado[0], resultado[1]);
     }
     
 }
