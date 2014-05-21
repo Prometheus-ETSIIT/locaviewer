@@ -1,7 +1,7 @@
 *.pyc
-/JuliaComm/nbproject/private/
-/JuliaComm/build/
-/JuliaComm/dist/
-/JuliaNativo/build/
-/JuliaNativo/dist/
-/JavaIO/nbproject/private/
+/Tests/JuliaComm/nbproject/private/
+/Tests/JuliaComm/build/
+/Tests/JuliaComm/dist/
+/Tests/JuliaNativo/build/
+/Tests/JuliaNativo/dist/
+
