@@ -4,5 +4,8 @@
 /Tests/JuliaComm/dist/
 /Tests/JuliaNativo/build/
 /Tests/JuliaNativo/dist/
+/Tests/JuliaNativo/nbproject/private
 /Tests/EncapsuladoCam/build/
 /Tests/EncapsuladoCam/dist/
+/Tests/EncapsuladoCam/nbproject/private/
+/Tests/TriangulacionWrapper/nbproject/private/
