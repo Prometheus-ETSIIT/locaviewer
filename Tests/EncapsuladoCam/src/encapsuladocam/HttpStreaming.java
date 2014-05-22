@@ -39,7 +39,7 @@ public class HttpStreaming extends VlcjTest {
         }
 
         String media = args[0];
-        String options = formatHttpStream("127.0.0.1", 5555);
+        String options = formatHttpStream("0.0.0.0", 5555);
 
         System.out.println("Streaming '" + media + "' to '" + options + "'");
 
@@ -55,7 +55,7 @@ public class HttpStreaming extends VlcjTest {
         StringBuilder sb = new StringBuilder(60);
         sb.append(":sout=#");
         
-        sb.append("transcode{vcodec=mp4v,vb=4096,scale=1,acodec=mpga,ab=128,channels=2,samplerate=44100}");
+        sb.append("transcode{vcodec=mp4v,vb=4096,scale=1,acodec=mpga,ab=128,channels=2,samplerate=44100,fps=59.9}");
         
         sb.append(":duplicate{dst=std{access=http,mux=ts,");
         sb.append("dst=");
