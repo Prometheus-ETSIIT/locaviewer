@@ -61,28 +61,34 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
             
-        	Iterator<Entry<String, ArrayList<Dato>>> it = datosNinos.entrySet().iterator();//Iterar en el mapa
+        	Iterator<Entry<String, ArrayList<Dato>>>it;
     		ArrayList<Dato> datosActual;//Datos del niño actual
-    		long min,actual;
+    		long min,actual, max;
     		
             while(true){
-				while(it.hasNext()){//Se recorren las claves del mapa
+            	it = datosNinos.entrySet().iterator();//Iterar en el mapa
+				
+            	while(it.hasNext()){//Se recorren las claves del mapa
 					
 					Map.Entry entrada = (Map.Entry)it.next();
 					datosActual=(ArrayList<Dato>) entrada.getValue();
 					
 					
-					min=0;
+					min=99999999;
+					max=0;
 					
 					for(int i=0;i<datosActual.size();i++){
-						if(datosActual.get(i).getCreacion()>min){//Tomamos de la última medición
+						if(datosActual.get(i).getCreacion()<min){//Tomamos de la última medición
 							min=datosActual.get(i).getCreacion();
+						}
+						else if(datosActual.get(i).getCreacion()>max){//Tomamos medición más nueva
+							max=datosActual.get(i).getCreacion();
 						}
 					}
 					
 					actual = new Date().getTime(); 
 					
-					if((actual-min)/1000>10){//Si han pasado más de 10 segundos
+					if((actual-min)/1000>10 || (max-min)/1000>10){//Si han pasado más de 10 segundos o hay demasiada diferencia entre los datos
 						datosNinos.remove(entrada.getKey());//Desechamos los datos de ese niño
 						it = datosNinos.entrySet().iterator();//Hay que regenerar el iterador
 					}
