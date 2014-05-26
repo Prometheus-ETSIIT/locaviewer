@@ -8,28 +8,33 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.StringDataReader;
+import com.rti.dds.type.builtin.StringDataWriter;
 import com.rti.dds.type.builtin.StringTypeSupport;
 
 public class Servidor extends DataReaderAdapter{
 	
-		Parseador pars = new Parseador("posicionesCamaras.xml");
-		ArrayList<CamaraPos> posiciones = pars.parse();
 
-		static Map<String,ArrayList<Dato>> datosNinos = new HashMap<String, ArrayList<Dato>>(); ;
+    	static Map<String,Topic>topicosNinos = new HashMap<String,Topic>();; 
+
+		static Map<String,ArrayList<Dato>> datosNinos = new HashMap<String, ArrayList<Dato>>(); 
 
         public static final void main(String[] args) {
+    		Parseador pars = new Parseador("posicionesCamaras.xml");
+    		ArrayList<CamaraPos> posiciones = pars.parse();
+    		
             DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                     0, 
                     DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
@@ -51,8 +56,32 @@ public class Servidor extends DataReaderAdapter{
                 System.err.println("Unable to create topic.");
                 return;
             }
+            
+            
+            Topic clasificadorPadres = participant.create_topic(
+            		"clasificador", 
+                    StringTypeSupport.get_type_name(), 
+                    DomainParticipant.TOPIC_QOS_DEFAULT, 
+                    null, // listener
+                    StatusKind.STATUS_MASK_NONE);
+            if (clasificadorPadres == null) {
+                System.err.println("Unable to create topic.");
+                return;
+            }
+            
+            //Escritor
+            StringDataWriter dataWriter =
+                (StringDataWriter) participant.create_datawriter(
+                    topic, 
+                    Publisher.DATAWRITER_QOS_DEFAULT,
+                    null, // listener
+                    StatusKind.STATUS_MASK_NONE);
+            if (dataWriter == null) {
+                System.err.println("Unable to create data writer\n");
+                return;
+            }
 
-
+            //Lector
             StringDataReader dataReader =
                 (StringDataReader) participant.create_datareader(
                     topic, 
@@ -67,7 +96,7 @@ public class Servidor extends DataReaderAdapter{
         	Iterator<Entry<String, ArrayList<Dato>>>it;
     		ArrayList<Dato> datosActual;//Datos del niño actual
     		long min,actual, max;
-    		
+    		Topic topicoNino;
     		
             while(true){
             	it = datosNinos.entrySet().iterator();//Iterar en el mapa
@@ -100,6 +129,13 @@ public class Servidor extends DataReaderAdapter{
 						ArrayList<Dato> datosNino =  (ArrayList<Dato>) entrada.getValue();
 						//PROCESAR
 						//llamada a triangular de octave
+						//sustituir la cadena por lo adecuado
+						String toWrite = entrada.getKey() + "CAMARAADECUADA";
+						dataWriter.write(toWrite, InstanceHandle_t.HANDLE_NIL);
+						
+						//Se obtiene el tópico del niño
+						topicosNinos.get(entrada.getKey());
+						
 					}
 				}
             }
