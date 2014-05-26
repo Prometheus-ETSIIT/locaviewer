@@ -23,6 +23,9 @@ import com.rti.dds.type.builtin.StringDataReader;
 import com.rti.dds.type.builtin.StringTypeSupport;
 
 public class Servidor extends DataReaderAdapter{
+	
+		Parseador pars = new Parseador("posicionesCamaras.xml");
+		ArrayList<CamaraPos> posiciones = pars.parse();
 
 		static Map<String,ArrayList<Dato>> datosNinos = new HashMap<String, ArrayList<Dato>>(); ;
 
