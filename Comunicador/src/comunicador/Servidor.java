@@ -65,6 +65,7 @@ public class Servidor extends DataReaderAdapter{
     		ArrayList<Dato> datosActual;//Datos del niño actual
     		long min,actual, max;
     		
+    		
             while(true){
             	it = datosNinos.entrySet().iterator();//Iterar en el mapa
 				
@@ -95,6 +96,7 @@ public class Servidor extends DataReaderAdapter{
 					else if(datosActual.size()>3){//Si hay más de 3 datos
 						ArrayList<Dato> datosNino =  (ArrayList<Dato>) entrada.getValue();
 						//PROCESAR
+						//llamada a triangular de octave
 					}
 				}
             }
