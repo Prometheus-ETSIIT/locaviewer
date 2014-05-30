@@ -98,6 +98,14 @@ public class Servidor extends DataReaderAdapter{
     		long min,actual, max;
     		Topic topicoNino;
     		
+    		TriangulacionOctave triangulacion = new TriangulacionOctave(
+                    "detectarcamara.m",
+                    "detectarcamara",
+                    posiciones,
+                    6,
+                    6,
+                    true
+            );
             while(true){
             	it = datosNinos.entrySet().iterator();//Iterar en el mapa
 				
@@ -127,10 +135,8 @@ public class Servidor extends DataReaderAdapter{
 					}
 					else if(datosActual.size()>3){//Si hay más de 3 datos
 						ArrayList<Dato> datosNino =  (ArrayList<Dato>) entrada.getValue();
-						//PROCESAR
-						//llamada a triangular de octave
-						//sustituir la cadena por lo adecuado
-						String toWrite = entrada.getKey() + "CAMARAADECUADA";
+						String camId = triangulacion.triangular(datosNino);
+						String toWrite = entrada.getKey() + " " + camId;
 						dataWriter.write(toWrite, InstanceHandle_t.HANDLE_NIL);
 						
 						//Se obtiene el tópico del niño
