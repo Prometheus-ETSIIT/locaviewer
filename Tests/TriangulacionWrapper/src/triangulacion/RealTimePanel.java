@@ -38,8 +38,7 @@ public class RealTimePanel extends javax.swing.JPanel {
     private TriangulacionOctave octave;
     private int width;
     private int length;
-    private List<CamaraPos> cams;
-    private List<Dato> sensors;
+    private List<Dato> lastSensors;
     
     private boolean showCams;
     private boolean showSensors;
@@ -64,27 +63,27 @@ public class RealTimePanel extends javax.swing.JPanel {
         this.repaint();
     }
     
-    public void initialize(final List<CamaraPos> cams, final int width, final int length) {
-        this.width  = width;
-        this.length = length;
-        this.cams   = cams;
-        this.octave = new TriangulacionOctave(ScriptPath, FuncName, cams, width, length);
+    public void initialize(final TriangulacionOctave triangulacion) {
+        this.width  = triangulacion.getWidth();
+        this.length = triangulacion.getLength();
+        this.octave = triangulacion;
     }
 
     public void close() {
-        this.octave.close();
+        if (this.octave.isAlive())
+            this.octave.close();
     }
     
     public void setNewSensors(final List<Dato> sensors) {
-        this.sensors = sensors;
-        this.octave.triangular(sensors);
+        this.lastSensors = sensors;
+        this.repaint();
     }
     
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        if (this.cams == null)
+        if (this.octave == null)
             return;
         
         // Pinta el fondo
@@ -98,22 +97,21 @@ public class RealTimePanel extends javax.swing.JPanel {
         // Pinta los ángulos de las cámaras
         if (this.showCams) {
             g.setColor(new Color(128, 128, 128, 128));
-            for (CamaraPos cam : this.cams)
+            for (CamaraPos cam : this.octave.getCamaras())
                 drawVision(g, meter2Px(cam.getPosX()), meter2Px(cam.getPosY()));
         }
         
         // Pinta los puntos de las cámaras
         g.setColor(Color.blue);
-        for (CamaraPos cam : this.cams)
+        for (CamaraPos cam : this.octave.getCamaras())
             g.fillOval(meter2Px(cam.getPosX()), meter2Px(cam.getPosY()), 10, 10);
         
-        if (this.showSensors) {
+        if (this.showSensors && this.lastSensors != null) {
             g.setColor(Color.green);
-            for (Dato sensor : this.sensors) {
+            for (Dato sensor : this.lastSensors) {
                 int sensorX = meter2Px(sensor.getPosicionSensor().getPrimero());
                 int sensorY = meter2Px(sensor.getPosicionSensor().getSegundo());
                 g.fillOval(sensorX, sensorY, 10, 10);
-                g.drawOval(sensorX, sensorY, 100, 100);
             }
         }
     }

@@ -20,7 +20,6 @@ package triangulacion;
 
 import comunicador.CamaraPos;
 import comunicador.Dato;
-import comunicador.Par;
 import dk.ange.octave.OctaveEngine;
 import dk.ange.octave.OctaveEngineFactory;
 import dk.ange.octave.exception.OctaveEvalException;
@@ -41,9 +40,13 @@ public class TriangulacionOctave {
     private final OctaveEngine octave;
     private final String funcName;
     private final List<CamaraPos> cams;
+    private final int width;
+    private final int length;
     private boolean alive;
     private double[] lastPosition;
     private int lastCamIdx;
+    
+    private final TestFrame testFrame;
     
     /**
      * Crea una nueva instancia inicializando el engine.
@@ -57,13 +60,51 @@ public class TriangulacionOctave {
      * @param cams Datos de las cámaras disponibles.
      * @param width Ancho de la habitación.
      * @param length Largo de la habitación.
+     * @param mostrarVentana Si se debe mostrar o no una ventana de prueba.
      */
     public TriangulacionOctave(final String scriptPath, final String funcName,
-            final List<CamaraPos> cams, final int width, final int length) {
-        this.octave   = new OctaveEngineFactory().getScriptEngine();
-        this.funcName = funcName;
-        this.cams     = cams;
-        this.alive    = this.initialize(scriptPath, width, length);
+            final List<CamaraPos> cams, final int width, final int length,
+            final boolean mostrarVentana) {
+        this.octave    = new OctaveEngineFactory().getScriptEngine();
+        this.funcName  = funcName;
+        this.width     = width;
+        this.length    = length;
+        this.cams      = cams;
+        this.alive     = this.initialize(scriptPath, width, length);
+        this.testFrame = mostrarVentana ? new TestFrame(this) : null;
+        
+        if (mostrarVentana) {
+            /* Set the Nimbus look and feel */
+            //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+            /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+             * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+             */
+            try {
+                for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                    if ("Nimbus".equals(info.getName())) {
+                        javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                        break;
+                    }
+                }
+            } catch (ClassNotFoundException ex) {
+                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            } catch (InstantiationException ex) {
+                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            } catch (IllegalAccessException ex) {
+                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            }
+            //</editor-fold>
+
+            /* Create and display the form */
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    testFrame.setVisible(true);
+                }
+            });
+        }
     }
     
     /**
@@ -132,6 +173,33 @@ public class TriangulacionOctave {
     }
     
     /**
+     * Obtiene la lista de cámaras disponibles.
+     * 
+     * @return Cámaras disponibles.
+     */
+    public List<CamaraPos> getCamaras() {
+        return this.cams;
+    }
+    
+    /**
+     * Obtiene el ancho de la habitación.
+     * 
+     * @return Ancho de la habitación.
+     */
+    public int getWidth() {
+        return this.width;
+    }
+    
+    /**
+     * Obtiene el largo de la habitación.
+     * 
+     * @return Largo de la habitación.
+     */
+    public int getLength() {
+        return this.length;
+    }
+    
+    /**
      * Obtiene el último índice de la cámara elegida.
      * 
      * @return Índice de la cámara elegida.
@@ -193,9 +261,11 @@ public class TriangulacionOctave {
         // Obtiene el resultado
         OctaveDouble idxCam = octave.get(OctaveDouble.class, "idxCam");
         if (idxCam != null && idxCam.size(1) == 1 && idxCam.get(1) != -1) {
+            if (this.testFrame != null)
+                this.testFrame.getRT().setNewSensors(datos);
             this.lastCamIdx = (int)idxCam.get(1) - 1;
             this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
-            return this.cams.get(this.lastCamIdx).getID();
+            return this.cams.get(this.lastCamIdx).getID();    
         } else {
             return null;
         }
@@ -225,8 +295,10 @@ public class TriangulacionOctave {
         sensores.add(new Dato("S2", 6, 0, "Chavea", -38));
         sensores.add(new Dato("S3", 0, 6, "Chavea", -38));
         
+        boolean showWindows = (args.length == 1 && args[0].equals("true"));
+        
         TriangulacionOctave octave = new TriangulacionOctave(
-                scriptPath, funcName, cams, width, length);
+                scriptPath, funcName, cams, width, length, showWindows);
         if (octave.isAlive()) {
             String idCamara = octave.triangular(sensores);
             System.out.printf("[JAVA] ID camara: %s\n", idCamara);

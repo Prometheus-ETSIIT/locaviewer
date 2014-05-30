@@ -18,21 +18,20 @@
 
 package triangulacion;
 
-import comunicador.CamaraPos;
-import comunicador.Dato;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  */
 public class TestFrame extends javax.swing.JFrame {
 
-    public TestFrame(final List<CamaraPos> cams, final int width, final int length) {
+    public TestFrame(final TriangulacionOctave triangulacion) {
         initComponents();
-        this.rtPanel.initialize(cams, width, length);
+        this.rtPanel.initialize(triangulacion);
     }
 
+    public RealTimePanel getRT() {
+        return this.rtPanel;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -147,52 +146,6 @@ public class TestFrame extends javax.swing.JFrame {
     private void checkBestCamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBestCamsActionPerformed
         this.rtPanel.setShowBestCam(this.checkBestCams.isSelected());
     }//GEN-LAST:event_checkBestCamsActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                List<CamaraPos> cams = new ArrayList<>();
-                cams.add(new CamaraPos(3, 0, "Cam1"));
-                cams.add(new CamaraPos(3, 6, "Cam2"));
-                cams.add(new CamaraPos(0, 3, "Cam3"));
-                cams.add(new CamaraPos(8, 3, "Cam4"));
-                
-                new TestFrame(cams, 8, 6).setVisible(true);
-                
-                List<Dato> sensors = new ArrayList<>();
-                
-                
-            }
-        });
-    }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox checkBestCams;
