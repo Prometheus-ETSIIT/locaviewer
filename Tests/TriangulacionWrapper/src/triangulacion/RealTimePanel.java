@@ -22,7 +22,10 @@ import comunicador.CamaraPos;
 import comunicador.Dato;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Timer;
 
 /**
  *
@@ -41,9 +44,18 @@ public class RealTimePanel extends javax.swing.JPanel {
     private boolean showCams;
     private boolean showSensors;
     private boolean showBestCam;
+    private boolean showChild;
     
     public RealTimePanel() {
         initComponents();
+        Timer childTimer = new Timer(500, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showChild = !showChild;
+                repaint();
+            }
+        });
+        childTimer.start();
     }
     
     public void setShowCams(final boolean value) {
@@ -131,7 +143,7 @@ public class RealTimePanel extends javax.swing.JPanel {
         
         // Pinta el punto con el niño
         double[] childPos = this.octave.getLastPosition();
-        if (childPos != null) {
+        if (showChild && childPos != null) {
             g.setColor(Color.red);
             fillCircle(g, meter2Px((int)childPos[0]), lenPx - meter2Px((int)childPos[1]));
         }
