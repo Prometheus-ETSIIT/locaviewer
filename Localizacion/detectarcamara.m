@@ -83,8 +83,10 @@ if contador==length(rssi)
                         encima_recta_inferior=1;
                     end
                     %recta superior
-
                     punto_2_recta_superior(i)=posicion_camara(i,1)+tan(angulo_vision/2)*abs(posicion_chavea(2)-posicion_camara(i,2));
+                    if posicion_chavea(1)<=punto_2_recta_superior(i)
+                        debajo_recta_superior=1;
+                    end
                 else
                     %recta inferior
                     punto_2_recta_inferior(i)=posicion_camara(i,2)-tan(angulo_vision/2)*abs(posicion_chavea(1)-posicion_camara(i,1));
@@ -93,10 +95,11 @@ if contador==length(rssi)
                     end
                     %recta superior
                     punto_2_recta_superior(i)=posicion_camara(i,2)+tan(angulo_vision/2)*abs(posicion_chavea(1)-posicion_camara(i,1));
+                    if posicion_chavea(2)<=punto_2_recta_superior(i)
+                        debajo_recta_superior=1;
+                    end
                 end
-                if posicion_chavea(2)<=punto_2_recta_superior(i)
-                    debajo_recta_superior=1;
-                end
+               
                 if debajo_recta_superior==1 && encima_recta_inferior==1
                     dentro_rango_vision=1;
                 end
