@@ -72,8 +72,7 @@ public class TestFrame extends javax.swing.JFrame {
         this.txtChildPosY.setText(Double.toString(((int)(childPos[1] * 1000)) / 1000.0));
         
         // Pone la mejor cámara
-        int bestCamIdx_Oct = triang.getLastCamIndex();
-        int bestCamIdx = (bestCamIdx_Oct != -1) ? bestCamIdx_Oct - 1 : -1;
+        int bestCamIdx = triang.getLastCamIndex();
         this.txtCamIdx.setText(Integer.toString(bestCamIdx));
         if (bestCamIdx != -1) {
             CamaraPos bestCam = this.triang.getCamaras().get(bestCamIdx);
