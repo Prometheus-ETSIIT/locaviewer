@@ -145,12 +145,12 @@ public class RealTimePanel extends javax.swing.JPanel {
         double[] childPos = this.octave.getLastPosition();
         if (showChild && childPos != null) {
             g.setColor(Color.red);
-            fillCircle(g, meter2Px((int)childPos[0]), lenPx - meter2Px((int)childPos[1]));
+            fillCircle(g, meter2Px(childPos[0]), lenPx - meter2Px(childPos[1]));
         }
     }
     
-    private int meter2Px(final int meters) {
-        return meters * MeterPixelRate;
+    private int meter2Px(final double meters) {
+        return (int)Math.round(meters * MeterPixelRate);
     }
     
     private int rssi2Px(final int rssi) {
@@ -159,7 +159,7 @@ public class RealTimePanel extends javax.swing.JPanel {
         meters -= 1.04905123190747    * (rssi * rssi);
         meters -= 59.2087843354658    * (rssi);
         meters -= 1106.35595941215;
-        return meter2Px((int)Math.round(meters / 100));
+        return meter2Px(Math.round(meters / 100));
     }
     
     private void drawVision(Graphics g, int camX, int camY) {
