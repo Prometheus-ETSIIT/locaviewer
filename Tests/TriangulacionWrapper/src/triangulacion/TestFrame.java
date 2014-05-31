@@ -18,6 +18,7 @@
 
 package triangulacion;
 
+import comunicador.CamaraPos;
 import comunicador.Dato;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -70,8 +71,16 @@ public class TestFrame extends javax.swing.JFrame {
         int bestCamIdx_Oct = triang.getLastCamIndex();
         int bestCamIdx = (bestCamIdx_Oct != -1) ? bestCamIdx_Oct - 1 : -1;
         this.txtCamIdx.setText(Integer.toString(bestCamIdx));
-        if (bestCamIdx != -1)
-            this.txtCamId.setText(this.triang.getCamaras().get(bestCamIdx).getID());
+        if (bestCamIdx != -1) {
+            CamaraPos bestCam = this.triang.getCamaras().get(bestCamIdx);
+            this.txtCamId.setText(bestCam.getID());
+            this.txtCamPosX.setText(Double.toString(((int)(bestCam.getPosX() * 1000)) / 1000.0));
+            this.txtCamPosY.setText(Double.toString(((int)(bestCam.getPosY() * 1000)) / 1000.0));
+        } else {
+            this.txtCamId.setText("-1");
+            this.txtCamPosX.setText("");
+            this.txtCamPosY.setText("");
+        }
         
         // Muestra los mensajes de debug
         this.txtDebug.setText("Niño: " + sensors.get(0).getIDNino() + "\n");
@@ -117,6 +126,10 @@ public class TestFrame extends javax.swing.JFrame {
         jSeparator2 = new javax.swing.JSeparator();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtDebug = new javax.swing.JTextArea();
+        jLabel9 = new javax.swing.JLabel();
+        txtCamPosX = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
+        txtCamPosY = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Real Time Trianguleishon");
@@ -191,7 +204,7 @@ public class TestFrame extends javax.swing.JFrame {
         jLabel7.setText("Índice:");
 
         txtCamIdx.setEditable(false);
-        txtCamIdx.setColumns(3);
+        txtCamIdx.setColumns(2);
 
         jLabel8.setText("ID:");
 
@@ -203,6 +216,16 @@ public class TestFrame extends javax.swing.JFrame {
         txtDebug.setRows(5);
         jScrollPane2.setViewportView(txtDebug);
 
+        jLabel9.setText("X:");
+
+        txtCamPosX.setEditable(false);
+        txtCamPosX.setColumns(4);
+
+        jLabel10.setText("Y:");
+
+        txtCamPosY.setEditable(false);
+        txtCamPosY.setColumns(4);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -211,18 +234,9 @@ public class TestFrame extends javax.swing.JFrame {
                 .addComponent(rtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 474, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(92, 92, 92)
-                                .addComponent(jLabel3))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(98, 98, 98)
-                                .addComponent(btnPause)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(checkSensors, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(checkSensors, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                             .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -241,7 +255,7 @@ public class TestFrame extends javax.swing.JFrame {
                                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                             .addComponent(jLabel8)
                                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtCamId, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                                            .addComponent(txtCamId))
                                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                             .addGap(53, 53, 53)
                                             .addComponent(jLabel4)
@@ -254,7 +268,26 @@ public class TestFrame extends javax.swing.JFrame {
                                         .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.LEADING))
                                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())))
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnPause)
+                        .addGap(94, 94, 94))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(92, 92, 92)
+                                .addComponent(jLabel3))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(68, 68, 68)
+                                .addComponent(jLabel9)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtCamPosX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel10)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtCamPosY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -286,9 +319,15 @@ public class TestFrame extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addComponent(jLabel8)
                     .addComponent(txtCamId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel9)
+                    .addComponent(txtCamPosX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10)
+                    .addComponent(txtCamPosY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(7, 7, 7)
                 .addComponent(btnPause)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane2)
@@ -334,6 +373,7 @@ public class TestFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox checkCams;
     private javax.swing.JCheckBox checkSensors;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -341,12 +381,15 @@ public class TestFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private triangulacion.RealTimePanel rtPanel;
     private javax.swing.JTextField txtCamId;
     private javax.swing.JTextField txtCamIdx;
+    private javax.swing.JTextField txtCamPosX;
+    private javax.swing.JTextField txtCamPosY;
     private javax.swing.JTextField txtChildPosX;
     private javax.swing.JTextField txtChildPosY;
     private javax.swing.JTextArea txtDebug;
