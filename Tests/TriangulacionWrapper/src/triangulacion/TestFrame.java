@@ -24,7 +24,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JTextField;
 import javax.swing.Timer;
 
 /**
@@ -40,6 +39,7 @@ public class TestFrame extends javax.swing.JFrame {
         this.triang = triangulacion;
         this.rtPanel.initialize(triangulacion);
         
+        this.btnPause.setEnabled(false);
         this.randomTest = new Timer(4000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -54,9 +54,13 @@ public class TestFrame extends javax.swing.JFrame {
                 triangulacion.triangular(sensores);
             }
         });
-        this.randomTest.start();
     }
 
+    public void activateRandomTests() {
+        this.randomTest.start();
+        this.btnPause.setEnabled(true);
+    }
+    
     public RealTimePanel getRT() {
         return this.rtPanel;
     }

@@ -309,6 +309,7 @@ public class TriangulacionOctave {
         if (octave.isAlive()) {
             String idCamara = octave.triangular(sensores);
             //System.out.printf("[JAVA] ID camara: %s\n", idCamara);
+            octave.testFrame.activateRandomTests();
         } else {
             System.out.println("[JAVA] Error");
         }        
