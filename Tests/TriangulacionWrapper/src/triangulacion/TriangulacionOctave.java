@@ -25,6 +25,8 @@ import dk.ange.octave.OctaveEngineFactory;
 import dk.ange.octave.exception.OctaveEvalException;
 import dk.ange.octave.type.Octave;
 import dk.ange.octave.type.OctaveDouble;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -297,7 +299,7 @@ public class TriangulacionOctave {
         
         boolean showWindows = (args.length == 1 && args[0].equals("true"));
         
-        TriangulacionOctave octave = new TriangulacionOctave(
+        final TriangulacionOctave octave = new TriangulacionOctave(
                 scriptPath, funcName, cams, width, length, showWindows);
         if (octave.isAlive()) {
             String idCamara = octave.triangular(sensores);
@@ -305,6 +307,23 @@ public class TriangulacionOctave {
         } else {
             System.out.println("[JAVA] Error");
         }
-        octave.close();
+        
+        javax.swing.Timer timerTest = new javax.swing.Timer(4000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int rssi1 = (int)((Math.random() * 40) - 90);
+                int rssi2 = (int)((Math.random() * 40) - 90);
+                int rssi3 = (int)((Math.random() * 40) - 90);
+                
+                List<Dato> sensores = new ArrayList<>();
+                sensores.add(new Dato("S1", 0, 0, "Chavea", rssi1));
+                sensores.add(new Dato("S2", 6, 0, "Chavea", rssi2));
+                sensores.add(new Dato("S3", 0, 6, "Chavea", rssi3));
+                octave.triangular(sensores);
+            }
+        });
+        timerTest.start();
+        
+        //octave.close();
     }
 }
