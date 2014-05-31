@@ -261,12 +261,17 @@ public class TriangulacionOctave {
         }
  
         // Obtiene el resultado
-        OctaveDouble idxCam = octave.get(OctaveDouble.class, "idxCam");
-        if (idxCam != null && idxCam.size(1) == 1 && idxCam.get(1) != -1) {
-            if (this.testFrame != null)
-                this.testFrame.getRT().setNewSensors(datos);
-            this.lastCamIdx = (int)idxCam.get(1) - 1;
-            this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
+        OctaveDouble idxCam_Oct = octave.get(OctaveDouble.class, "idxCam");
+        int idxCam = (int)idxCam_Oct.get(1);
+        
+        // Lo establece en la ventana de prueba
+        if (this.testFrame != null)
+            this.testFrame.getRT().setNewSensors(datos);
+        this.lastCamIdx = (idxCam != -1) ? idxCam - 1 : -1;
+        this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
+        
+        // Devuelve el ID de la cámara.
+        if (this.lastCamIdx != -1) {
             return this.cams.get(this.lastCamIdx).getID();    
         } else {
             return null;
