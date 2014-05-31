@@ -6,12 +6,15 @@
 #                                             #
 # V 1.0: Benito Palacios Sánchez              #
 #   - Implementación de descubrimiento básico #
+# V 1.3: Benito Palacios Sánchez              #
+#   - Añadido envío por sockets               #
 #                                             #
 # Copyright Prometheus 2014                   #
 ###############################################
 
 import struct
 import bluetooth._bluetooth as bluez
+import socket
 
 # Información general:
 #  Estructura de paquetes enviados (comandos): pág. 673
@@ -21,11 +24,14 @@ import bluetooth._bluetooth as bluez
 # Implementación de búsqueda con RSSI con Bluez
 class BluezInquiry:
     
-    def __init__(self, dev_id, mac):
-        self.dev_id    = dev_id # El número del bluetooth (si hay más de uno)
-        self.mac       = mac
-        self.inquiring = False
-        self.socket    = None
+    def __init__(self, dev_id, mac, port):
+        self.dev_id     = dev_id # El número del bluetooth (si hay más de uno)
+        self.mac        = mac
+        self.inquiring  = False
+        self.socket     = None
+        self.port       = port
+        self.host       = 'localhost'
+        self.sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def is_inquiring(self):
         return self.inquiring
@@ -91,10 +97,11 @@ class BluezInquiry:
                 # Obtiene el rssi
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
                 print addr, rssi
+                self.sendSocket.sendto("MENSAJE A ENVIAR A JAVA", (self.host, self.port))
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             pass
-	    #self.socket.close()
+            #self.socket.close()
             #self.socket = None
             #self.inquiring = False
             
@@ -106,9 +113,9 @@ class BluezInquiry:
                 self.socket = None
                 self.inquiring = False
         elif event == bluez.EVT_CMD_COMPLETE:
-	    pass        
+            pass        
         elif event == 255: #Suponemos que no lee ningun evento y por eso devuelve 255
-	    return
+            return
 	elif event == bluez.EVT_INQUIRY_RESULT:
             nrsp = struct.unpack("B", pkt[0])[0]    # Número de respuestas
             for i in range(nrsp):
