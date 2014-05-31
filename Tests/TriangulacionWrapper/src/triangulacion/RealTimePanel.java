@@ -76,7 +76,6 @@ public class RealTimePanel extends javax.swing.JPanel {
     
     public void setNewSensors(final List<Dato> sensors) {
         this.lastSensors = sensors;
-        this.repaint();
     }
     
     @Override

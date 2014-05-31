@@ -248,7 +248,7 @@ public class TriangulacionOctave {
         // Llama a la función que tiene en memoria
         try {
             String funcCall = String.format(
-                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo)",
+                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo);",
                     this.funcName
             );
             this.octave.eval(funcCall);
@@ -265,10 +265,10 @@ public class TriangulacionOctave {
         int idxCam = (int)idxCam_Oct.get(1);
         
         // Lo establece en la ventana de prueba
-        if (this.testFrame != null)
-            this.testFrame.getRT().setNewSensors(datos);
         this.lastCamIdx = (idxCam != -1) ? idxCam - 1 : -1;
         this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
+        if (this.testFrame != null)
+            this.testFrame.setNewSensors(datos);
         
         // Devuelve el ID de la cámara.
         if (this.lastCamIdx != -1) {
@@ -308,7 +308,7 @@ public class TriangulacionOctave {
                 scriptPath, funcName, cams, width, length, showWindows);
         if (octave.isAlive()) {
             String idCamara = octave.triangular(sensores);
-            System.out.printf("[JAVA] ID camara: %s\n", idCamara);
+            //System.out.printf("[JAVA] ID camara: %s\n", idCamara);
         } else {
             System.out.println("[JAVA] Error");
         }        
