@@ -291,9 +291,9 @@ public class TriangulacionOctave {
         cams.add(new CamaraPos(6, 3, "ID4"));
         
         List<Dato> sensores = new ArrayList<>();
-        sensores.add(new Dato("S1", 0, 0, "Chavea", -38));
-        sensores.add(new Dato("S2", 6, 0, "Chavea", -38));
-        sensores.add(new Dato("S3", 0, 6, "Chavea", -38));
+        sensores.add(new Dato("S1", 0, 0, "Chavea", -89));  // Antes -38
+        sensores.add(new Dato("S2", 6, 0, "Chavea", -85));  // Antes -38
+        sensores.add(new Dato("S3", 0, 6, "Chavea", -85));  // Antes -38
         
         boolean showWindows = (args.length == 1 && args[0].equals("true"));
         

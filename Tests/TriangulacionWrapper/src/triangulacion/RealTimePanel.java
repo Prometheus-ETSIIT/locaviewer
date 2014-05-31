@@ -86,38 +86,69 @@ public class RealTimePanel extends javax.swing.JPanel {
         if (this.octave == null)
             return;
         
+        int lenPx = this.meter2Px(this.octave.getLength());
+        
         // Pinta el fondo
         g.setColor(Color.white);
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
         
         // Pinta la habitación
-        g.setColor(Color.red);
+        g.setColor(Color.blue);
         g.drawRect(0, 0, meter2Px(this.width), meter2Px(this.length));
         
         // Pinta los ángulos de las cámaras
         if (this.showCams) {
             g.setColor(new Color(128, 128, 128, 128));
             for (CamaraPos cam : this.octave.getCamaras())
-                drawVision(g, meter2Px(cam.getPosX()), meter2Px(cam.getPosY()));
+                drawVision(g, meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()));
         }
         
         // Pinta los puntos de las cámaras
         g.setColor(Color.blue);
         for (CamaraPos cam : this.octave.getCamaras())
-            g.fillOval(meter2Px(cam.getPosX()), meter2Px(cam.getPosY()), 10, 10);
+            g.fillOval(meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()), 10, 10);
         
+        // Pinta los puntos de los sensores activos y su radio de intersección.
         if (this.showSensors && this.lastSensors != null) {
             g.setColor(Color.green);
             for (Dato sensor : this.lastSensors) {
                 int sensorX = meter2Px(sensor.getPosicionSensor().getPrimero());
                 int sensorY = meter2Px(sensor.getPosicionSensor().getSegundo());
-                g.fillOval(sensorX, sensorY, 10, 10);
+                g.fillOval(sensorX, lenPx - sensorY, 10, 10);
+                
+                int dist = rssi2Px(sensor.getIntensidad());
+                int diam = dist * 2;
+                g.drawOval(sensorX - dist, lenPx - sensorY - dist, diam, diam);
             }
+        }
+        
+        // Resalta la mejor cámara
+        int bestCamIdx = this.octave.getLastCamIndex();
+        if (this.showBestCam && this.octave.getLastPosition() != null && bestCamIdx != -1) {
+            CamaraPos bestCam = this.octave.getCamaras().get(bestCamIdx);            
+            g.setColor(new Color(255, 0, 0, 128));
+            drawVision(g, meter2Px(bestCam.getPosX()), lenPx - meter2Px(bestCam.getPosY()));
+        }
+        
+        // Pinta el punto con el niño
+        double[] childPos = this.octave.getLastPosition();
+        if (childPos != null) {
+            g.setColor(Color.red);
+            g.fillOval(meter2Px((int)childPos[0]), lenPx - meter2Px((int)childPos[1]), 10, 10);
         }
     }
     
     private int meter2Px(final int meters) {
         return meters * MeterPixelRate;
+    }
+    
+    private int rssi2Px(final int rssi) {
+        double meters = 0;
+        meters -= 0.00680102923817849 * (rssi * rssi * rssi);
+        meters -= 1.04905123190747    * (rssi * rssi);
+        meters -= 59.2087843354658    * (rssi);
+        meters -= 1106.35595941215;
+        return meter2Px((int)Math.round(meters / 100));
     }
     
     private void drawVision(Graphics g, int camX, int camY) {
