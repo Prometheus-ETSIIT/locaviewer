@@ -311,24 +311,7 @@ public class TriangulacionOctave {
             System.out.printf("[JAVA] ID camara: %s\n", idCamara);
         } else {
             System.out.println("[JAVA] Error");
-        }
-        
-        javax.swing.Timer timerTest = new javax.swing.Timer(4000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int rssi1 = (int)((Math.random() * 40) - 90);
-                int rssi2 = (int)((Math.random() * 40) - 90);
-                int rssi3 = (int)((Math.random() * 40) - 90);
-                
-                List<Dato> sensores = new ArrayList<>();
-                sensores.add(new Dato("S1", 0, 0, "Chavea", rssi1));
-                sensores.add(new Dato("S2", 6, 0, "Chavea", rssi2));
-                sensores.add(new Dato("S3", 0, 6, "Chavea", rssi3));
-                octave.triangular(sensores);
-            }
-        });
-        timerTest.start();
-        
+        }        
         //octave.close();
     }
 }

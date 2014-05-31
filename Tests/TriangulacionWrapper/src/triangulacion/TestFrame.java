@@ -18,14 +18,39 @@
 
 package triangulacion;
 
+import comunicador.Dato;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.Timer;
+
 /**
  *
  */
 public class TestFrame extends javax.swing.JFrame {
 
+    private final Timer randomTest;
+    
     public TestFrame(final TriangulacionOctave triangulacion) {
         initComponents();
         this.rtPanel.initialize(triangulacion);
+        
+        this.randomTest = new Timer(4000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int rssi1 = (int)((Math.random() * 40) - 90);
+                int rssi2 = (int)((Math.random() * 40) - 90);
+                int rssi3 = (int)((Math.random() * 40) - 90);
+                
+                List<Dato> sensores = new ArrayList<>();
+                sensores.add(new Dato("S1", 0, 0, "Chavea", rssi1));
+                sensores.add(new Dato("S2", 6, 0, "Chavea", rssi2));
+                sensores.add(new Dato("S3", 0, 6, "Chavea", rssi3));
+                triangulacion.triangular(sensores);
+            }
+        });
+        this.randomTest.start();
     }
 
     public RealTimePanel getRT() {
@@ -47,6 +72,7 @@ public class TestFrame extends javax.swing.JFrame {
         checkSensors = new javax.swing.JCheckBox();
         checkBestCams = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
+        btnPause = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Real Time Trianguleishon");
@@ -96,19 +122,31 @@ public class TestFrame extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         jLabel2.setText("by PROMETHEUS");
 
+        btnPause.setText("Pausar");
+        btnPause.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPauseActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(rtPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 474, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(checkCams)
-                    .addComponent(checkSensors)
-                    .addComponent(checkBestCams)
-                    .addComponent(jLabel2))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(checkCams)
+                            .addComponent(checkSensors)
+                            .addComponent(checkBestCams)
+                            .addComponent(jLabel2)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(102, 102, 102)
+                        .addComponent(btnPause)))
                 .addGap(60, 60, 60))
         );
         layout.setVerticalGroup(
@@ -123,6 +161,8 @@ public class TestFrame extends javax.swing.JFrame {
                 .addComponent(checkSensors)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(checkBestCams)
+                .addGap(153, 153, 153)
+                .addComponent(btnPause)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addContainerGap())
@@ -146,8 +186,19 @@ public class TestFrame extends javax.swing.JFrame {
     private void checkBestCamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBestCamsActionPerformed
         this.rtPanel.setShowBestCam(this.checkBestCams.isSelected());
     }//GEN-LAST:event_checkBestCamsActionPerformed
+
+    private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseActionPerformed
+        if (this.randomTest.isRunning()) {
+            this.randomTest.stop();
+            this.btnPause.setText("Continuar");
+        } else {
+            this.randomTest.start();
+            this.btnPause.setText("Pausar");
+        }
+    }//GEN-LAST:event_btnPauseActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnPause;
     private javax.swing.JCheckBox checkBestCams;
     private javax.swing.JCheckBox checkCams;
     private javax.swing.JCheckBox checkSensors;
