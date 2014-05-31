@@ -29,11 +29,9 @@ import java.util.List;
  */
 public class RealTimePanel extends javax.swing.JPanel {
 
-    private final static String ScriptPath = "../../Localizacion/detectarcamara.m";
-    private final static String FuncName   = "detectarcamara";
     private final static int MeterPixelRate = 50;
-    private final static int OffsetX = 10;
-    private final static int OffsetY = 10;
+    private final static int OffsetX = 50;
+    private final static int OffsetY = 50;
     
     private TriangulacionOctave octave;
     private int width;
@@ -90,6 +88,8 @@ public class RealTimePanel extends javax.swing.JPanel {
         // Pinta el fondo
         g.setColor(Color.white);
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
+        
+        g.translate(OffsetX, OffsetY);
         
         // Pinta la habitación
         g.setColor(Color.blue);

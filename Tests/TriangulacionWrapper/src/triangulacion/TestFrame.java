@@ -143,18 +143,17 @@ public class TestFrame extends javax.swing.JFrame {
             }
         });
 
-        rtPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         rtPanel.setPreferredSize(new java.awt.Dimension(400, 400));
 
         javax.swing.GroupLayout rtPanelLayout = new javax.swing.GroupLayout(rtPanel);
         rtPanel.setLayout(rtPanelLayout);
         rtPanelLayout.setHorizontalGroup(
             rtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 472, Short.MAX_VALUE)
+            .addGap(0, 474, Short.MAX_VALUE)
         );
         rtPanelLayout.setVerticalGroup(
             rtPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 475, Short.MAX_VALUE)
+            .addGap(0, 477, Short.MAX_VALUE)
         );
 
         jLabel1.setText("Capas:");
