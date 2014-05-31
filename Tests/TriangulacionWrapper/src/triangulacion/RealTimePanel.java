@@ -170,7 +170,6 @@ public class RealTimePanel extends javax.swing.JPanel {
         int roomLength = meter2Px(this.length);
         boolean vertical = (camX == 0 || camX == roomWidth);
         if (vertical) {
-            camY += 5;
             int x1 = (camX == 0) ? roomWidth : 0;
             int y11 = (int)(camY + TAN_MEDIOS * (x1 - camX));
             g.drawLine(camX, camY, x1, y11);
@@ -180,7 +179,6 @@ public class RealTimePanel extends javax.swing.JPanel {
             
             g.fillPolygon(new int[] { camX, x1, x1 }, new int[] { camY, y11, y12 }, 3);
         } else {
-            camX += 5;
             int y1 = (camY == 0) ? roomLength : 0;
             int x11 = (int)(camX + TAN_MEDIOS * (y1 - camY));
             g.drawLine(camX, camY, x11, y1);
