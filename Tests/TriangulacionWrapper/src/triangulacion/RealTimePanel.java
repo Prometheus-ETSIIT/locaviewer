@@ -105,7 +105,7 @@ public class RealTimePanel extends javax.swing.JPanel {
         // Pinta los puntos de las cámaras
         g.setColor(Color.blue);
         for (CamaraPos cam : this.octave.getCamaras())
-            g.fillOval(meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()), 10, 10);
+            fillCircle(g, meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()));
         
         // Pinta los puntos de los sensores activos y su radio de intersección.
         if (this.showSensors && this.lastSensors != null) {
@@ -113,7 +113,7 @@ public class RealTimePanel extends javax.swing.JPanel {
             for (Dato sensor : this.lastSensors) {
                 int sensorX = meter2Px(sensor.getPosicionSensor().getPrimero());
                 int sensorY = meter2Px(sensor.getPosicionSensor().getSegundo());
-                g.fillOval(sensorX, lenPx - sensorY, 10, 10);
+                fillCircle(g, sensorX, lenPx - sensorY);
                 
                 int dist = rssi2Px(sensor.getIntensidad());
                 int diam = dist * 2;
@@ -133,7 +133,7 @@ public class RealTimePanel extends javax.swing.JPanel {
         double[] childPos = this.octave.getLastPosition();
         if (childPos != null) {
             g.setColor(Color.red);
-            g.fillOval(meter2Px((int)childPos[0]), lenPx - meter2Px((int)childPos[1]), 10, 10);
+            fillCircle(g, meter2Px((int)childPos[0]), lenPx - meter2Px((int)childPos[1]));
         }
     }
     
@@ -178,6 +178,13 @@ public class RealTimePanel extends javax.swing.JPanel {
             
             g.fillPolygon(new int[] { camX, x11, x12 }, new int[] { camY, y1, y1 }, 3);    
         }
+    }
+    
+    private void fillCircle(Graphics g, int posX, int posY) {
+        final int SIZE  = 10;
+        int radio = SIZE / 2;
+        
+        g.fillOval(posX - radio, posY - radio, SIZE, SIZE);        
     }
     
     /**
