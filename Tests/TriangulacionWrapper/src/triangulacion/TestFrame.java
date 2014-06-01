@@ -33,6 +33,7 @@ public class TestFrame extends javax.swing.JFrame {
 
     private final Timer randomTest;
     private final TriangulacionOctave triang;
+    private String childId;
     
     public TestFrame(final TriangulacionOctave triangulacion) {
         initComponents();
@@ -48,9 +49,9 @@ public class TestFrame extends javax.swing.JFrame {
                 int rssi3 = (int)((Math.random() * 40) - 90);
                 
                 List<Dato> sensores = new ArrayList<>();
-                sensores.add(new Dato("S1", 0, 0, "Chavea", rssi1));
-                sensores.add(new Dato("S2", 6, 0, "Chavea", rssi2));
-                sensores.add(new Dato("S3", 0, 6, "Chavea", rssi3));
+                sensores.add(new Dato("S1", 0, 0, "Kentaki", rssi1));
+                sensores.add(new Dato("S2", 6, 0, "Kentaki", rssi2));
+                sensores.add(new Dato("S3", 0, 6, "Kentaki", rssi3));
                 triangulacion.triangular(sensores);
             }
         });
@@ -66,6 +67,27 @@ public class TestFrame extends javax.swing.JFrame {
     }
     
     public void setNewSensors(final List<Dato> sensors) {
+        if (sensors.isEmpty())
+            return;
+        
+        // Añade al niño a la lista si no lo estaba
+        String childName = sensors.get(0).getIDNino();
+        boolean containsChild = false;
+        for (int i = 0; i < this.comboChildren.getItemCount() && !containsChild; i++)
+            if (childName.equals(this.comboChildren.getItemAt(i)))
+                containsChild = true;
+        
+        if (!containsChild)
+            this.comboChildren.addItem(childName);
+        
+        // Actualiza el componente para que pinte la situación
+        this.rtPanel.setNewSensors(sensors);
+        this.repaint();
+        
+        // Si no es el niño deseado sale
+        if (!this.childId.equals(sensors.get(0).getIDNino()))
+            return;
+        
         // Pone la posición del niño
         double[] childPos = triang.getLastPosition();
         this.txtChildPosX.setText(Double.toString(((int)(childPos[0] * 1000)) / 1000.0));
@@ -86,17 +108,13 @@ public class TestFrame extends javax.swing.JFrame {
         }
         
         // Muestra los mensajes de debug
-        this.txtDebug.setText("Niño: " + sensors.get(0).getIDNino() + "\n");
+        this.txtDebug.setText("");
         for (Dato sensor : sensors) {
             this.txtDebug.append("ID: " + sensor.getID() + " | ");
             this.txtDebug.append("X: " + sensor.getPosicionSensor().getPrimero() + " | ");
             this.txtDebug.append("Y: " + sensor.getPosicionSensor().getSegundo() + " | ");
             this.txtDebug.append("RSSI: " + sensor.getIntensidad() + "\n");
         }
-        
-        // Actualiza el componente para que pinte la situación
-        this.rtPanel.setNewSensors(sensors);
-        this.repaint();
     }
     
     /**
@@ -133,9 +151,11 @@ public class TestFrame extends javax.swing.JFrame {
         txtCamPosX = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
         txtCamPosY = new javax.swing.JTextField();
+        comboChildren = new javax.swing.JComboBox();
+        jLabel11 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Real Time Trianguleishon");
+        setTitle("Real Time Triangulation");
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -228,6 +248,14 @@ public class TestFrame extends javax.swing.JFrame {
         txtCamPosY.setEditable(false);
         txtCamPosY.setColumns(4);
 
+        comboChildren.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                comboChildrenActionPerformed(evt);
+            }
+        });
+
+        jLabel11.setText("Niño:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -238,37 +266,40 @@ public class TestFrame extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(checkSensors, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+                            .addComponent(checkSensors, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(checkCams, javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(checkBestCams, javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                            .addGap(79, 79, 79)
-                                            .addComponent(jLabel6))
-                                        .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                            .addComponent(jLabel7)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtCamIdx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(jLabel8)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtCamId))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                            .addGap(53, 53, 53)
-                                            .addComponent(jLabel4)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtChildPosX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(jLabel5)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(txtChildPosY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.LEADING))
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jLabel1)
+                                    .addComponent(checkCams)
+                                    .addComponent(checkBestCams)
+                                    .addComponent(jSeparator1)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel7)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtCamIdx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel8)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtCamId))
+                                    .addComponent(jSeparator2)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(36, 36, 36)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel4)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtChildPosX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jLabel5)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(txtChildPosY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                            .addComponent(jLabel6)))
+                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel11)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(comboChildren, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -331,8 +362,12 @@ public class TestFrame extends javax.swing.JFrame {
                 .addComponent(btnPause)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(comboChildren, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2)
                 .addContainerGap())
@@ -368,14 +403,22 @@ public class TestFrame extends javax.swing.JFrame {
             this.btnPause.setText("Pausar");
         }
     }//GEN-LAST:event_btnPauseActionPerformed
+
+    private void comboChildrenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboChildrenActionPerformed
+        this.childId = (String)this.comboChildren.getSelectedItem();
+        this.rtPanel.setChildId(this.childId);
+        this.repaint();
+    }//GEN-LAST:event_comboChildrenActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnPause;
     private javax.swing.JCheckBox checkBestCams;
     private javax.swing.JCheckBox checkCams;
     private javax.swing.JCheckBox checkSensors;
+    private javax.swing.JComboBox comboChildren;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

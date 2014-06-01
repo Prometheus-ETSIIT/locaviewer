@@ -25,8 +25,6 @@ import dk.ange.octave.OctaveEngineFactory;
 import dk.ange.octave.exception.OctaveEvalException;
 import dk.ange.octave.type.Octave;
 import dk.ange.octave.type.OctaveDouble;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -298,9 +296,9 @@ public class TriangulacionOctave {
         cams.add(new CamaraPos(6, 3, "ID4"));
         
         List<Dato> sensores = new ArrayList<>();
-        sensores.add(new Dato("S1", 0, 0, "Chavea", -89));  // Antes -38
-        sensores.add(new Dato("S2", 6, 0, "Chavea", -85));  // Antes -38
-        sensores.add(new Dato("S3", 0, 6, "Chavea", -85));  // Antes -38
+        sensores.add(new Dato("S1", 0, 0, "Juan", -89));  // Antes -38
+        sensores.add(new Dato("S2", 6, 0, "Juan", -85));  // Antes -38
+        sensores.add(new Dato("S3", 0, 6, "Juan", -85));  // Antes -38
         
         boolean showWindows = (args.length == 1 && args[0].equals("true"));
         

@@ -39,7 +39,9 @@ public class RealTimePanel extends javax.swing.JPanel {
     private TriangulacionOctave octave;
     private int width;
     private int length;
+    
     private List<Dato> lastSensors;
+    private String childId;
     
     private boolean showCams;
     private boolean showSensors;
@@ -84,7 +86,14 @@ public class RealTimePanel extends javax.swing.JPanel {
             this.octave.close();
     }
     
+    public void setChildId(final String childId) {
+        this.childId = childId;
+    }
+    
     public void setNewSensors(final List<Dato> sensors) {
+        if (sensors.isEmpty())
+            return;
+        
         this.lastSensors = sensors;
     }
     
@@ -92,9 +101,9 @@ public class RealTimePanel extends javax.swing.JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        if (this.octave == null)
+        if (this.octave == null || this.childId == null)
             return;
-        
+            
         int lenPx = this.meter2Px(this.octave.getLength());
         
         // Pinta el fondo
@@ -119,8 +128,13 @@ public class RealTimePanel extends javax.swing.JPanel {
         for (CamaraPos cam : this.octave.getCamaras())
             fillCircle(g, meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()));
         
+        // A partir de aquí, comprueba se que tienen datos del niño en cuestión.
+        if (this.lastSensors != null &&
+                !this.lastSensors.get(0).getIDNino().equals(this.childId))
+            return;
+        
         // Pinta los puntos de los sensores activos y su radio de intersección.
-        if (this.showSensors && this.lastSensors != null) {
+        if (this.showSensors) {
             g.setColor(Color.green);
             for (Dato sensor : this.lastSensors) {
                 int sensorX = meter2Px(sensor.getPosicionSensor().getPrimero());
@@ -143,7 +157,7 @@ public class RealTimePanel extends javax.swing.JPanel {
         
         // Pinta el punto con el niño
         double[] childPos = this.octave.getLastPosition();
-        if (showChild && childPos != null) {
+        if (this.showChild && childPos != null) {
             g.setColor(Color.red);
             fillCircle(g, meter2Px(childPos[0]), lenPx - meter2Px(childPos[1]));
         }
