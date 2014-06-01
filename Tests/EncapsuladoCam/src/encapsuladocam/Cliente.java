@@ -18,6 +18,13 @@
 
 package encapsuladocam;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
+import com.rti.dds.type.builtin.BytesDataReader;
+import com.rti.dds.type.builtin.StringTypeSupport;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -39,9 +46,8 @@ public class Cliente {
      * @param args Ninguno.
      */
     public static void main(String[] args) {       
-        // Inicia el servidor falso
-        FakeStreaming fakeServer = new FakeStreaming(PORT);
-        fakeServer.start();
+        // Inicia DDS
+        iniciaDds();
         
         // Crea la ventana del reproductor
         Canvas canvas = new Canvas();
@@ -67,5 +73,41 @@ public class Cliente {
         // Reproduce el vídeo.
         frame.setVisible(true);
         mediaPlayer.playMedia("http://localhost:" + PORT);
+    }
+    
+    private static void iniciaDds() {
+         //Dominio 0
+        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
+                1, // ID de dominio 1
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (participant == null) {
+            System.err.println("No se pudo obtener el dominio.");
+            return;
+        }
+
+        // Crea el tópico
+        Topic topic = participant.create_topic(
+                "test_cam", 
+                StringTypeSupport.get_type_name(), 
+                DomainParticipant.TOPIC_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (topic == null) {
+            System.err.println("No se pudo crear el tópico");
+            return;
+        }
+
+        // Crea el suscriptor
+        BytesDataReader dataReader = (BytesDataReader) participant.create_datareader(
+                topic, 
+                Subscriber.DATAREADER_QOS_DEFAULT,
+                new FakeStreaming(PORT),         // Listener
+                StatusKind.DATA_AVAILABLE_STATUS);
+        if (dataReader == null) {
+            System.err.println("Unable to create DDS Data Reader");
+            return;
+        }
     }
 }

@@ -18,7 +18,14 @@
 
 package encapsuladocam;
 
-import java.io.FileOutputStream;
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.topic.Topic;
+import com.rti.dds.type.builtin.BytesDataWriter;
+import com.rti.dds.type.builtin.StringTypeSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -31,6 +38,7 @@ public class VlcToDds {
     
     private final String srcHost;
     private final int srcPort;
+    private BytesDataWriter writer;
     
     /**
      * Crea una nueva instancia con los datos de redirección.
@@ -41,6 +49,7 @@ public class VlcToDds {
     public VlcToDds(final String srcHost, final int srcPort) {
         this.srcHost = srcHost;
         this.srcPort = srcPort;
+        this.iniciaDds();
     }
     
     /**
@@ -48,32 +57,65 @@ public class VlcToDds {
      */
     public void start() {
         try {
+            // Crea el socket.
             Socket conn = new Socket(this.srcHost, this.srcPort);
             
             // Envía la petición GET
-            PrintWriter writer = new PrintWriter(conn.getOutputStream());
-            writer.append("GET / HTTP/1.1\r\n");
-            writer.append("Host: " + this.srcHost + ":" + this.srcPort + "\r\n");
-            writer.append("User-Agent: VLC/2.1.4 LibVLC/2.1.4\r\n");
-            writer.append("Range: bytes=0-\r\n");
-            writer.append("Connection: close\r\n");
-            writer.append("Icy-MetaData: 1\r\n");
-            writer.append("\r\n");
-            writer.flush();
+            PrintWriter socketWriter = new PrintWriter(conn.getOutputStream());
+            socketWriter.append("GET / HTTP/1.1\r\n");
+            socketWriter.append("Host: " + this.srcHost + ":" + this.srcPort + "\r\n");
+            socketWriter.append("User-Agent: VLC/2.1.4 LibVLC/2.1.4\r\n");
+            socketWriter.append("Range: bytes=0-\r\n");
+            socketWriter.append("Connection: close\r\n");
+            socketWriter.append("Icy-MetaData: 1\r\n");
+            socketWriter.append("\r\n");
+            socketWriter.flush();
 
-            // Comienza a recibir los datos del streaming y los guarda.
+            // Comienza a recibir los datos del streaming y los reenvía por DDS.
             InputStream inputStream = conn.getInputStream();
-            FileOutputStream outputStream = new FileOutputStream("test.mpg");
-
             int bytesRead;
             byte[] buffer = new byte[1024];
             while (true) {
                 bytesRead = inputStream.read(buffer);
                 if (bytesRead != -1)
-                    outputStream.write(buffer, 0, bytesRead);
+                    this.writer.write(buffer, 0, bytesRead, InstanceHandle_t.HANDLE_NIL);
             }
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
+        }
+    }
+    
+    private void iniciaDds() {
+        //Dominio 1
+        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
+                1, // Domain ID = 0
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (participant == null) {
+            System.err.println("No se pudo crear el dominio.");
+            return;
+        }
+
+       //Creación del tópico
+        Topic topic = participant.create_topic(
+                "test_cam", 
+                StringTypeSupport.get_type_name(), 
+                DomainParticipant.TOPIC_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (topic == null) {
+            System.err.println("Unable to create topic.");
+            return;
+        }
+        
+        writer = (BytesDataWriter)participant.create_datawriter(
+                topic, 
+                Publisher.DATAWRITER_QOS_DEFAULT,
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (writer == null) {
+            System.err.println("No se pudo crear el escritor");
         }
     }
 }

@@ -18,25 +18,25 @@
 
 package encapsuladocam;
 
-import java.awt.event.ActionEvent;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import com.rti.dds.subscription.DataReader;
+import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.type.builtin.Bytes;
+import com.rti.dds.type.builtin.BytesDataReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.Timer;
 
 /**
  * Crea un servidor falso que simule ser VLC haciendo Streaming.
  */
-public class FakeStreaming {
+public class FakeStreaming extends DataReaderAdapter {
     private final List<Socket> clients;
     private final int port;
-    
+        
     /**
      * Crea una nueva instancia del servidor falso.
      * 
@@ -45,37 +45,13 @@ public class FakeStreaming {
     public FakeStreaming(final int port) {
         this.clients = new ArrayList<>();
         this.port    = port;
-        
-        // TEMPORAL: Inicia un timer que simula DDS leyendo 1 KB cada 10 ms.
-        try {
-            final FileInputStream reader = new FileInputStream("test.mpg");
-            
-            // Salta algunos bytes para simular que coge la conexión a medias.
-            try { reader.skip(1024*1024*2); } catch (IOException ex) { }
-            new Timer(10, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        // Lee 1 KB
-                        byte[] buffer = new byte[1024];
-                        int read = reader.read(buffer);
-                        
-                        // Lo envía a todos los sockets.
-                        DdsCallback(buffer, read);                        
-                    } catch (IOException ex) {
-                        System.err.println(ex);
-                    }
-                }
-            }).start();
-        } catch (FileNotFoundException ex) {
-            System.err.println(ex);
-        }
+        this.start();
     }
     
     /**
      * Inicia el servidor.
      */
-    public void start() {
+    private void start() {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() { serverLoop(); }
@@ -120,15 +96,19 @@ public class FakeStreaming {
     /**
      * Callback que llama RTI connext cuando se recibe para datos.
      * 
-     * @param data Datos recibidos.
+     * @param reader Lector de datos
      */
-    private void DdsCallback(final byte[] data, final int len) {
-        for (Socket socket : this.clients) {
-            try {
-                socket.getOutputStream().write(data, 0, len);
-            } catch (IOException ex) {
-                System.err.println(ex);
-            }
+    @Override
+    public void on_data_available(DataReader reader) {
+        BytesDataReader bytesReader = (BytesDataReader)reader;
+        try {
+            Bytes data = new Bytes();
+            SampleInfo info = new SampleInfo();
+            bytesReader.take_next_sample(data, info);
+            for (Socket socket : this.clients)
+                socket.getOutputStream().write(data.value, data.offset, data.length);
+        } catch (IOException ex) {
+            System.err.println(ex);
         }
     }
 }

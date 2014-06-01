@@ -38,8 +38,8 @@ public class HttpStreaming {
      */
     public static void main(String[] args) {
         // Comprueba los argumentos.
-        if(args.length != 2) {
-            System.out.println("USO: HttpStreaming MRL puerto");
+        if(args.length != 1) {
+            System.out.println("USO: HttpStreaming MRL");
             System.exit(1);
         }
 
