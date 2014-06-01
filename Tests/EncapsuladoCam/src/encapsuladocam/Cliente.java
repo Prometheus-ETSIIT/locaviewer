@@ -24,7 +24,7 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.BytesDataReader;
-import com.rti.dds.type.builtin.StringTypeSupport;
+import com.rti.dds.type.builtin.BytesTypeSupport;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -90,7 +90,7 @@ public class Cliente {
         // Crea el tópico
         Topic topic = participant.create_topic(
                 "test_cam", 
-                StringTypeSupport.get_type_name(), 
+                BytesTypeSupport.get_type_name(), 
                 DomainParticipant.TOPIC_QOS_DEFAULT, 
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
