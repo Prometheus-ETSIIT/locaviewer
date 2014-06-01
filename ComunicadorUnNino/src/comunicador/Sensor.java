@@ -1,5 +1,8 @@
 package comunicador;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -89,20 +92,47 @@ public class Sensor extends DataReaderAdapter{
 		  }
 		
 		//Niño a
-		Dato prueba = new Dato(MAC,0,0,"75572325",-89);
+	/*	Dato prueba = new Dato(MAC,0,0,"75572325",-89);
 		Dato prueba2 = new Dato(MAC,6,0,"75572325",-82);
 		Dato prueba3 = new Dato(MAC,0,6,"75572325",-85);
+		*/
 		
+		//Lectura
+		/*try {
+		//	Runtime.getRuntime().exec("sudo python sensor.py 1 4554");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
 		
-        int numero=0;
+	
+		DatagramSocket socketServidor;
+
+		 try {
+			 socketServidor = new DatagramSocket(5445);
      	while(true){
-	        dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
-		        dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
-		        dataWriter.write(prueba2.toString(), InstanceHandle_t.HANDLE_NIL);
-		        dataWriter.write(prueba3.toString(), InstanceHandle_t.HANDLE_NIL);
-		        Thread.sleep(1000);
-	        
-     	}
+     			 byte [] bufer = new byte [256];
+ 				 DatagramPacket paquete = new DatagramPacket(bufer,bufer.length);
+ 				 socketServidor.receive(paquete);
+ 				 String peticion = new String (paquete.getData());
+ 				 String [] recibido = peticion.split("\\s+");
+ 				 int numEntero = Integer.parseInt(recibido[1].substring(0, 3));
+ 				 
+ 				 Dato prueba = new Dato (recibido[0],0,0,"75572325",numEntero);
+ 	     		 dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+ 	     		 
+ 				 prueba = new Dato (recibido[0],6,0,"75572325",numEntero);
+ 	     		 dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+ 	     		 
+ 				 prueba = new Dato (recibido[0],0,6,"75572325",numEntero);
+ 	     		 dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+ 	     		 
+     		}
+     		} catch (SocketException e1) {
+     			e1.printStackTrace();
+     		} catch (IOException e) {
+     			e.printStackTrace();
+     		}
+     	
     }
     
     
