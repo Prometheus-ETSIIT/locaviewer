@@ -29,12 +29,12 @@ import uk.co.caprica.vlcj.player.headless.HeadlessMediaPlayer;
 public class HttpStreaming {
 
     private static final int DELAY = 20000;
+    private static final int PORT  = 5555;
     
     /**
      * Inicia el programa.
      * 
-     * @param args Primer elemento: MRL al medio que se va a transmitir (v4l2:///dev/video0). 
-     * Segundo elemento: puerto de transmisión.
+     * @param args MRL al medio que se va a transmitir (v4l2:///dev/video0). 
      */
     public static void main(String[] args) {
         // Comprueba los argumentos.
@@ -44,14 +44,13 @@ public class HttpStreaming {
         }
 
         String media = args[0];
-        int port = Integer.parseInt(args[1]);
 
         // Crea el reproductor
         MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
         HeadlessMediaPlayer mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
         
         // Crea la opciones y comienza a reproducir (capturar y streaming).
-        String options = formatHttpStream("0.0.0.0", port);
+        String options = formatHttpStream("127.0.0.1", PORT);
         mediaPlayer.playMedia(media, options);
 
         // Espera un tiempo para iniciar el streaming.
@@ -62,7 +61,7 @@ public class HttpStreaming {
         }
         
         // Redirección
-        VlcToDds redireccion = new VlcToDds("127.0.0.1", 5555);
+        VlcToDds redireccion = new VlcToDds("127.0.0.1", PORT);
         redireccion.start();
         
         try {
