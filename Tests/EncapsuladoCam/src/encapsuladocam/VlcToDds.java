@@ -25,7 +25,7 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.BytesDataWriter;
-import com.rti.dds.type.builtin.StringTypeSupport;
+import com.rti.dds.type.builtin.BytesTypeSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -100,7 +100,7 @@ public class VlcToDds {
        //Creación del tópico
         Topic topic = participant.create_topic(
                 "test_cam", 
-                StringTypeSupport.get_type_name(), 
+                BytesTypeSupport.get_type_name(),
                 DomainParticipant.TOPIC_QOS_DEFAULT, 
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
