@@ -4,14 +4,10 @@
 from BluezInquiry import *
 import sys
 
-#MAC del sensor
-MAC_blue=sys.argv[1]
-Port=sys.argv[2]
+#Obtenemos la ID y el puerto por el que se enviaran los datos
+ID_blue=int(sys.argv[1])
+Port=int(sys.argv[2])
 
-#Averiguamos su ID
-ID_blue=bluez.hci_get_route(MAC_blue)
-
-#DUTYCICLES = 2
 
 def inquiry(inquirier):
     inquirier.inquiry()
@@ -20,20 +16,10 @@ def inquiry(inquirier):
     
     return 
 
-#def inquiry_times(inquirier, times):
-#    inquirier.clear_samples()
-#    for i in range(times):
-#        inquiry(inquirier)
-#    return inquirier.get_mean()
-
 
     
 inquirier = BluezInquiry(ID_blue,Port)
-
-
-
-while True: 
-	inquiry(inquirier)
+inquiry(inquirier)
 
     
             

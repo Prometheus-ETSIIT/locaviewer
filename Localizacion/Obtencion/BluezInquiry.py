@@ -14,6 +14,7 @@
 
 import struct
 import bluetooth._bluetooth as bluez
+import bluetooth
 import socket
 
 # Información general:
@@ -36,9 +37,10 @@ class BluezInquiry:
         return self.inquiring
 
     def create_socket(self):
-        try:
+   
+	try:
             self.socket = bluez.hci_open_dev(self.dev_id)
-        except:
+        except:	        
             raise BluetoothError("Error al acceder al dispositivo")
             return
 
@@ -94,6 +96,8 @@ class BluezInquiry:
                 # Obtiene el rssi
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
                 print addr, rssi
+                #r = -0.00680102923817849*(int(rssi)**3) - 1.04905123190747*(int(rssi)**2) - 59.2087843354658*int(rssi) - 1106.35595941215
+                #print r
                 self.sendSocket.sendto("MENSAJE A ENVIAR A JAVA", (self.host, self.port))
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
@@ -122,7 +126,10 @@ class BluezInquiry:
                 print "%s (no RRSI)" % addr
                 
         else:
-            print "Evento desconocido: ", event
+            self.inquiring = False
+	    self.socket = None
+            self.socket.close()
+	    print "Evento desconocido: ", event
 
     def write_inquiry_mode(self, mode):
         """returns 0 on success, -1 on failure"""
