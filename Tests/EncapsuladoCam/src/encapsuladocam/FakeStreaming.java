@@ -18,12 +18,17 @@
 
 package encapsuladocam;
 
+import java.awt.event.ActionEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Timer;
 
 /**
  * Crea un servidor falso que simule ser VLC haciendo Streaming.
@@ -40,6 +45,31 @@ public class FakeStreaming {
     public FakeStreaming(final int port) {
         this.clients = new ArrayList<>();
         this.port    = port;
+        
+        // TEMPORAL: Inicia un timer que simula DDS leyendo 1 KB cada 10 ms.
+        try {
+            final FileInputStream reader = new FileInputStream("test.mpg");
+            
+            // Salta algunos bytes para simular que coge la conexión a medias.
+            try { reader.skip(1024*1024*2); } catch (IOException ex) { }
+            new Timer(10, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        // Lee 1 KB
+                        byte[] buffer = new byte[1024];
+                        int read = reader.read(buffer);
+                        
+                        // Lo envía a todos los sockets.
+                        DdsCallback(buffer, read);                        
+                    } catch (IOException ex) {
+                        System.err.println(ex);
+                    }
+                }
+            }).start();
+        } catch (FileNotFoundException ex) {
+            System.err.println(ex);
+        }
     }
     
     /**
@@ -92,10 +122,10 @@ public class FakeStreaming {
      * 
      * @param data Datos recibidos.
      */
-    private void DdsCallback(final byte[] data) {
+    private void DdsCallback(final byte[] data, final int len) {
         for (Socket socket : this.clients) {
             try {
-                socket.getOutputStream().write(data);
+                socket.getOutputStream().write(data, 0, len);
             } catch (IOException ex) {
                 System.err.println(ex);
             }
