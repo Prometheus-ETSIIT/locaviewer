@@ -98,11 +98,11 @@ public class Sensor extends DataReaderAdapter{
 		*/
 		
 		//Lectura
-		/*try {
-		//	Runtime.getRuntime().exec("sudo python sensor.py 1 4554");
+		try {
+			Runtime.getRuntime().exec("sudo python sensor.py 0 4554");
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
 		
 	
 		DatagramSocket socketServidor;
@@ -116,7 +116,7 @@ public class Sensor extends DataReaderAdapter{
  				 String peticion = new String (paquete.getData());
  				 String [] recibido = peticion.split("\\s+");
  				 int numEntero = Integer.parseInt(recibido[1].substring(0, 3));
- 				 
+ 				 System.out.println(recibido[0]);
  				 Dato prueba = new Dato (recibido[0],0,0,"75572325",numEntero);
  	     		 dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
  	     		 
