@@ -98,7 +98,7 @@ class BluezInquiry:
                 print addr, rssi
                 #r = -0.00680102923817849*(int(rssi)**3) - 1.04905123190747*(int(rssi)**2) - 59.2087843354658*int(rssi) - 1106.35595941215
                 #print r
-                self.sendSocket.sendto("MENSAJE A ENVIAR A JAVA", (self.host, self.port))
+                self.sendSocket.sendto(str(addr) + " " + str(rssi), (self.host, self.port))
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             pass

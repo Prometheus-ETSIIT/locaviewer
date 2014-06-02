@@ -108,7 +108,7 @@ public class Sensor extends DataReaderAdapter{
 		DatagramSocket socketServidor;
 
 		 try {
-			 socketServidor = new DatagramSocket(5445);
+			 socketServidor = new DatagramSocket(4554);
      	while(true){
      			 byte [] bufer = new byte [256];
  				 DatagramPacket paquete = new DatagramPacket(bufer,bufer.length);
