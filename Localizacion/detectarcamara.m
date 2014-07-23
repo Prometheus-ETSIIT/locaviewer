@@ -1,4 +1,4 @@
-function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2,ancho_habitacion,alto_habitacion)
+function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2,ancho_habitacion,alto_habitacion,angulo_pos)
 %Argumentos
 %------------------------------------------------------
 %rssi=[-89,-85,-85]; %Potencia rssi(i) leida por el sensor i  en dBm
@@ -6,6 +6,8 @@ function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2
 %posicion_camara2=[3,0;3,6;0,3;6,3];% el tercer elemento de cada fila indican si estan en la pared vertical u horizontal
 %ancho_habitacion=6; 
 %alto_habitacion=6;
+%angulo_pos=[pi/2,pi/2,pi/2,pi/2] %angulo de la posicion de la camara. pi/2
+%radianes seria cuando la camara está perpendicular a la pared. 0 radianes cuando la camara esta girada totalmente hacia la izquierda y pi rad cuando esta totalmente girada a la derecha 
 %-------------------------------------------------------
 
 %Devuelve
@@ -78,23 +80,24 @@ if contador==length(rssi)
                 debajo_recta_superior=0;
                 if posicion_camara(i,3)==0
                     %recta inferior
-                    punto_2_recta_inferior(i)=posicion_camara(i,1)-tan(angulo_vision/2)*abs(posicion_chavea(2)-posicion_camara(i,2));
+                    punto_2_recta_inferior(i)=posicion_camara(i,1)-tan(angulo_vision/2-(pi/2-angulo_pos(i)))*abs(posicion_chavea(2)-posicion_camara(i,2));
+                  
                     if posicion_chavea(1)>=punto_2_recta_inferior(i)
                         encima_recta_inferior=1;
                     end
                     %recta superior
-                    punto_2_recta_superior(i)=posicion_camara(i,1)+tan(angulo_vision/2)*abs(posicion_chavea(2)-posicion_camara(i,2));
+                    punto_2_recta_superior(i)=posicion_camara(i,1)+tan(angulo_vision/2+(pi/2-angulo_pos(i)))*abs(posicion_chavea(2)-posicion_camara(i,2));
                     if posicion_chavea(1)<=punto_2_recta_superior(i)
                         debajo_recta_superior=1;
                     end
                 else
                     %recta inferior
-                    punto_2_recta_inferior(i)=posicion_camara(i,2)-tan(angulo_vision/2)*abs(posicion_chavea(1)-posicion_camara(i,1));
+                    punto_2_recta_inferior(i)=posicion_camara(i,2)-tan(angulo_vision/2+(pi/2-angulo_pos(i)))*abs(posicion_chavea(1)-posicion_camara(i,1));
                     if posicion_chavea(2)>=punto_2_recta_inferior(i)
                         encima_recta_inferior=1;
                     end
                     %recta superior
-                    punto_2_recta_superior(i)=posicion_camara(i,2)+tan(angulo_vision/2)*abs(posicion_chavea(1)-posicion_camara(i,1));
+                    punto_2_recta_superior(i)=posicion_camara(i,2)+tan(angulo_vision/2-(pi/2-angulo_pos(i)))*abs(posicion_chavea(1)-posicion_camara(i,1));                    
                     if posicion_chavea(2)<=punto_2_recta_superior(i)
                         debajo_recta_superior=1;
                     end
