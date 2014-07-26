@@ -23,6 +23,7 @@ import comunicador.Dato;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.Timer;
 
@@ -49,9 +50,9 @@ public class TestFrame extends javax.swing.JFrame {
                 int rssi3 = (int)((Math.random() * 40) - 90);
                 
                 List<Dato> sensores = new ArrayList<>();
-                sensores.add(new Dato("S1", 0, 0, "Kentaki", rssi1));
-                sensores.add(new Dato("S2", 6, 0, "Kentaki", rssi2));
-                sensores.add(new Dato("S3", 0, 6, "Kentaki", rssi3));
+                sensores.add(new Dato("S1", 0, 0, "Pepe", rssi1));
+                sensores.add(new Dato("S2", 6, 0, "Pepe", rssi2));
+                sensores.add(new Dato("S3", 0, 6, "Pepe", rssi3));
                 triangulacion.triangular(sensores);
             }
         });
@@ -69,6 +70,8 @@ public class TestFrame extends javax.swing.JFrame {
     public void setNewSensors(final List<Dato> sensors) {
         if (sensors.isEmpty())
             return;
+        
+        //List<Dato> mSensors = Arrays.asList((Dato[])sensors.toArray());
         
         // Añade al niño a la lista si no lo estaba
         String childName = sensors.get(0).getIDNino();
