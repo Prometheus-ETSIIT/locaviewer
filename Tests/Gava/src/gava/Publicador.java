@@ -27,7 +27,10 @@ import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.BytesDataWriter;
 import com.rti.dds.type.builtin.BytesTypeSupport;
 import org.gstreamer.Buffer;
+import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
+import org.gstreamer.Element;
+import org.gstreamer.ElementFactory;
 import org.gstreamer.Gst;
 import org.gstreamer.Pipeline;
 import org.gstreamer.State;
@@ -56,37 +59,46 @@ public class Publicador {
         // Inicia DDS y obtiene el escritor
         this.iniciaDds();
 
-        // Inicializamos GStreamer
-        String[] args = new String[] {
-        "v4lsrc device=/dev/video0",       // Origen de vídeo
-        "video/x-raw, width=640, height=480, framerate=15/1",
-        "appsink"   // Destino de vídeo
-        };
+        // Crea los elementos de la tubería
+        // 1º Origen de vídeo, del códec v4l2
+        Element videosrc = ElementFactory.make("v4l2src", null);
+        
+        // 2º Datos del vídeo
+        Element videofilter = ElementFactory.make("capsfilter", null);
+        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=30/1"));
+        
+        // 3º Salida de vídeo
+        this.appsink = (AppSink)ElementFactory.make("appsink", null);
+       
+        // Crea la tubería
+        this.pipe = new Pipeline();
+        this.pipe.addMany(videosrc, videofilter, this.appsink);
+        Element.linkMany(videosrc, videofilter, this.appsink);
 
-        // Inicia la obtención de vídeo
-        this.pipe = Pipeline.launch(args);
-        this.appsink = (AppSink)this.pipe.getSinks().get(0);
-        this.pipe.play();
-
+        // Configura el APPSINK
+        this.appsink.setQOSEnabled(true);
+        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");        
+        
+        // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
+        this.pipe.play();
         State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
         if (retState == State.NULL) {
             System.err.println("Error al cambiar de estado.");
             System.exit(-1);
         }
-        
-        // Configura el APPSINK
-        this.appsink.setQOSEnabled(true);
-        
+                
         // Mientras no se acabe, coje cada frame y lo envía.
         while (!appsink.isEOS()) {
-            Buffer buffer = appsink.pullBuffer();
-
+            Buffer buffer = appsink.pullBuffer();            
             if (buffer == null)
                  continue;
 
             // Lo envía por DDS
-            byte[] toSend = buffer.getByteBuffer().array();
+            System.out.println(buffer.getSize());
+            byte[] toSend = new byte[buffer.getSize()];
+            buffer.getByteBuffer().get(toSend, 0, toSend.length);
+
             String caps   = buffer.getCaps().toString();
             byte[] capsLength = new byte[] {
                 (byte)(caps.getBytes().length & 0xFF),
@@ -98,7 +110,7 @@ public class Publicador {
             this.writer.write(capsLength, 0, 4, InstanceHandle_t.HANDLE_NIL);
             this.writer.write(caps.getBytes(), 0, caps.getBytes().length, InstanceHandle_t.HANDLE_NIL);
             this.writer.write(toSend, 0, toSend.length, InstanceHandle_t.HANDLE_NIL);
-            
+
             // TODO: Los caps son todos iguales y se podría solo enviar uno que
             // se obtiene desde
             //String caps = appsink.getCaps().toString();

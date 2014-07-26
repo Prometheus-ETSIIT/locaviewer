@@ -57,7 +57,7 @@ public class Suscriptor extends DataReaderAdapter {
         
         // 2º Datos del vídeo
         Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw, width=640, height=480, framerate=15/1"));
+        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=30/1"));
         
         // 3º Salida de vídeo
         VideoComponent videoComponent = new VideoComponent();
@@ -66,6 +66,7 @@ public class Suscriptor extends DataReaderAdapter {
         // Crea la tubería
         this.pipe = new Pipeline();
         this.pipe.addMany(this.appsrc, videofilter, videosink);
+        Element.linkMany(this.appsrc, videofilter, videosink);
         
         // Configura el APPSRC
         appsrc.setLive(true);
@@ -90,6 +91,8 @@ public class Suscriptor extends DataReaderAdapter {
             System.err.println("Error al cambio de estado.");
             System.exit(-1);
         }
+        
+        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor");
     }
     
     public static void main(final String[] args) {
@@ -159,15 +162,17 @@ public class Suscriptor extends DataReaderAdapter {
         byte[] recibido = Arrays.copyOfRange(
                 data.value,
                 data.offset + 4 + capLength,
-                data.length - 4 - capLength
+                data.length - (4 + capLength)
         );
 
         // Crea el buffer de GStreamer
         Buffer buffer = new Buffer(recibido.length);
         buffer.getByteBuffer().put(recibido);
-        buffer.setCaps(caps);
+        //buffer.setCaps(caps);
 
         // Lo mete en la tubería
         this.appsrc.pushBuffer(buffer);
+        
+        System.out.print(". ");
     }
 }
