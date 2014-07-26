@@ -18,6 +18,14 @@
 
 package gava;
 
+import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.Publisher;
+import com.rti.dds.topic.Topic;
+import com.rti.dds.type.builtin.BytesDataWriter;
+import com.rti.dds.type.builtin.BytesTypeSupport;
 import org.gstreamer.Buffer;
 import org.gstreamer.ClockTime;
 import org.gstreamer.Gst;
@@ -26,35 +34,49 @@ import org.gstreamer.State;
 import org.gstreamer.elements.AppSink;
 
 public class Publicador {
-
+    private BytesDataWriter writer;
+    private Pipeline pipe;
+    private AppSink appsink;
+    
+    public Publicador() {
+    }
+    
     /**
      * Inicia la aplicación.
      * 
      * @param args Ninguno.
      */
     public static void main(String[] args) {
+        Gst.init("Gava", args);
+        Publicador pub = new Publicador();
+        pub.start();
+    }
+    
+    public void start() {
+        // Inicia DDS y obtiene el escritor
+        this.iniciaDds();
+
         // Inicializamos GStreamer
-        args = new String[] {
+        String[] args = new String[] {
         "v4lsrc device=/dev/video0",       // Origen de vídeo
         "video/x-raw, width=640, height=480, framerate=15/1",
         "appsink"   // Destino de vídeo
         };
-        args = Gst.init("Gava", args);
 
         // Inicia la obtención de vídeo
-        Pipeline p = Pipeline.launch(args);
-        AppSink appsink = (AppSink)p.getSinks().get(0);
-        p.play();
+        this.pipe = Pipeline.launch(args);
+        this.appsink = (AppSink)this.pipe.getSinks().get(0);
+        this.pipe.play();
 
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
-        State retState = p.getState(ClockTime.fromSeconds(5).toSeconds());
+        State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
         if (retState == State.NULL) {
-            System.err.println("failed to play the file");
+            System.err.println("Error al cambiar de estado.");
             System.exit(-1);
         }
         
         // Configura el APPSINK
-        appsink.setQOSEnabled(true);
+        this.appsink.setQOSEnabled(true);
         
         // Mientras no se acabe, coje cada frame y lo envía.
         while (!appsink.isEOS()) {
@@ -63,14 +85,58 @@ public class Publicador {
             if (buffer == null)
                  continue;
 
-            // TODO: Enviarlos por DDS
+            // Lo envía por DDS
             byte[] toSend = buffer.getByteBuffer().array();
             String caps   = buffer.getCaps().toString();
+            byte[] capsLength = new byte[] {
+                (byte)(caps.getBytes().length & 0xFF),
+                (byte)((caps.getBytes().length >> 8) & 0xFF),
+                (byte)((caps.getBytes().length >> 16) & 0xFF),
+                (byte)((caps.getBytes().length >> 24) & 0xFF)
+            };
+            
+            this.writer.write(capsLength, 0, 4, InstanceHandle_t.HANDLE_NIL);
+            this.writer.write(caps.getBytes(), 0, caps.getBytes().length, InstanceHandle_t.HANDLE_NIL);
+            this.writer.write(toSend, 0, toSend.length, InstanceHandle_t.HANDLE_NIL);
             
             // TODO: Los caps son todos iguales y se podría solo enviar uno que
             // se obtiene desde
             //String caps = appsink.getCaps().toString();
             // Hay que mirar como enviar un dato sólo una vez al inicio.
+        }
+    }
+    
+    private void iniciaDds() {
+        //Dominio 1
+        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
+                1, // Domain ID = 0
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (participant == null) {
+            System.err.println("No se pudo crear el dominio.");
+            return;
+        }
+
+       //Creación del tópico
+        Topic topic = participant.create_topic(
+                "test_cam", 
+                BytesTypeSupport.get_type_name(),
+                DomainParticipant.TOPIC_QOS_DEFAULT, 
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (topic == null) {
+            System.err.println("Unable to create topic.");
+            return;
+        }
+        
+        this.writer = (BytesDataWriter)participant.create_datawriter(
+                topic, 
+                Publisher.DATAWRITER_QOS_DEFAULT,
+                null, // listener
+                StatusKind.STATUS_MASK_NONE);
+        if (this.writer == null) {
+            System.err.println("No se pudo crear el escritor");
         }
     }
 }
