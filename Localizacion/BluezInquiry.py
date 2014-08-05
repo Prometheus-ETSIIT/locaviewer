@@ -96,8 +96,8 @@ class BluezInquiry:
                 
                 # Obtiene el rssi
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
-                print addr, rssi
-                self.sendSocket.sendto("MENSAJE A ENVIAR A JAVA", (self.host, self.port))
+                self.sendSocket.sendto(str(addr)+" "+str(rssi), (self.host, self.port))
+		print str(addr)+" "+str(rssi)
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             pass
