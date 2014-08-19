@@ -65,15 +65,21 @@ public class Publicador {
         
         // 2º Datos del vídeo
         Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=30/1"));
+        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=160,height=120,framerate=15/1"));
+        
+        Element videorate = ElementFactory.make("videorate", null);
+        
+        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
+        Element codec = ElementFactory.make("jpegenc", null);
+        Element codec2 = ElementFactory.make("multipartmux", null);
         
         // 3º Salida de vídeo
         this.appsink = (AppSink)ElementFactory.make("appsink", null);
        
         // Crea la tubería
         this.pipe = new Pipeline();
-        this.pipe.addMany(videosrc, videofilter, this.appsink);
-        Element.linkMany(videosrc, videofilter, this.appsink);
+        this.pipe.addMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
+        Element.linkMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
 
         // Configura el APPSINK
         this.appsink.setQOSEnabled(true);

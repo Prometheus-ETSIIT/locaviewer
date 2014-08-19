@@ -116,7 +116,7 @@ public class Suscriptor extends DataReaderAdapter {
             System.err.println("No se pudo obtener el dominio.");
             return;
         }
-
+        
         // Crea el tópico
         Topic topic = participant.create_topic(
                 "test_cam", 
