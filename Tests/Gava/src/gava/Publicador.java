@@ -20,8 +20,11 @@ package gava;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriterQos;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.BytesDataWriter;
@@ -47,25 +50,26 @@ public class Publicador {
     /**
      * Inicia la aplicación.
      * 
-     * @param args Ninguno.
+     * @param args La camara. Ej: "/dev/video1"
      */
     public static void main(String[] args) {
-        Gst.init("Gava", args);
+        args = Gst.init("Gava", args);
         Publicador pub = new Publicador();
-        pub.start();
+        pub.start(args[0]);
     }
     
-    public void start() {
+    public void start(String device) {
         // Inicia DDS y obtiene el escritor
         this.iniciaDds();
 
         // Crea los elementos de la tubería
         // 1º Origen de vídeo, del códec v4l2
         Element videosrc = ElementFactory.make("v4l2src", null);
+        videosrc.set("device", device);
         
         // 2º Datos del vídeo
         Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=160,height=120,framerate=15/1"));
+        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
         
         Element videorate = ElementFactory.make("videorate", null);
         
@@ -101,20 +105,9 @@ public class Publicador {
                  continue;
 
             // Lo envía por DDS
-            System.out.println(buffer.getSize());
+            System.out.print(".");
             byte[] toSend = new byte[buffer.getSize()];
             buffer.getByteBuffer().get(toSend, 0, toSend.length);
-
-            String caps   = buffer.getCaps().toString();
-            byte[] capsLength = new byte[] {
-                (byte)(caps.getBytes().length & 0xFF),
-                (byte)((caps.getBytes().length >> 8) & 0xFF),
-                (byte)((caps.getBytes().length >> 16) & 0xFF),
-                (byte)((caps.getBytes().length >> 24) & 0xFF)
-            };
-            
-            this.writer.write(capsLength, 0, 4, InstanceHandle_t.HANDLE_NIL);
-            this.writer.write(caps.getBytes(), 0, caps.getBytes().length, InstanceHandle_t.HANDLE_NIL);
             this.writer.write(toSend, 0, toSend.length, InstanceHandle_t.HANDLE_NIL);
 
             // TODO: Los caps son todos iguales y se podría solo enviar uno que
@@ -124,11 +117,56 @@ public class Publicador {
         }
     }
     
-    private void iniciaDds() {
+    private void iniciaDds() {    
+        DomainParticipantQos qos = new DomainParticipantQos();
+        DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
+        qos.receiver_pool.buffer_size = 65507;
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max");
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.parent.message_size_max",
+                "65507",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.send_socket_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.recv_socket_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.parent.message_size_max",
+                "65507",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.receive_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.received_message_count_max",
+                "2048",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.builtin_type.octets.max_size",
+                "2097152",
+                true);
+                
         //Dominio 1
-        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
+        DomainParticipant participant = DomainParticipantFactory.TheParticipantFactory.create_participant(
                 1, // Domain ID = 0
-                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                qos,
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
         if (participant == null) {
@@ -147,7 +185,7 @@ public class Publicador {
             System.err.println("Unable to create topic.");
             return;
         }
-        
+
         this.writer = (BytesDataWriter)participant.create_datawriter(
                 topic, 
                 Publisher.DATAWRITER_QOS_DEFAULT,

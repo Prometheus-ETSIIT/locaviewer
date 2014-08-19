@@ -20,6 +20,8 @@ package gava;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
@@ -55,9 +57,9 @@ public class Suscriptor extends DataReaderAdapter {
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
         
-        // 2º Datos del vídeo
-        Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=30/1"));
+        // 2º Decodificación
+        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
+        Element codec = ElementFactory.make("jpegdec", null);
         
         // 3º Salida de vídeo
         VideoComponent videoComponent = new VideoComponent();
@@ -65,8 +67,8 @@ public class Suscriptor extends DataReaderAdapter {
        
         // Crea la tubería
         this.pipe = new Pipeline();
-        this.pipe.addMany(this.appsrc, videofilter, videosink);
-        Element.linkMany(this.appsrc, videofilter, videosink);
+        this.pipe.addMany(this.appsrc, codec, videoconvert, videosink);
+        Element.linkMany(this.appsrc, codec, videoconvert, videosink);
         
         // Configura el APPSRC
         appsrc.setLive(true);
@@ -106,10 +108,55 @@ public class Suscriptor extends DataReaderAdapter {
     }
     
     private static void IniciaDds() {
+      DomainParticipantQos qos = new DomainParticipantQos();
+        DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
+        qos.receiver_pool.buffer_size = 65507;
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size");
+        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max");
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.parent.message_size_max",
+                "65507",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.send_socket_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.UDPv4.builtin.recv_socket_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.parent.message_size_max",
+                "65507",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.receive_buffer_size",
+                "2097152",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.transport.shmem.builtin.received_message_count_max",
+                "2048",
+                true);
+        PropertyQosPolicyHelper.add_property(
+                qos.property,
+                "dds.builtin_type.octets.max_size",
+                "2097152",
+                true);
+        
          //Dominio 0
         DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                 1, // ID de dominio 1
-                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                qos, 
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
         if (participant == null) {
@@ -148,6 +195,8 @@ public class Suscriptor extends DataReaderAdapter {
      */
     @Override
     public void on_data_available(DataReader reader) {
+        System.out.print(".");
+        
         // Obtiene el sample de DDS
         BytesDataReader bytesReader = (BytesDataReader)reader;
         Bytes data = new Bytes();
@@ -155,24 +204,17 @@ public class Suscriptor extends DataReaderAdapter {
         bytesReader.take_next_sample(data, info);           
 
         // Deserializa los datos
-        int capLength = data.value[3] << 24 | data.value[2] << 16 | data.value[1] << 8 | data.value[0];
-        byte[] capsByte = Arrays.copyOfRange(data.value, data.offset + 4, capLength);
-        Caps caps = new Caps(new String(capsByte));
-        
         byte[] recibido = Arrays.copyOfRange(
                 data.value,
-                data.offset + 4 + capLength,
-                data.length - (4 + capLength)
+                data.offset,
+                data.length
         );
 
         // Crea el buffer de GStreamer
         Buffer buffer = new Buffer(recibido.length);
         buffer.getByteBuffer().put(recibido);
-        //buffer.setCaps(caps);
 
         // Lo mete en la tubería
         this.appsrc.pushBuffer(buffer);
-        
-        System.out.print(". ");
     }
 }
