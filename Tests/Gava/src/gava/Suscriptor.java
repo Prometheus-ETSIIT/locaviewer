@@ -97,26 +97,33 @@ public class Suscriptor extends DataReaderAdapter {
         GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor");
     }
     
+    /**
+     * Inicia el programa
+     * 
+     * @param args Un argumento opcional como nombre del tópico.
+     */
     public static void main(final String[] args) {
+        final String topico = (args.length == 0) ? "test_cam" : args[0];
+        
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 Gst.init("Gava", args); // Inicia GStreamer
-                IniciaDds();            // Inicia DDS
+                IniciaDds(topico);      // Inicia DDS
             }
         });
     }
     
-    private static void IniciaDds() {
+    private static void IniciaDds(final String topico) {
       DomainParticipantQos qos = new DomainParticipantQos();
         DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
         qos.receiver_pool.buffer_size = 65507;
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max");
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max"); } catch (Exception ex) { }
         PropertyQosPolicyHelper.add_property(
                 qos.property,
                 "dds.transport.UDPv4.builtin.parent.message_size_max",
@@ -166,7 +173,7 @@ public class Suscriptor extends DataReaderAdapter {
         
         // Crea el tópico
         Topic topic = participant.create_topic(
-                "test_cam", 
+                topico, 
                 BytesTypeSupport.get_type_name(), 
                 DomainParticipant.TOPIC_QOS_DEFAULT, 
                 null, // listener
