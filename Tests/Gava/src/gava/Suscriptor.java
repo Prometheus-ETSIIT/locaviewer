@@ -103,7 +103,7 @@ public class Suscriptor extends DataReaderAdapter {
      * @param args Un argumento opcional como nombre del tópico.
      */
     public static void main(final String[] args) {
-        final String topico = (args.length == 0) ? "test_cam" : args[0];
+        final String topico = (args.length == 0) ? "test_cam_0" : args[0];
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -201,9 +201,7 @@ public class Suscriptor extends DataReaderAdapter {
      * @param reader Lector de datos
      */
     @Override
-    public void on_data_available(DataReader reader) {
-        System.out.print(".");
-        
+    public void on_data_available(DataReader reader) {        
         // Obtiene el sample de DDS
         BytesDataReader bytesReader = (BytesDataReader)reader;
         Bytes data = new Bytes();

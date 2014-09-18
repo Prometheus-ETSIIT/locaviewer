@@ -29,6 +29,8 @@ import com.rti.dds.publication.Publisher;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.BytesDataWriter;
 import com.rti.dds.type.builtin.BytesTypeSupport;
+import java.io.File;
+import java.io.FilenameFilter;
 import org.gstreamer.Buffer;
 import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
@@ -39,28 +41,62 @@ import org.gstreamer.Pipeline;
 import org.gstreamer.State;
 import org.gstreamer.elements.AppSink;
 
-public class Publicador {
+public class Publicador implements Runnable {
+    private final String device;
+    private final String camId;
+    
     private BytesDataWriter writer;
     private Pipeline pipe;
     private AppSink appsink;
     
-    public Publicador() {
+    public Publicador(final String device, final String camId) {
+        this.device = device;
+        this.camId  = camId;
     }
     
     /**
      * Inicia la aplicación.
      * 
-     * @param args La camara. Ej: "/dev/video1"
+     * @param args La(s) camara(s). Ej: "/dev/video1". 
+     *             Si no se pasa ningún parámetro, inicia todas.
      */
     public static void main(String[] args) {
         args = Gst.init("Gava", args);
-        Publicador pub = new Publicador();
-        pub.start(args[0]);
+        
+        if (args.length > 0) {
+            for (int i = 0; i < args.length; i++)
+                new Thread(new Publicador(args[i], "test_cam_" + i)).start();
+        } else {
+            StartAll();
+        }
     }
     
-    public void start(String device) {
+    private static void StartAll() {
+        // Obtiene una lista de cámaras conectadas (/dev/video*)
+        String[] cams = new File("/dev/").list(new FilenameFilter() {
+            @Override
+            public boolean accept(File parentDir, String filename) {
+                return parentDir.getAbsolutePath().equals("/dev") &&
+                       filename.startsWith("video");
+            }
+        });
+        
+        // Para cada cámara crea un publicador
+        for (String cam : cams) {
+            System.out.println("Iniciando cámara " + cam);
+            
+            // Parsea el ID
+            int id = Integer.parseInt(cam.substring(5));
+            
+            // Crea el publicador
+            new Thread(new Publicador("/dev/" + cam, "test_cam_" + id)).start();
+        }
+    }
+    
+    @Override
+    public void run() {
         // Inicia DDS y obtiene el escritor
-        this.iniciaDds();
+        this.iniciaDds(camId);
 
         // Crea los elementos de la tubería
         // 1º Origen de vídeo, del códec v4l2
@@ -105,28 +141,22 @@ public class Publicador {
                  continue;
 
             // Lo envía por DDS
-            System.out.print(".");
             byte[] toSend = new byte[buffer.getSize()];
             buffer.getByteBuffer().get(toSend, 0, toSend.length);
             this.writer.write(toSend, 0, toSend.length, InstanceHandle_t.HANDLE_NIL);
-
-            // TODO: Los caps son todos iguales y se podría solo enviar uno que
-            // se obtiene desde
-            //String caps = appsink.getCaps().toString();
-            // Hay que mirar como enviar un dato sólo una vez al inicio.
         }
     }
     
-    private void iniciaDds() {    
+    private void iniciaDds(final String topico) {    
         DomainParticipantQos qos = new DomainParticipantQos();
         DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
         qos.receiver_pool.buffer_size = 65507;
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size");
-        PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max");
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size"); } catch (Exception ex) { }
+        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max"); } catch (Exception ex) { }
         PropertyQosPolicyHelper.add_property(
                 qos.property,
                 "dds.transport.UDPv4.builtin.parent.message_size_max",
@@ -163,9 +193,9 @@ public class Publicador {
                 "2097152",
                 true);
                 
-        //Dominio 1
+        //Dominio 0
         DomainParticipant participant = DomainParticipantFactory.TheParticipantFactory.create_participant(
-                1, // Domain ID = 0
+                1, // Domain ID = 1
                 qos,
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
@@ -176,7 +206,7 @@ public class Publicador {
 
        //Creación del tópico
         Topic topic = participant.create_topic(
-                "test_cam", 
+                topico, 
                 BytesTypeSupport.get_type_name(),
                 DomainParticipant.TOPIC_QOS_DEFAULT, 
                 null, // listener
