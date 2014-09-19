@@ -49,7 +49,7 @@ public class InicioSesion extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Inicio de sesión");
         setBackground(new java.awt.Color(255, 255, 255));
         setMaximumSize(new java.awt.Dimension(185, 325));
@@ -69,8 +69,13 @@ public class InicioSesion extends javax.swing.JFrame {
         btnConnect.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         btnConnect.setText("¡Conectar!");
         btnConnect.setContentAreaFilled(false);
+        btnConnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnConnectActionPerformed(evt);
+            }
+        });
 
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/image09.png"))); // NOI18N
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/logo.png"))); // NOI18N
 
         txtPassword.setToolTipText("Introduce aquí tu contraseña.");
 
@@ -118,6 +123,16 @@ public class InicioSesion extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
+        // TODO: Inicio de sesión en servidor
+        // TODO: Obtener tópicos posibles de suscripción
+        // TODO: Crear una nueva ventana MainWindow
+        
+        // Cerramos esta ventana
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_btnConnectActionPerformed
+    
     /**
      * @param args Sin argumentos.
      */
