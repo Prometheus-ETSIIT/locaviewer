@@ -18,6 +18,8 @@
 
 package control;
 
+import com.rti.dds.infrastructure.RETCODE_ERROR;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
@@ -111,25 +113,40 @@ public class Suscriptor extends DataReaderAdapter {
      */
     @Override
     public void on_data_available(DataReader reader) {   
-        // Obtiene el sample de DDS
+        // Obtiene todos los sample de DDS
         BytesDataReader bytesReader = (BytesDataReader)reader;
-        Bytes data = new Bytes();
-        SampleInfo info = new SampleInfo();
-        bytesReader.take_next_sample(data, info);           
+        while (true) {
+            // Intenta obtener un sample.
+            Bytes data = new Bytes();
+            SampleInfo info = new SampleInfo();
+            try {
+                bytesReader.take_next_sample(data, info);           
+            } catch (RETCODE_NO_DATA noData) {
+                // No hay más datos para leer, paramos
+                break;
+            } catch (RETCODE_ERROR e) {
+                // Se produjo un error
+                e.printStackTrace();
+            }
+            
+            // En caso de que sea meta-data del tópico
+            if (!info.valid_data)
+                return;
 
-        // Deserializa los datos
-        byte[] recibido = Arrays.copyOfRange(
-                data.value,
-                data.offset,
-                data.length
-        );
+            // Deserializa los datos
+            byte[] recibido = Arrays.copyOfRange(
+                    data.value,
+                    data.offset,
+                    data.length
+            );
 
-        // Crea el buffer de GStreamer
-        Buffer buffer = new Buffer(recibido.length);
-        buffer.getByteBuffer().put(recibido);
+            // Crea el buffer de GStreamer
+            Buffer buffer = new Buffer(recibido.length);
+            buffer.getByteBuffer().put(recibido);
 
-        // Lo mete en la tubería
-        this.appsrc.pushBuffer(buffer);
+            // Lo mete en la tubería
+            this.appsrc.pushBuffer(buffer);
+        }
     }
     
     public VideoComponent getVideoComponent() {
