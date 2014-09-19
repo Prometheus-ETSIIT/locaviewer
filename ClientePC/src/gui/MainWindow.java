@@ -18,15 +18,25 @@
 
 package gui;
 
+import control.Dominio;
+import control.Suscriptor;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
-import java.net.Socket;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import org.gstreamer.swing.VideoComponent;
 
 /**
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
-
+    
+    private Dominio dominio;
+    private final Suscriptor[] suscriptores = new Suscriptor[4];
+    
     /**
      * Crea una nueva ventana sin funcionalidad.
      * Sólo para diseñador.
@@ -37,11 +47,66 @@ public class MainWindow extends javax.swing.JFrame {
         this.setBackground(Color.white);
         this.getContentPane().setBackground(Color.white);
         this.setIconImage(Toolkit.getDefaultToolkit().getImage(InicioSesion.class.getResource("icon.png")));
+        
+        // Inicia GStreamer
+        org.gstreamer.Gst.init();
     }
 
-    public MainWindow(final String[] topicos, final Socket serverUpdate) {
+    /**
+     * Crea una nueva ventana que participa en un dominio.
+     * 
+     * @param dominio Dominio en el que participa.
+     */
+    public MainWindow(final Dominio dominio) {
         this();
         
+        this.dominio = dominio;
+        this.updateNumTopicos();
+    }
+    
+    private void updateNumTopicos() {
+        switch (this.dominio.getNumTopicos()) {
+            case 0:
+                this.setEnablePanel(panelCam1, false);
+                this.setEnablePanel(panelCam2, false);
+                this.setEnablePanel(panelCam3, false);
+                this.setEnablePanel(panelCam4, false);
+                break;
+                
+            case 1:
+                this.setEnablePanel(panelCam1, true);
+                this.setEnablePanel(panelCam2, false);
+                this.setEnablePanel(panelCam3, false);
+                this.setEnablePanel(panelCam4, false);
+                break;
+                
+            case 2:
+                this.setEnablePanel(panelCam1, true);
+                this.setEnablePanel(panelCam2, true);
+                this.setEnablePanel(panelCam3, false);
+                this.setEnablePanel(panelCam4, false);
+                break;
+                
+            case 3:
+                this.setEnablePanel(panelCam1, true);
+                this.setEnablePanel(panelCam2, true);
+                this.setEnablePanel(panelCam3, true);
+                this.setEnablePanel(panelCam4, false);
+                break;
+                
+            default:
+                this.setEnablePanel(panelCam1, true);
+                this.setEnablePanel(panelCam2, true);
+                this.setEnablePanel(panelCam3, true);
+                this.setEnablePanel(panelCam4, true);
+                break;
+        }
+    }
+    
+    private void setEnablePanel(javax.swing.JPanel panel, boolean enable) {
+        panel.setEnabled(enable);
+        for (java.awt.Component comp : panel.getComponents())
+            comp.setEnabled(enable);
     }
     
     @SuppressWarnings("unchecked")
@@ -50,7 +115,6 @@ public class MainWindow extends javax.swing.JFrame {
 
         toolbar = new javax.swing.JToolBar();
         lblStatus = new javax.swing.JLabel();
-        fillervideo = new javax.swing.Box.Filler(new java.awt.Dimension(640, 480), new java.awt.Dimension(640, 480), new java.awt.Dimension(32767, 32767));
         panelCam1 = new javax.swing.JPanel();
         lblCam1Child = new javax.swing.JLabel();
         comboCam1 = new javax.swing.JComboBox();
@@ -75,13 +139,14 @@ public class MainWindow extends javax.swing.JFrame {
         btnCam4 = new javax.swing.JToggleButton();
         lblCam4Tag = new javax.swing.JLabel();
         lblCam4Place = new javax.swing.JLabel();
+        panelVideo = new javax.swing.JPanel();
         menubar = new javax.swing.JMenuBar();
         menuOpt = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("locaviewer Beta ~ by Prometheus");
-        setMinimumSize(new java.awt.Dimension(800, 580));
-        setPreferredSize(new java.awt.Dimension(800, 580));
+        setMinimumSize(new java.awt.Dimension(800, 583));
+        setPreferredSize(new java.awt.Dimension(800, 583));
 
         toolbar.setBackground(new java.awt.Color(176, 206, 230));
         toolbar.setFloatable(false);
@@ -89,9 +154,6 @@ public class MainWindow extends javax.swing.JFrame {
         lblStatus.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         lblStatus.setText("Transmitiendo vídeo. . .");
         toolbar.add(lblStatus);
-
-        fillervideo.setBackground(new java.awt.Color(255, 255, 255));
-        fillervideo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         panelCam1.setBackground(new java.awt.Color(255, 255, 255));
         panelCam1.setBorder(javax.swing.BorderFactory.createTitledBorder("Cámara 1"));
@@ -102,6 +164,11 @@ public class MainWindow extends javax.swing.JFrame {
         comboCam1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
 
         btnCam1.setText("Activar cámara");
+        btnCam1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         lblCam1Tag.setText("Sala:");
 
@@ -147,6 +214,11 @@ public class MainWindow extends javax.swing.JFrame {
         comboCam3.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
 
         btnCam3.setText("Activar cámara");
+        btnCam3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         lblCam3Tag.setText("Sala:");
 
@@ -192,6 +264,11 @@ public class MainWindow extends javax.swing.JFrame {
         comboCam2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
 
         btnCam2.setText("Activar cámara");
+        btnCam2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         lblCam2Tag.setText("Sala:");
 
@@ -237,6 +314,11 @@ public class MainWindow extends javax.swing.JFrame {
         comboCam4.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
 
         btnCam4.setText("Activar cámara");
+        btnCam4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         lblCam4Tag.setText("Sala:");
 
@@ -256,7 +338,7 @@ public class MainWindow extends javax.swing.JFrame {
                         .addComponent(lblCam4Tag)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCam4Place)))
-                .addGap(0, 5, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         panelCam4Layout.setVerticalGroup(
             panelCam4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -271,6 +353,22 @@ public class MainWindow extends javax.swing.JFrame {
                     .addComponent(lblCam4Tag)
                     .addComponent(lblCam4Place))
                 .addContainerGap())
+        );
+
+        panelVideo.setBackground(new java.awt.Color(255, 255, 255));
+        panelVideo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        panelVideo.setMinimumSize(new java.awt.Dimension(640, 480));
+        panelVideo.setPreferredSize(new java.awt.Dimension(640, 480));
+
+        javax.swing.GroupLayout panelVideoLayout = new javax.swing.GroupLayout(panelVideo);
+        panelVideo.setLayout(panelVideoLayout);
+        panelVideoLayout.setHorizontalGroup(
+            panelVideoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        panelVideoLayout.setVerticalGroup(
+            panelVideoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 478, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -292,31 +390,32 @@ public class MainWindow extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(fillervideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, 644, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(panelCam4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelCam1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelCam3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelCam2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 0, 0))
-            .addComponent(toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelCam2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+            .addComponent(toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fillervideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(panelCam1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(panelCam2, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(panelCam3, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(panelCam4, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, 0))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)))
+                .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         panelCam3.getAccessibleContext().setAccessibleName("Cámara 3");
@@ -326,6 +425,68 @@ public class MainWindow extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void updateCams(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCams
+        int numCams = 0;
+        if (this.btnCam1.isSelected()) numCams++;
+        if (this.btnCam2.isSelected()) numCams++;
+        if (this.btnCam3.isSelected()) numCams++;
+        if (this.btnCam4.isSelected()) numCams++;
+        
+        this.panelVideo.removeAll();
+        if (numCams > 1) {
+            this.panelVideo.setLayout(new GridLayout(2, 2));
+            this.updateMultiView(this.btnCam1, 0);
+            this.updateMultiView(this.btnCam2, 1);
+            this.updateMultiView(this.btnCam3, 2);
+            this.updateMultiView(this.btnCam4, 3);
+        } else {
+            this.panelVideo.setLayout(new GridLayout(1, 1));
+            this.updateSingleView(this.btnCam1, 0);
+            this.updateSingleView(this.btnCam2, 1);
+            this.updateSingleView(this.btnCam3, 2);
+            this.updateSingleView(this.btnCam4, 3);
+        }
+        
+        this.panelVideo.validate();
+    }//GEN-LAST:event_updateCams
+    
+    private void removeView(int i) {
+        this.suscriptores[i].eliminar();
+        this.suscriptores[i] = null;
+    }
+    
+    private void updateMultiView(javax.swing.JToggleButton btn, int i) {
+        if (!btn.isSelected() && this.suscriptores[i] != null) {
+            this.removeView(i);
+        } else if (btn.isSelected()) {
+            if (this.suscriptores[i] == null) {
+                this.suscriptores[i] = new Suscriptor(
+                        this.dominio.getTopico(i),
+                        new VideoComponent()
+                );
+            }
+            
+            VideoComponent comp = this.suscriptores[i].getVideoComponent();
+            this.panelVideo.add(comp);
+        }
+    }
+    
+    private void updateSingleView(javax.swing.JToggleButton btn, int i) {
+        if (!btn.isSelected() && this.suscriptores[i] != null) {
+            this.removeView(i);
+        } else if (btn.isSelected()) {
+            if (this.suscriptores[i] == null) {
+                this.suscriptores[i] = new Suscriptor(
+                        this.dominio.getTopico(i),
+                        new VideoComponent()
+                );
+            }
+
+            VideoComponent comp = this.suscriptores[i].getVideoComponent();            
+            this.panelVideo.add(comp);
+        }
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnCam1;
     private javax.swing.JToggleButton btnCam2;
@@ -335,7 +496,6 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JComboBox comboCam2;
     private javax.swing.JComboBox comboCam3;
     private javax.swing.JComboBox comboCam4;
-    private javax.swing.Box.Filler fillervideo;
     private javax.swing.JLabel lblCam1Child;
     private javax.swing.JLabel lblCam1Place;
     private javax.swing.JLabel lblCam1Tag;
@@ -355,6 +515,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel panelCam2;
     private javax.swing.JPanel panelCam3;
     private javax.swing.JPanel panelCam4;
+    private javax.swing.JPanel panelVideo;
     private javax.swing.JToolBar toolbar;
     // End of variables declaration//GEN-END:variables
 }

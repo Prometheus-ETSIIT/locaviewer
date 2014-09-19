@@ -18,6 +18,7 @@
 
 package gui;
 
+import control.Dominio;
 import java.awt.Color;
 import java.awt.Toolkit;
 
@@ -25,7 +26,8 @@ import java.awt.Toolkit;
  * Formulario de inicio de sesión.
  */
 public class InicioSesion extends javax.swing.JFrame {
-
+    private static final int DOMINIO_ID = 1;
+    
     /**
      * Crea el formulario de inicio de sesión.
      */
@@ -125,11 +127,13 @@ public class InicioSesion extends javax.swing.JFrame {
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
-        // TODO: Obtener tópicos posibles de suscripción
-        // TODO: Crear una nueva ventana MainWindow
         
-        // TEMP: Cortocircuito
-        new MainWindow().setVisible(true);
+        // TODO: Obtener tópicos posibles de suscripción
+        String[] topicos = new String[] { "test_cam_0", "test_cam_1" };
+        
+        // Creo un control de dominio y la ventana principal
+        Dominio dominio = new Dominio(DOMINIO_ID, topicos);
+        new MainWindow(dominio).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);
