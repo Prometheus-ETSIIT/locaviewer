@@ -20,20 +20,16 @@ package gui;
 
 import control.Dominio;
 import control.Suscriptor;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import org.gstreamer.swing.VideoComponent;
 
 /**
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
-    
+    private boolean stop;
     private Dominio dominio;
     private final Suscriptor[] suscriptores = new Suscriptor[4];
     
@@ -65,6 +61,23 @@ public class MainWindow extends javax.swing.JFrame {
     }
     
     private void updateNumTopicos() {
+        this.stop = true;
+        
+        // Pone los tópicos para elegir        
+        this.comboCam1.removeAllItems();
+        this.comboCam2.removeAllItems();
+        this.comboCam3.removeAllItems();
+        this.comboCam4.removeAllItems();
+        
+        for (String nombre : this.dominio.getNombreTopicos()) {
+            this.comboCam1.addItem(nombre);
+            this.comboCam2.addItem(nombre);
+            this.comboCam3.addItem(nombre);
+            this.comboCam4.addItem(nombre);
+        }
+        
+        this.stop = false;
+        
         switch (this.dominio.getNumTopicos()) {
             case 0:
                 this.setEnablePanel(panelCam1, false);
@@ -162,6 +175,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         comboCam1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         comboCam1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
+        comboCam1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         btnCam1.setText("Activar cámara");
         btnCam1.addActionListener(new java.awt.event.ActionListener() {
@@ -212,6 +230,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         comboCam3.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         comboCam3.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
+        comboCam3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         btnCam3.setText("Activar cámara");
         btnCam3.addActionListener(new java.awt.event.ActionListener() {
@@ -262,6 +285,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         comboCam2.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         comboCam2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
+        comboCam2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         btnCam2.setText("Activar cámara");
         btnCam2.addActionListener(new java.awt.event.ActionListener() {
@@ -312,6 +340,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         comboCam4.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         comboCam4.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
+        comboCam4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCams(evt);
+            }
+        });
 
         btnCam4.setText("Activar cámara");
         btnCam4.addActionListener(new java.awt.event.ActionListener() {
@@ -426,6 +459,9 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void updateCams(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCams
+        if (this.stop)
+            return;
+        
         int numCams = 0;
         if (this.btnCam1.isSelected()) numCams++;
         if (this.btnCam2.isSelected()) numCams++;
@@ -433,20 +469,19 @@ public class MainWindow extends javax.swing.JFrame {
         if (this.btnCam4.isSelected()) numCams++;
         
         this.panelVideo.removeAll();
-        if (numCams > 1) {
-            this.panelVideo.setLayout(new GridLayout(2, 2));
-            this.updateMultiView(this.btnCam1, 0);
-            this.updateMultiView(this.btnCam2, 1);
-            this.updateMultiView(this.btnCam3, 2);
-            this.updateMultiView(this.btnCam4, 3);
-        } else {
-            this.panelVideo.setLayout(new GridLayout(1, 1));
-            this.updateSingleView(this.btnCam1, 0);
-            this.updateSingleView(this.btnCam2, 1);
-            this.updateSingleView(this.btnCam3, 2);
-            this.updateSingleView(this.btnCam4, 3);
-        }
         
+        if (numCams > 1)    // Multi View
+            this.panelVideo.setLayout(new GridLayout(2, 2));
+        else                // Single View
+            this.panelVideo.setLayout(new GridLayout(1, 1));
+        
+        // Añade las vistas
+        this.updateCam(this.btnCam1.isSelected(), this.comboCam1.getSelectedItem().toString(), 0);
+        this.updateCam(this.btnCam2.isSelected(), this.comboCam2.getSelectedItem().toString(), 1);
+        this.updateCam(this.btnCam3.isSelected(), this.comboCam3.getSelectedItem().toString(), 2);
+        this.updateCam(this.btnCam4.isSelected(), this.comboCam4.getSelectedItem().toString(), 3);
+
+        // Actualiza
         this.panelVideo.validate();
     }//GEN-LAST:event_updateCams
     
@@ -455,29 +490,13 @@ public class MainWindow extends javax.swing.JFrame {
         this.suscriptores[i] = null;
     }
     
-    private void updateMultiView(javax.swing.JToggleButton btn, int i) {
-        if (!btn.isSelected() && this.suscriptores[i] != null) {
+    private void updateCam(boolean estado, String nombre, int i) {
+        if (!estado && this.suscriptores[i] != null) {
             this.removeView(i);
-        } else if (btn.isSelected()) {
+        } else if (estado) {
             if (this.suscriptores[i] == null) {
                 this.suscriptores[i] = new Suscriptor(
-                        this.dominio.getTopico(i),
-                        new VideoComponent()
-                );
-            }
-            
-            VideoComponent comp = this.suscriptores[i].getVideoComponent();
-            this.panelVideo.add(comp);
-        }
-    }
-    
-    private void updateSingleView(javax.swing.JToggleButton btn, int i) {
-        if (!btn.isSelected() && this.suscriptores[i] != null) {
-            this.removeView(i);
-        } else if (btn.isSelected()) {
-            if (this.suscriptores[i] == null) {
-                this.suscriptores[i] = new Suscriptor(
-                        this.dominio.getTopico(i),
+                        this.dominio.getTopico(nombre),
                         new VideoComponent()
                 );
             }

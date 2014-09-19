@@ -192,6 +192,9 @@
               </StringArray>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="updateCams"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="btnCam1">
           <Properties>
@@ -285,6 +288,9 @@
               </StringArray>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="updateCams"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="btnCam3">
           <Properties>
@@ -378,6 +384,9 @@
               </StringArray>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="updateCams"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="btnCam2">
           <Properties>
@@ -471,6 +480,9 @@
               </StringArray>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="updateCams"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="btnCam4">
           <Properties>

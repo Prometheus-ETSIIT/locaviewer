@@ -21,7 +21,8 @@ import java.util.List;
  */
 public class Dominio {    
     private final DomainParticipant participante;
-    private List<Topic> topicos;
+    private final String[] nombreTopicos;
+    private final List<Topic> topicos;
     
     public Dominio(final int id, final String[] nombreTopicos) {
         // Crea un participante de dominio
@@ -37,6 +38,7 @@ public class Dominio {
         }
         
         // Crea los tópicos (se suscribe a ellos)
+        this.nombreTopicos = nombreTopicos;
         this.topicos = new ArrayList<>(nombreTopicos.length);
         for (String nombreTopico : nombreTopicos) {
             Topic topico = this.participante.create_topic(
@@ -109,7 +111,18 @@ public class Dominio {
         return this.topicos.toArray(new Topic[0]);
     }
     
+    public String[] getNombreTopicos() {
+        return this.nombreTopicos;
+    }
+    
     public Topic getTopico(final int i) {
         return this.topicos.get(i);
+    }
+    
+    public Topic getTopico(final String nombre) {
+        for (Topic topico : this.topicos)
+            if (topico.get_name().equals(nombre))
+                return topico;
+        return null;
     }
 }
