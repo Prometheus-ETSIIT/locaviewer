@@ -128,6 +128,9 @@ public class InicioSesion extends javax.swing.JFrame {
         // TODO: Obtener tópicos posibles de suscripción
         // TODO: Crear una nueva ventana MainWindow
         
+        // TEMP: Cortocircuito
+        new MainWindow().setVisible(true);
+        
         // Cerramos esta ventana
         this.setVisible(false);
         this.dispose();
