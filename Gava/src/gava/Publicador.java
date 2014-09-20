@@ -21,6 +21,7 @@ package gava;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.dynamicdata.DynamicData;
+import com.rti.dds.dynamicdata.DynamicDataProperty_t;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
@@ -146,24 +147,16 @@ public class Publicador implements Runnable {
             buffer.getByteBuffer().get(tmp);
             
             // Crea la estructura de datos
-            try {
-                this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
-                this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
-                this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
-                this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
-                this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
+            this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
+            this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
+            this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
+            this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
+            this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
 
-                this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
-                this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
-                this.instance.set_int("height", DynamicData.MEMBER_ID_UNSPECIFIED, 480);
-                this.instance.set_byte_seq("buffer", DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
-            } catch (RETCODE_ILLEGAL_OPERATION | RETCODE_OUT_OF_RESOURCES e) {
-                // Este error se da raramente cuando no se cierra bien la aplicación,
-                // hay que ver si con esta solución deja de darlo.
-                System.out.println("Reecreando estructura -> " + tmp.length);
-                this.writer.delete_data(instance);
-                this.instance = this.writer.create_data(DynamicData.PROPERTY_DEFAULT);
-            }
+            this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
+            this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
+            this.instance.set_int("height", DynamicData.MEMBER_ID_UNSPECIFIED, 480);
+            this.instance.set_byte_seq("buffer", DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
             
             // Publica la estructura de datos generada en DDS
             try {
@@ -198,8 +191,15 @@ public class Publicador implements Runnable {
             System.exit(1);
         }
         
+        // Como en la estructura tenemos un campo (buffer) que puede ser mayor
+        // de 64 KB, se necesita aumentar algunos límites. Más info:
+        // http://community.rti.com/content/forum-topic/ddsdynamicdatasetoctetseq-returns-ddsretcodeoutofresources
+        DynamicDataProperty_t propiedades = new DynamicDataProperty_t();
+        propiedades.buffer_initial_size = 100;
+        propiedades.buffer_max_size = 1000000;
+        
         // Crea una estructura de datos como la que hemos definido en el XML.
-        this.instance = this.writer.create_data(DynamicData.PROPERTY_DEFAULT);
+        this.instance = this.writer.create_data(propiedades);
         if (this.instance == null) {
             System.err.println("No se pudo crear la instancia de datos.");
             System.exit(1);
