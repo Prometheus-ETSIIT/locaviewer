@@ -130,8 +130,14 @@ public class Suscriptor extends DataReaderAdapter {
         }
 
         // Obtiene el lector creado en el XML
-        // NOTA: Parece ser que sí se permite tener más de un lector con el mismo nombre
-        // a diferencia de lo que pasa con los writers :D
+        /* NOTA IMPORTANTE:
+            Cada suscriptor se puede usar sólo una vez de forma simultánea,
+            es decir no se pueden usar dos instancias de este mismo, si se hace
+            sólo se recibirán datos en la última, y la primera dejará de recibirlos.
+            Esto se debe a que sólo puede haber un listener.
+        
+            Hay que crear tantos lectores en el XML como se deseen.
+        */
         DynamicDataReader reader = (DynamicDataReader)participant
                 .lookup_datareader_by_name("MySubscriber::VideoDataReader");
         if (reader == null) {

@@ -147,16 +147,29 @@ public class Publicador implements Runnable {
             buffer.getByteBuffer().get(tmp);
             
             // Crea la estructura de datos
-            this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
-            this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
-            this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
-            this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
-            this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
+            try {
+                // NOTA: Limpiar siempre, que si no se acumulan datos en byte_seq
+                // y falla porque no tiene recursos suficientes.
+                this.instance.clear_all_members(); 
+                
+                this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
+                this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
+                this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
+                this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
+                this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
 
-            this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
-            this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
-            this.instance.set_int("height", DynamicData.MEMBER_ID_UNSPECIFIED, 480);
-            this.instance.set_byte_seq("buffer", DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
+                this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
+                this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
+                this.instance.set_int("height", DynamicData.MEMBER_ID_UNSPECIFIED, 480);
+                this.instance.set_byte_seq("buffer", DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
+            } catch (com.rti.dds.infrastructure.RETCODE_OUT_OF_RESOURCES e) {
+                // Se da cuando la estructura interna de datos no puede guardar
+                // todos los bytes del buffer. Para arreglarlo hay que aumentar
+                // las propiedades cuando se crea 'instance'. Ahora mismo puesto
+                // a 1 MB. Si se da el error, descartamos el frame.
+                System.out.println("¡Aumentar recursos! -> " + tmp.length);
+                continue;
+            }
             
             // Publica la estructura de datos generada en DDS
             try {
@@ -196,7 +209,7 @@ public class Publicador implements Runnable {
         // http://community.rti.com/content/forum-topic/ddsdynamicdatasetoctetseq-returns-ddsretcodeoutofresources
         DynamicDataProperty_t propiedades = new DynamicDataProperty_t();
         propiedades.buffer_initial_size = 100;
-        propiedades.buffer_max_size = 1000000;
+        propiedades.buffer_max_size = 1048576;
         
         // Crea una estructura de datos como la que hemos definido en el XML.
         this.instance = this.writer.create_data(propiedades);
