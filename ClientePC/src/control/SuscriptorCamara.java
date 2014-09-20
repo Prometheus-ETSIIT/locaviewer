@@ -94,6 +94,8 @@ public class SuscriptorCamara extends SuscriptorBase {
     
     @Override
     public void dispose() {
+        super.dispose();
+        
         // Para la tuberia
         this.pipe.stop();
         this.pipe.dispose();

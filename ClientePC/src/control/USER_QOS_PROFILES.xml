@@ -249,13 +249,17 @@
         <domain_participant name="SubscriptionParticipant" 
                             domain_ref="MyDomainLibrary::LocaviewerDomain"> 
             <subscriber name="MySubscriber">
-                <data_reader name="VideoDataReader" topic_ref="VideoDataTopic" >
+                <data_reader name="VideoDataReader0" topic_ref="VideoDataTopic" >
                     <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                    <!--
-                    <filter name="VideoDataTopic" kind="builtin.sql">
-                        <expression> camId = '0' </expression>
-                    </filter>
-                    -->
+                </data_reader>
+                <data_reader name="VideoDataReader1" topic_ref="VideoDataTopic" >
+                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
+                </data_reader>
+                <data_reader name="VideoDataReader2" topic_ref="VideoDataTopic" >
+                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
+                </data_reader>
+                <data_reader name="VideoDataReader3" topic_ref="VideoDataTopic" >
+                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
                 </data_reader>
             </subscriber>     
         </domain_participant>

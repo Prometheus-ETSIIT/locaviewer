@@ -64,7 +64,7 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
                 InstanceStateKind.ANY_INSTANCE_STATE,
                 "camId = %0",
                 queryParams);
-        
+
         // Le añade el listener para recibir datos.
         reader.set_listener(this, StatusKind.STATUS_MASK_ALL);
     }
@@ -73,6 +73,8 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
      * Libera los recursos del suscriptor.
      */
     public void dispose() {
+        this.reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
+        this.reader.delete_contained_entities();
         this.control.eliminaLector(this.reader);
     }
     

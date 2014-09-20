@@ -25,9 +25,12 @@ import com.rti.dds.dynamicdata.DynamicDataReader;
 /**
  * Clase para crear y destruir lectores sobre un tópico.
  */
-public class TopicoControl {    
+public class TopicoControl {   
+    private final static int MAX_LECTORES = 4;
+    
     private final DomainParticipant participante;
     private final String[] keys;
+    private final DynamicDataReader[] lectoresUsados = new DynamicDataReader[MAX_LECTORES];
     
     /**
      * Crea una nueva instancia de control de tópico.
@@ -81,10 +84,21 @@ public class TopicoControl {
      * @return Lector del tópico.
      */
     public DynamicDataReader creaLector() {
-        DynamicDataReader reader = (DynamicDataReader)this.participante
-                .lookup_datareader_by_name("MySubscriber::VideoDataReader");
+        // Primero buscamos un lector que no se esté usando
+        int i;
+        for (i = 0; i < this.lectoresUsados.length; i++)
+            if (this.lectoresUsados[i] == null)
+                break;
         
-        return reader;
+        this.lectoresUsados[i] = (DynamicDataReader)this.participante
+                .lookup_datareader_by_name("MySubscriber::VideoDataReader" + i);
+        
+        if (this.lectoresUsados[i] == null) {
+            System.out.println("No se pudo crear el lector.");
+        }
+        
+        System.out.println("Usando: " + i);
+        return this.lectoresUsados[i];
     }
     
     /**
@@ -93,6 +107,17 @@ public class TopicoControl {
      * @param reader Lector del tópico.
      */
     public void eliminaLector(final DynamicDataReader reader) {
-        this.participante.delete_datareader(reader);
+        // Lo libera de los usados
+        for (int i = 0; i < this.lectoresUsados.length; i++) {
+            if (this.lectoresUsados[i] == reader) {
+                System.out.println("Liberando: " + i);
+                this.lectoresUsados[i] = null;
+                break;
+            }
+        }
+        
+        // NOTA:
+        // NO se puede eliminar del dominio porque si no no se podría volver a
+        // recuperar. Simplemente le quitamos el listener y las condiciones.
     }
 }
