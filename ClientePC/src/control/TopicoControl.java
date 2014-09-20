@@ -93,11 +93,9 @@ public class TopicoControl {
         this.lectoresUsados[i] = (DynamicDataReader)this.participante
                 .lookup_datareader_by_name("MySubscriber::VideoDataReader" + i);
         
-        if (this.lectoresUsados[i] == null) {
+        if (this.lectoresUsados[i] == null)
             System.out.println("No se pudo crear el lector.");
-        }
         
-        System.out.println("Usando: " + i);
         return this.lectoresUsados[i];
     }
     
@@ -108,13 +106,9 @@ public class TopicoControl {
      */
     public void eliminaLector(final DynamicDataReader reader) {
         // Lo libera de los usados
-        for (int i = 0; i < this.lectoresUsados.length; i++) {
-            if (this.lectoresUsados[i] == reader) {
-                System.out.println("Liberando: " + i);
+        for (int i = 0; i < this.lectoresUsados.length; i++)
+            if (this.lectoresUsados[i] == reader)
                 this.lectoresUsados[i] = null;
-                break;
-            }
-        }
         
         // NOTA:
         // NO se puede eliminar del dominio porque si no no se podría volver a

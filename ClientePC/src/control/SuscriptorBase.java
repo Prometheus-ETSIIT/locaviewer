@@ -79,6 +79,15 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
     }
     
     /**
+     * Obtiene la clave que está discerniendo los datos en este lector.
+     * 
+     * @return Clave del lector. 
+     */
+    public String getKey() {
+        return this.key;
+    }
+    
+    /**
      * Método que se llama para sacar los datos recibidos de la muestra.
      * 
      * @param sample Muestra recibida con datos.

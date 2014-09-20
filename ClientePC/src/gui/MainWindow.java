@@ -516,6 +516,9 @@ public class MainWindow extends javax.swing.JFrame {
         if (!estado && this.suscriptores[i] != null) {
             this.eliminaView(i);
         } else if (estado) {
+            if (this.suscriptores[i] != null && !this.suscriptores[i].getKey().equals(nombre))
+                this.eliminaView(i);
+            
             if (this.suscriptores[i] == null) {
                 this.suscriptores[i] = new SuscriptorCamara(
                         this.dominio,
