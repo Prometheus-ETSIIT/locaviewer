@@ -196,6 +196,7 @@ public class Suscriptor extends DataReaderAdapter {
                 String sala  = sample.get_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED);
                 double posX  = sample.get_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED);
                 double posY  = sample.get_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED);
+                double angle = sample.get_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED);
                 String codecInfo = sample.get_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED);
                 int width  = sample.get_int("width", DynamicData.MEMBER_ID_UNSPECIFIED);
                 int height = sample.get_int("height", DynamicData.MEMBER_ID_UNSPECIFIED);

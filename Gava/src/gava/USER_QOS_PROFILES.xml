@@ -56,6 +56,7 @@
              <member name="sala"  type="string" stringMaxLength="MAX_STRING_SIZE" />
              <member name="posX"  type="double" />
              <member name="posY"  type="double" />
+             <member name="angle" type="double" />
              <member name="codecInfo" type="string" stringMaxLength="MAX_STRING_SIZE" />
              <member name="width"     type="long" />
              <member name="height"    type="long" />

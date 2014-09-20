@@ -151,6 +151,7 @@ public class Publicador implements Runnable {
                 this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
                 this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
                 this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
+                this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
 
                 this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
                 this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
