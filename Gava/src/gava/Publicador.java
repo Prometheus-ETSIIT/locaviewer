@@ -20,15 +20,13 @@ package gava;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
+import com.rti.dds.dynamicdata.DynamicData;
+import com.rti.dds.dynamicdata.DynamicDataWriter;
+import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.DataWriterQos;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.topic.Topic;
-import com.rti.dds.type.builtin.BytesDataWriter;
-import com.rti.dds.type.builtin.BytesTypeSupport;
+import com.rti.dds.infrastructure.RETCODE_ERROR;
+import com.rti.dds.infrastructure.RETCODE_ILLEGAL_OPERATION;
+import com.rti.dds.infrastructure.RETCODE_OUT_OF_RESOURCES;
 import java.io.File;
 import java.io.FilenameFilter;
 import org.gstreamer.Buffer;
@@ -45,7 +43,10 @@ public class Publicador implements Runnable {
     private final String device;
     private final String camId;
     
-    private BytesDataWriter writer;
+    private DomainParticipant participant;
+    private DynamicDataWriter writer;
+    private DynamicData instance;
+    
     private Pipeline pipe;
     private AppSink appsink;
     
@@ -89,14 +90,14 @@ public class Publicador implements Runnable {
             int id = Integer.parseInt(cam.substring(5));
             
             // Crea el publicador
-            new Thread(new Publicador("/dev/" + cam, "test_cam_" + id)).start();
+            new Thread(new Publicador("/dev/" + cam, "" + id)).start();
         }
     }
     
     @Override
     public void run() {
         // Inicia DDS y obtiene el escritor
-        this.iniciaDds(camId);
+        this.iniciaDds();
 
         // Crea los elementos de la tubería
         // 1º Origen de vídeo, del códec v4l2
@@ -140,89 +141,67 @@ public class Publicador implements Runnable {
             if (buffer == null)
                  continue;
 
-            // Lo envía por DDS
-            byte[] toSend = new byte[buffer.getSize()];
-            buffer.getByteBuffer().get(toSend, 0, toSend.length);
-            this.writer.write(toSend, 0, toSend.length, InstanceHandle_t.HANDLE_NIL);
+            // Transfiere los datos a un buffer intermedio
+            byte[] tmp = new byte[buffer.getSize()];
+            buffer.getByteBuffer().get(tmp);
+            
+            // Crea la estructura de datos
+            try {
+                this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
+                this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
+                this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
+                this.instance.set_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
+
+                this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
+                this.instance.set_int("width", DynamicData.MEMBER_ID_UNSPECIFIED, 640);
+                this.instance.set_int("height", DynamicData.MEMBER_ID_UNSPECIFIED, 480);
+                this.instance.set_byte_seq("buffer", DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
+            } catch (RETCODE_ILLEGAL_OPERATION | RETCODE_OUT_OF_RESOURCES e) {
+                // Este error se da raramente cuando no se cierra bien la aplicación,
+                // hay que ver si con esta solución deja de darlo.
+                System.out.println("Reecreando estructura");
+                this.writer.delete_data(instance);
+                this.instance = this.writer.create_data(DynamicData.PROPERTY_DEFAULT);
+            }
+            
+            // Publica la estructura de datos generada en DDS
+            try {
+                this.writer.write(this.instance, InstanceHandle_t.HANDLE_NIL);
+            } catch (RETCODE_ERROR e) {
+                System.out.println("! Write error:" + e.getMessage());
+                System.exit(1);
+            }
         }
     }
     
-    private void iniciaDds(final String topico) {    
-        DomainParticipantQos qos = new DomainParticipantQos();
-        DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
-        qos.receiver_pool.buffer_size = 65507;
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max"); } catch (Exception ex) { }
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.parent.message_size_max",
-                "65507",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.send_socket_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.recv_socket_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.parent.message_size_max",
-                "65507",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.receive_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.received_message_count_max",
-                "2048",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.builtin_type.octets.max_size",
-                "2097152",
-                true);
-                
-        //Dominio 0
-        DomainParticipant participant = DomainParticipantFactory.TheParticipantFactory.create_participant(
-                1, // Domain ID = 1
-                qos,
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
+    private void iniciaDds() {
+        // Obtiene el participante de dominio creado en el XML.
+        this.participant = DomainParticipantFactory.get_instance()
+                .create_participant_from_config("MyParticipantLibrary::PublicationParticipant");
         if (participant == null) {
             System.err.println("No se pudo crear el dominio.");
-            return;
+            System.exit(1);
         }
-
-       //Creación del tópico
-        Topic topic = participant.create_topic(
-                topico, 
-                BytesTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, 
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
-        if (topic == null) {
-            System.err.println("Unable to create topic.");
-            return;
-        }
-
-        this.writer = (BytesDataWriter)participant.create_datawriter(
-                topic, 
-                Publisher.DATAWRITER_QOS_DEFAULT,
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
+        
+        // Obtiene el escritor creado en el XML.
+        /* NOTA IMPORTANTE:
+            No se pueden crear dos tópicos con el mismo nombre.
+            Tampoco se pueden tener dos Writer con el mismo nombre, por ello
+            para cada cámara habrá que definir un nuevo Writer en el XML, que será
+            básicamente su ID.
+        */
+        this.writer = (DynamicDataWriter)participant
+                .lookup_datawriter_by_name("MyPublisher::VideoDataWriter" + camId);
         if (this.writer == null) {
-            System.err.println("No se pudo crear el escritor");
+            System.err.println("No se pudo crear el escritor.");
+            System.exit(1);
+        }
+        
+        // Crea una estructura de datos como la que hemos definido en el XML.
+        this.instance = this.writer.create_data(DynamicData.PROPERTY_DEFAULT);
+        if (this.instance == null) {
+            System.err.println("No se pudo crear la instancia de datos.");
+            System.exit(1);
         }
     }
 }

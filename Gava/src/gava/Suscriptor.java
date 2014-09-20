@@ -20,22 +20,24 @@ package gava;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.domain.DomainParticipantQos;
-import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
-import com.rti.dds.infrastructure.RETCODE_ERROR;
+import com.rti.dds.dynamicdata.DynamicData;
+import com.rti.dds.dynamicdata.DynamicDataReader;
+import com.rti.dds.dynamicdata.DynamicDataSeq;
+import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.InstanceStateKind;
+import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.SampleInfo;
-import com.rti.dds.subscription.Subscriber;
-import com.rti.dds.topic.Topic;
-import com.rti.dds.type.builtin.Bytes;
-import com.rti.dds.type.builtin.BytesDataReader;
-import com.rti.dds.type.builtin.BytesTypeSupport;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.ViewStateKind;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.Arrays;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.gstreamer.Buffer;
@@ -52,8 +54,11 @@ import org.gstreamer.swing.VideoComponent;
 public class Suscriptor extends DataReaderAdapter {
     private final Pipeline pipe;
     private final AppSrc appsrc;
+    private final QueryCondition query;
     
-    public Suscriptor() {
+    public Suscriptor(QueryCondition query) {
+        this.query = query;
+        
         // Crea los elementos de la tubería
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
@@ -92,7 +97,7 @@ public class Suscriptor extends DataReaderAdapter {
         State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
         if (retState == State.NULL) {
             System.err.println("Error al cambio de estado.");
-            System.exit(-1);
+            System.exit(1);
         }
         
         GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor");
@@ -104,96 +109,57 @@ public class Suscriptor extends DataReaderAdapter {
      * @param args Un argumento opcional como nombre del tópico.
      */
     public static void main(final String[] args) {
-        final String topico = (args.length == 0) ? "test_cam_0" : args[0];
+        final String key = (args.length == 0) ? "test_cam_0" : args[0];
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 Gst.init("Gava", args); // Inicia GStreamer
-                IniciaDds(topico);      // Inicia DDS
+                IniciaDds(key);      // Inicia DDS
             }
         });
     }
     
-    private static void IniciaDds(final String topico) {
-      DomainParticipantQos qos = new DomainParticipantQos();
-        DomainParticipantFactory.TheParticipantFactory.get_default_participant_qos(qos);
-        qos.receiver_pool.buffer_size = 65507;
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.parent.message_size_max"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.send_socket_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.UDPv4.builtin.recv_socket_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.parent.message_size_max"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.receive_buffer_size"); } catch (Exception ex) { }
-        try { PropertyQosPolicyHelper.remove_property(qos.property, "dds.transport.shmem.builtin.received_message_count_max"); } catch (Exception ex) { }
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.parent.message_size_max",
-                "65507",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.send_socket_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.UDPv4.builtin.recv_socket_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.parent.message_size_max",
-                "65507",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.receive_buffer_size",
-                "2097152",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.transport.shmem.builtin.received_message_count_max",
-                "2048",
-                true);
-        PropertyQosPolicyHelper.add_property(
-                qos.property,
-                "dds.builtin_type.octets.max_size",
-                "2097152",
-                true);
-        
-         //Dominio 0
-        DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
-                1, // ID de dominio 1
-                qos, 
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
+    private static void IniciaDds(final String key) {
+        // Obtiene el participante de dominio creado en el XML
+        DomainParticipant participant = DomainParticipantFactory.get_instance()
+                .create_participant_from_config("MyParticipantLibrary::SubscriptionParticipant");
         if (participant == null) {
-            System.err.println("No se pudo obtener el dominio.");
-            return;
-        }
-        
-        // Crea el tópico
-        Topic topic = participant.create_topic(
-                topico, 
-                BytesTypeSupport.get_type_name(), 
-                DomainParticipant.TOPIC_QOS_DEFAULT, 
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
-        if (topic == null) {
-            System.err.println("No se pudo crear el tópico");
-            return;
+            System.err.println("No se pudo crear el dominio.");
+            System.exit(1);
         }
 
-        // Crea el suscriptor
-        BytesDataReader dataReader = (BytesDataReader) participant.create_datareader(
-                topic, 
-                Subscriber.DATAREADER_QOS_DEFAULT,
-                new Suscriptor(),         // Listener
-                StatusKind.DATA_AVAILABLE_STATUS);
-        if (dataReader == null) {
-            System.err.println("Unable to create DDS Data Reader");
-            return;
+        // Obtiene el lector creado en el XML
+        // NOTA: Parece ser que sí se permite tener más de un lector con el mismo nombre
+        // a diferencia de lo que pasa con los writers :D
+        DynamicDataReader reader = (DynamicDataReader)participant
+                .lookup_datareader_by_name("MySubscriber::VideoDataReader");
+        if (reader == null) {
+            System.err.println("No se pudo crear el lector.");
+            System.exit(1);
         }
+        
+        // Añade un filtro al lector
+        /* NOTA IMPORTANTE:
+            El filtro se basa en una expresión SQL de este formato:
+            http://community.rti.com/rti-doc/510/ndds/doc/html/api_java/group__DDSQueryAndFilterSyntaxModule.html
+        
+            Como se ve, el parámetro que se compara, si es un string debe ir entre
+            comillas simples, pero esto tiene que suceder en queryParam, no puede ser en la
+            expresión SQL directamente, de ahí que haya que crear el queryParam.
+        */
+        StringSeq queryParam = new StringSeq(1);
+        queryParam.add("'" + key + "'");
+        QueryCondition condition = reader.create_querycondition(
+                SampleStateKind.ANY_SAMPLE_STATE,
+                ViewStateKind.ANY_VIEW_STATE,
+                InstanceStateKind.ANY_INSTANCE_STATE,
+                "camId = %0",
+                queryParam
+                );
+        
+        // Le añade el listener para recibir datos.
+        reader.set_listener(new Suscriptor(condition), StatusKind.STATUS_MASK_ALL);
     }
     
     /**
@@ -202,40 +168,53 @@ public class Suscriptor extends DataReaderAdapter {
      * @param reader Lector de datos
      */
     @Override
-    public void on_data_available(DataReader reader) {        
+    public void on_data_available(DataReader reader) { 
         // Obtiene todos los sample de DDS
-        BytesDataReader bytesReader = (BytesDataReader)reader;
-        while (true) {
-            // Intenta obtener un sample.
-            Bytes data = new Bytes();
-            SampleInfo info = new SampleInfo();
-            try {
-                bytesReader.take_next_sample(data, info);           
-            } catch (RETCODE_NO_DATA noData) {
-                // No hay más datos para leer, paramos
-                break;
-            } catch (RETCODE_ERROR e) {
-                // Se produjo un error
-                e.printStackTrace();
-            }
+        DynamicDataReader dynamicReader = (DynamicDataReader)reader;
+        DynamicDataSeq dataSeq = new DynamicDataSeq();
+        SampleInfoSeq infoSeq = new SampleInfoSeq();
+        try {
+            // Obtiene datos aplicandole el filtro
+            dynamicReader.take_w_condition(
+                    dataSeq,
+                    infoSeq,
+                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                    this.query); 
             
-            // En caso de que sea meta-data del tópico
-            if (!info.valid_data)
-                return;
+            // Procesamos todos los datos recibidos
+            for (int i = 0; i < dataSeq.size(); i++) {
+                SampleInfo info = (SampleInfo)infoSeq.get(i);
+                
+                // En caso de que sea meta-data del tópico
+                if (!info.valid_data)
+                    continue;
 
-            // Deserializa los datos
-            byte[] recibido = Arrays.copyOfRange(
-                    data.value,
-                    data.offset,
-                    data.length
-            );
+                // Deserializa los datos
+                DynamicData sample = (DynamicData)dataSeq.get(i);
+                // DEBUG: sample.print(null, 0); // Para mostrarlo formateado por la consola
+                String camId = sample.get_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED);
+                String sala  = sample.get_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED);
+                double posX  = sample.get_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED);
+                double posY  = sample.get_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED);
+                String codecInfo = sample.get_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED);
+                int width  = sample.get_int("width", DynamicData.MEMBER_ID_UNSPECIFIED);
+                int height = sample.get_int("height", DynamicData.MEMBER_ID_UNSPECIFIED);
+                
+                // Crea el buffer de GStreamer
+                ByteSeq bufferSeq = new ByteSeq();
+                sample.get_byte_seq(bufferSeq, "buffer", DynamicData.MEMBER_ID_UNSPECIFIED);
 
-            // Crea el buffer de GStreamer
-            Buffer buffer = new Buffer(recibido.length);
-            buffer.getByteBuffer().put(recibido);
+                Buffer buffer = new Buffer(bufferSeq.size());
+                buffer.getByteBuffer().put(bufferSeq.toArrayByte(null));
 
-            // Lo mete en la tubería
-            this.appsrc.pushBuffer(buffer);
+                // Lo mete en la tubería
+                this.appsrc.pushBuffer(buffer);
+            }
+        } catch (RETCODE_NO_DATA e) {
+            // No hace nada, al filtrar datos pues se da la cosa de que no haya
+        } finally {
+            // Es para liberar recursos del sistema.
+            dynamicReader.return_loan(dataSeq, infoSeq);
         }
     }
 }
