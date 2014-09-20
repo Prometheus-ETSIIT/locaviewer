@@ -18,8 +18,8 @@
 
 package gui;
 
-import control.Dominio;
-import control.Suscriptor;
+import control.TopicoControl;
+import control.SuscriptorCamara;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
@@ -30,8 +30,8 @@ import org.gstreamer.swing.VideoComponent;
  */
 public class MainWindow extends javax.swing.JFrame {
     private boolean stop;
-    private Dominio dominio;
-    private final Suscriptor[] suscriptores = new Suscriptor[4];
+    private TopicoControl dominio;
+    private final SuscriptorCamara[] suscriptores = new SuscriptorCamara[4];
     
     /**
      * Crea una nueva ventana sin funcionalidad.
@@ -53,14 +53,18 @@ public class MainWindow extends javax.swing.JFrame {
      * 
      * @param dominio Dominio en el que participa.
      */
-    public MainWindow(final Dominio dominio) {
+    public MainWindow(final TopicoControl dominio) {
         this();
         
         this.dominio = dominio;
-        this.updateNumTopicos();
+        this.updateNumNinos();
     }
     
-    private void updateNumTopicos() {
+    /**
+     * Actualiza los controles de cámaras según del número de niños a los que se
+     * pueda visualizar.
+     */
+    private void updateNumNinos() {
         this.stop = true;
         
         // Pone los tópicos para elegir        
@@ -69,7 +73,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.comboCam3.removeAllItems();
         this.comboCam4.removeAllItems();
         
-        for (String nombre : this.dominio.getNombreTopicos()) {
+        for (String nombre : this.dominio.getKeys()) {
             this.comboCam1.addItem(nombre);
             this.comboCam2.addItem(nombre);
             this.comboCam3.addItem(nombre);
@@ -78,7 +82,7 @@ public class MainWindow extends javax.swing.JFrame {
         
         this.stop = false;
         
-        switch (this.dominio.getNumTopicos()) {
+        switch (this.dominio.getNumKeys()) {
             case 0:
                 this.setEnablePanel(panelCam1, false);
                 this.setEnablePanel(panelCam2, false);
@@ -116,6 +120,12 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }
     
+    /**
+     * Habilita o deshabilita un JPanel y todos sus controles.
+     * 
+     * @param panel JPanel a modificar.
+     * @param enable Si se habilita o deshabilita.
+     */
     private void setEnablePanel(javax.swing.JPanel panel, boolean enable) {
         panel.setEnabled(enable);
         for (java.awt.Component comp : panel.getComponents())
@@ -443,22 +453,22 @@ public class MainWindow extends javax.swing.JFrame {
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(panelCam3, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(panelCam4, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)))
+                        .addComponent(panelCam4, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
-
-        panelCam3.getAccessibleContext().setAccessibleName("Cámara 3");
-        panelCam2.getAccessibleContext().setAccessibleName("Cámara 2");
-        panelCam4.getAccessibleContext().setAccessibleName("Cámara 4");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Actualiza el número de cámaras que se están viendo añadiendo o quitando.
+     * 
+     * @param evt Evento que lo dispara.
+     */
     private void updateCams(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCams
+        // Si estamos modificando los datos de los controles (añdiendo elementos
+        // a los combox) no queremos que este evento se dispare.
         if (this.stop)
             return;
         
@@ -485,18 +495,31 @@ public class MainWindow extends javax.swing.JFrame {
         this.panelVideo.validate();
     }//GEN-LAST:event_updateCams
     
-    private void removeView(int i) {
-        this.suscriptores[i].eliminar();
+    /**
+     * Elimina una vista.
+     * 
+     * @param i Índice de la vista a eliminar.
+     */
+    private void eliminaView(int i) {
+        this.suscriptores[i].dispose();
         this.suscriptores[i] = null;
     }
     
+    /**
+     * Añade o elimina la iésima vista de cámara.
+     * 
+     * @param estado Si eliminar o crear.
+     * @param nombre Parámetro key de la cámara.
+     * @param i Elemento iésimo.
+     */
     private void updateCam(boolean estado, String nombre, int i) {
         if (!estado && this.suscriptores[i] != null) {
-            this.removeView(i);
+            this.eliminaView(i);
         } else if (estado) {
             if (this.suscriptores[i] == null) {
-                this.suscriptores[i] = new Suscriptor(
-                        this.dominio.getTopico(nombre),
+                this.suscriptores[i] = new SuscriptorCamara(
+                        this.dominio,
+                        nombre,
                         new VideoComponent()
                 );
             }

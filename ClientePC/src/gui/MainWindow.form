@@ -93,12 +93,8 @@
                       <Component id="panelCam3" min="-2" pref="116" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="panelCam4" min="-2" pref="116" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <Component id="panelVideo" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="panelVideo" min="-2" max="-2" attributes="0"/>
               </Group>
               <Component id="toolbar" min="-2" pref="27" max="-2" attributes="0"/>
           </Group>
@@ -230,9 +226,6 @@
           </Border>
         </Property>
       </Properties>
-      <AccessibilityProperties>
-        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="C&#xe1;mara 3"/>
-      </AccessibilityProperties>
 
       <Layout>
         <DimensionLayout dim="0">
@@ -326,9 +319,6 @@
           </Border>
         </Property>
       </Properties>
-      <AccessibilityProperties>
-        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="C&#xe1;mara 2"/>
-      </AccessibilityProperties>
 
       <Layout>
         <DimensionLayout dim="0">
@@ -422,9 +412,6 @@
           </Border>
         </Property>
       </Properties>
-      <AccessibilityProperties>
-        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="C&#xe1;mara 4"/>
-      </AccessibilityProperties>
 
       <Layout>
         <DimensionLayout dim="0">

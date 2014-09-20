@@ -18,7 +18,7 @@
 
 package gui;
 
-import control.Dominio;
+import control.TopicoControl;
 import java.awt.Color;
 import java.awt.Toolkit;
 
@@ -128,11 +128,12 @@ public class InicioSesion extends javax.swing.JFrame {
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
         
-        // TODO: Obtener tópicos posibles de suscripción
-        String[] topicos = new String[] { "test_cam_0", "test_cam_1" };
+        // TODO: Obtener keys de niños de los que se puede recibir datos
+        // TEMP: Por ahora sólo admite recibir desde el tópico de las cámaras
+        String[] topicos = new String[] { "0", "1" };
         
         // Creo un control de dominio y la ventana principal
-        Dominio dominio = new Dominio(DOMINIO_ID, topicos);
+        TopicoControl dominio = new TopicoControl(topicos);
         new MainWindow(dominio).setVisible(true);
         
         // Cerramos esta ventana
