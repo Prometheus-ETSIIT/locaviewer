@@ -66,7 +66,7 @@ public class Publicador implements Runnable {
         
         if (args.length > 0) {
             for (int i = 0; i < args.length; i++)
-                new Thread(new Publicador(args[i], "test_cam_" + i)).start();
+                new Thread(new Publicador("/dev/video" + args[i], args[i])).start();
         } else {
             StartAll();
         }
@@ -160,7 +160,7 @@ public class Publicador implements Runnable {
             } catch (RETCODE_ILLEGAL_OPERATION | RETCODE_OUT_OF_RESOURCES e) {
                 // Este error se da raramente cuando no se cierra bien la aplicación,
                 // hay que ver si con esta solución deja de darlo.
-                System.out.println("Reecreando estructura");
+                System.out.println("Reecreando estructura -> " + tmp.length);
                 this.writer.delete_data(instance);
                 this.instance = this.writer.create_data(DynamicData.PROPERTY_DEFAULT);
             }
