@@ -109,7 +109,7 @@ public class Suscriptor extends DataReaderAdapter {
      * @param args Un argumento opcional como nombre del tópico.
      */
     public static void main(final String[] args) {
-        final String key = (args.length == 0) ? "test_cam_0" : args[0];
+        final String key = (args.length == 0) ? "0" : args[0];
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
