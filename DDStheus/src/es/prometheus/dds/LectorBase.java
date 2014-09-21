@@ -33,6 +33,7 @@ import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.ViewStateKind;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 
 /**
@@ -43,6 +44,7 @@ public abstract class LectorBase extends DataReaderAdapter {
     private final DynamicDataReader reader;
     private final QueryCondition condition;
     
+    private ActionListener extraListener;
     private boolean parado;
     
     /**
@@ -74,6 +76,16 @@ public abstract class LectorBase extends DataReaderAdapter {
         this.reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
         this.reader.delete_contained_entities();
         this.control.eliminaLector(this.reader);
+    }
+    
+    /**
+     * Añade un listener extra que se llamará después de parsear los datos recibidos.
+     * Para desactivarlo establecer a null.
+     * 
+     * @param listener Listener externo.
+     */
+    public void setExtraListener(final ActionListener listener) {
+        this.extraListener = listener;
     }
     
     /**
@@ -151,6 +163,10 @@ public abstract class LectorBase extends DataReaderAdapter {
                 // Deserializa los datos
                 DynamicData sample = (DynamicData)dataSeq.get(i);
                 this.getDatos(sample);
+                
+                // Llama al listener externo
+                if (this.extraListener != null)
+                    this.extraListener.actionPerformed(null);
             }
         } catch (RETCODE_NO_DATA e) {
             // No hace nada, al filtrar datos pues se da la cosa de que no haya
