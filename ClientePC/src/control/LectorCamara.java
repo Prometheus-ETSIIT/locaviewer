@@ -19,6 +19,8 @@
 package control;
 
 import com.rti.dds.dynamicdata.DynamicData;
+import es.prometheus.dds.LectorBase;
+import es.prometheus.dds.TopicoControl;
 import org.gstreamer.Buffer;
 import org.gstreamer.ClockTime;
 import org.gstreamer.Element;
@@ -33,7 +35,7 @@ import org.gstreamer.swing.VideoComponent;
  * Suscriptor de tópico de cámaras.
  * Recibe datos de DDS y va actualizando el componente de vídeo de GStreamer.
  */
-public class SuscriptorCamara extends SuscriptorBase {
+public class LectorCamara extends LectorBase {
     private final VideoComponent videocomp;
     private DatosCamara ultDatos;
     
@@ -47,7 +49,7 @@ public class SuscriptorCamara extends SuscriptorBase {
      * @param key Clave para discernir los datos en el tópico.
      * @param videocomp Componente de vídeo a actualizar.
      */
-    public SuscriptorCamara(final TopicoControl control, final String key,
+    public LectorCamara(final TopicoControl control, final String key,
             final VideoComponent videocomp) {
         super(control, "camId = %0", new String[] { "'" + key + "'" });
         this.videocomp = videocomp;

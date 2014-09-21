@@ -5,7 +5,7 @@
     
     <!-- Qos Library -->
     <qos_library name="qosLibrary">
-        <qos_profile name="DefaultProfile">
+        <qos_profile name="VideoProfile">
             
             <participant_qos>
                 <receiver_pool>
@@ -198,6 +198,10 @@
             </datareader_qos>
             
         </qos_profile>
+        
+        <qos_profile name="ChildProfile">
+        </qos_profile>
+        
     </qos_library>
 
     <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->
@@ -236,15 +240,7 @@
     <domain_library name="BibliotecaDominios" >
 
         <domain name="DominioLocaviewer" domain_id="0">
-            <!-- Registro el tipo de datos de vídeo y creo un tópico para él. -->   
-            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
-            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
-                <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
-            </topic>
-            
-            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
-            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
-            <topic name="ChildDataTopic" register_type_ref="ChildDataTopic" />
+
         </domain>
         
     </domain_library>
@@ -254,25 +250,26 @@
         
         <!-- Participante de tópico de vídeo -->
         <domain_participant name="ParticipanteVideo" domain_ref="BibliotecaDominios::DominioLocaviewer"> 
+            <!-- Registro el tipo de datos de vídeo y creo un tópico para él. -->   
+            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
+            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
+                <topic_qos name="VideoData_qos" base_name="qosLibrary::VideoProfile"/>
+            </topic>
+            
             <subscriber name="SuscriptorVideo">
-                <data_reader name="VideoDataReader0" topic_ref="VideoDataTopic" >
-                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_reader>
-                <data_reader name="VideoDataReader1" topic_ref="VideoDataTopic" >
-                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_reader>
-                <data_reader name="VideoDataReader2" topic_ref="VideoDataTopic" >
-                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_reader>
-                <data_reader name="VideoDataReader3" topic_ref="VideoDataTopic" >
-                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_reader>
-            </subscriber>     
+                <data_reader name="VideoDataReader" topic_ref="VideoDataTopic" />
+            </subscriber>
+            
+            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
+            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
+            <topic name="ChildDataTopic" register_type_ref="ChildDataType" >
+                <topic_qos name="ChildData_qos" base_name="qosLibrary::ChildProfile" />
+            </topic>
+            
+            <!-- <subscriber name="SuscriptorChild">
+                <data_reader name="ChildDataReader" topic_ref="ChildDataTopic" />
+            </subscriber> -->     
         </domain_participant>
-       
-        <!-- Participante de tópico de niños -->
-        <!-- No creo suscriptores ya que estos variarán en tiempo de ejecución. -->
-        <domain_participant name="ParticipanteNino" domain_ref="BibliotecaDominios::DominioLocaviewer" />
     </participant_library>
 
 </dds>

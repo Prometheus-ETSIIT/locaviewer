@@ -81,9 +81,9 @@
           <Group type="102" alignment="0" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="panelCam1" min="-2" pref="116" max="-2" attributes="0"/>
-                  <Component id="panelVideo" min="-2" max="-2" attributes="0"/>
+                  <Component id="panelVideo" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
               <Component id="toolbar" min="-2" pref="27" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -182,6 +182,7 @@
         </Component>
         <Component class="javax.swing.JToggleButton" name="btnCam1">
           <Properties>
+            <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="Activar c&#xe1;mara"/>
           </Properties>
           <Events>

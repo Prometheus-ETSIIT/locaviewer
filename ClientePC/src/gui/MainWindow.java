@@ -18,25 +18,22 @@
 
 package gui;
 
-import control.TopicoControl;
-import control.SuscriptorCamara;
-import control.SuscriptorNino;
-import control.TopicoControlDinamico;
-import control.TopicoControlFijo;
+import control.LectorNino;
+import es.prometheus.dds.TopicoControl;
+import es.prometheus.dds.TopicoControlDinamico;
+import es.prometheus.dds.TopicoControlFijo;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import org.gstreamer.swing.VideoComponent;
 
 /**
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
     private boolean stop;
-    private int ninoActual;
     
-    private String[] ninoKeys;
-    private SuscriptorNino[] susNino;
+    //private String ninoKeys;
+    private LectorNino susNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
 
@@ -59,20 +56,19 @@ public class MainWindow extends javax.swing.JFrame {
     /**
      * Crea una nueva ventana que participa en un dominio.
      * 
-     * @param ninoKeys Claves para discernir los datos en el tópico de los niños.
+     * @param ninoKey Claves para discernir los datos en el tópico de los niños.
      */
-    public MainWindow(final String[] ninoKeys) {
+    public MainWindow(final String ninoKey) {
         this();
         
-        this.ninoActual  = 0;
-        this.ninoKeys    = ninoKeys;
-        this.controlNino = new TopicoControlDinamico("ParticipantesPC::ParticipanteNino");
+        //this.ninoKeys    = ninoKey;
+        this.controlNino = new TopicoControlDinamico("ParticipantesPC::ParticipanteVideo",
+                "ChildDataTopic");
         this.controlCamaras = new TopicoControlFijo("ParticipantesPC::ParticipanteVideo",
-                "SuscriptorVideo::VideoDataReader");
+                "SuscriptorVideo", null);
         
-        this.susNino = new SuscriptorNino[ninoKeys.length];
-        for (int i = 0; i < ninoKeys.length; i++)
-            this.susNino[i] = new SuscriptorNino(controlNino, ninoKeys[i], controlCamaras);
+        this.susNino = new LectorNino(controlNino, ninoKey, controlCamaras);
+        this.susNino.reanudar();
     }
     
     @SuppressWarnings("unchecked")
@@ -116,6 +112,7 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
+        btnCam1.setSelected(true);
         btnCam1.setText("Activar cámara");
         btnCam1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -203,8 +200,8 @@ public class MainWindow extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(panelCam1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, 0)
                 .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -222,29 +219,21 @@ public class MainWindow extends javax.swing.JFrame {
         if (this.stop)
             return;
 
+        // Elimina la vista antigua
+        this.panelVideo.removeAll();
+        
         // Si el botón está desactivado, borrar la pantalla.
-        if (!this.btnCam1.isSelected() && this.panelVideo.getComponentCount() > 0) {
-            this.panelVideo.removeAll();
-            this.susNino[this.ninoActual].parar();
+        if (!this.btnCam1.isSelected()) {
+            this.susNino.parar();
             return;
         }
         
-        // Comprueba si hay que actualizar la vista
-        int newNino = this.comboCam1.getSelectedIndex();
-        if (newNino == this.ninoActual && this.panelVideo.getComponentCount() > 0)
-            return;
-        
-        // Elimina la vista antigua
-        this.panelVideo.removeAll();
-        this.susNino[this.ninoActual].parar();
-        
         // Cambia a la nueva
-        this.susNino[newNino].reanudar();
-        this.panelVideo.add(this.susNino[newNino].getSuscriptorCamara().getVideoComponent());
+        this.susNino.reanudar();
+        this.panelVideo.add(this.susNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualiza
         this.panelVideo.validate();
-        this.ninoActual = newNino;
     }//GEN-LAST:event_updateCams
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

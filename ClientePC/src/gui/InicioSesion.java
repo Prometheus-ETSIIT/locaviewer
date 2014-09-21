@@ -18,8 +18,6 @@
 
 package gui;
 
-import control.TopicoControl;
-import control.TopicoControlDinamico;
 import java.awt.Color;
 import java.awt.Toolkit;
 
@@ -27,7 +25,6 @@ import java.awt.Toolkit;
  * Formulario de inicio de sesión.
  */
 public class InicioSesion extends javax.swing.JFrame {
-    private static final int DOMINIO_ID = 1;
     
     /**
      * Crea el formulario de inicio de sesión.
@@ -129,11 +126,11 @@ public class InicioSesion extends javax.swing.JFrame {
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
         
-        // TODO: Obtener keys de niños de los que se puede recibir datos
-        String[] keys = new String[] { "86159283", "64239283" };
+        // TODO: Obtener key de niño que puede recibir datos
+        String key = "86159283";
         
         // Turno de la ventana principal
-        new MainWindow(keys).setVisible(true);
+        new MainWindow(key).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);
