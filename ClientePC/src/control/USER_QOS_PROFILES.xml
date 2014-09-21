@@ -22,11 +22,11 @@
                         </element>
 
                         <!--
-                          The next setting is to setup the buffers for sending and recieving data 
-                          on the transport to be at least double what our expected message size will be.
-                          In this case our expected message size is 1MB, so therefore we are setting
-                          the buffer sizes to 2MB.
-                          -->
+                        The next setting is to setup the buffers for sending and recieving data 
+                        on the transport to be at least double what our expected message size will be.
+                        In this case our expected message size is 1MB, so therefore we are setting
+                        the buffer sizes to 2MB.
+                        -->
                         <element>
                             <name>dds.transport.UDPv4.builtin.send_socket_buffer_size</name>
                             <value>2097152</value>
@@ -36,8 +36,8 @@
                             <value>2097152</value>
                         </element>
                         <!--
-                            Configure shared memory transport for higher throughput:
-                          -->
+                          Configure shared memory transport for higher throughput:
+                        -->
                         <element>
                             <!-- 
                             Set the shared memory maximum message size to the
@@ -58,10 +58,10 @@
                         </element>
                         <element>
                             <!--
-                             Set the maximum number of messages that the shared
-                             memory transport can cache while waiting for them
-                             to be read and deserialized.
-                             -->
+                            Set the maximum number of messages that the shared
+                            memory transport can cache while waiting for them
+                            to be read and deserialized.
+                            -->
                             <name>dds.transport.shmem.builtin.received_message_count_max</name>
                             <value>2048</value>
                         </element>
@@ -73,25 +73,25 @@
             <!-- QoS used to configure the data writer -->                
             <datawriter_qos>
               
-		<!-- Streaming video data can be reliable or best-effort depending on 
-		     network characteristics --> 
+                <!-- Streaming video data can be reliable or best-effort depending on 
+                network characteristics --> 
                 <reliability>
                     <kind>RELIABLE_RELIABILITY_QOS</kind>
                 </reliability>
 
                 <!-- Reliably deliver 50 last updates to video stream.  Do not  
-                     block if reader has not received all updates. -->
+                block if reader has not received all updates. -->
                 <history>
                     <!-- If you need strict reliability, this should be changed to 
-                         keep all history. -->
+                    keep all history. -->
                     <kind>KEEP_LAST_HISTORY_QOS</kind>
                     <depth>50</depth>
                 </history>
 
                 <!-- Resource limits: to allow the application to specify
-                   a different number of maximum frames that can be handled
-                   at once. 
-                   -->
+                a different number of maximum frames that can be handled
+                at once. 
+                -->
                 <!--<resource_limits>
                     <max_samples>128</max_samples>
                     <max_instances>64</max_instances>
@@ -99,26 +99,26 @@
                 </resource_limits>-->
 
                 <!-- This data may be larger than 64K (the maximum transport 
-                     size for UDP) so this allows the middleware to fragment
-                     data into chunks to send over the UDP transport -->
+                size for UDP) so this allows the middleware to fragment
+                data into chunks to send over the UDP transport -->
                 <publish_mode>
                     <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
                 </publish_mode>
 
                 <!-- Tuning the reliability protocol for faster reliable 
-                     data repairs (at the expense of bandwidth). -->
+                data repairs (at the expense of bandwidth). -->
                 <protocol>
                     
                     <rtps_reliable_writer>
 
                         <!-- Send reliability heartbeats every 50 ms if there 
-                             is a reader waiting for data.  Send reliability 
-                             heartbeats every 10 ms if the queue is starting to
-                             fill and there is a reader waiting for data. (Note
-                             that no heartbeats are sent if there are no 
-                             readers waiting for data).  These heartbeats 
-                             determine how quickly data is re-sent if it was 
-                             lost the first time. -->
+                        is a reader waiting for data.  Send reliability 
+                        heartbeats every 10 ms if the queue is starting to
+                        fill and there is a reader waiting for data. (Note
+                        that no heartbeats are sent if there are no 
+                        readers waiting for data).  These heartbeats 
+                        determine how quickly data is re-sent if it was 
+                        lost the first time. -->
                         <heartbeat_period>
                             <sec>0</sec>
                             <nanosec>50000000</nanosec>
@@ -133,44 +133,44 @@
                         </late_joiner_heartbeat_period>
                         
                         <!-- Tells the DataWriter to not delay when it 
-                             receives a negative acknowledgement (NACK). -->
+                        receives a negative acknowledgement (NACK). -->
                         <max_nack_response_delay>
                             <sec>0</sec>
                             <nanosec>0</nanosec>
                         </max_nack_response_delay>
                         
                         <!-- Does not change behavior in a system with no 
-                             multicast.  However, if somebody does enable 
-                             multicast on a DataReader, this will prevent 
-                             potential delays. -->
+                        multicast.  However, if somebody does enable 
+                        multicast on a DataReader, this will prevent 
+                        potential delays. -->
                         <enable_multicast_periodic_heartbeat>true</enable_multicast_periodic_heartbeat>
                     </rtps_reliable_writer>
                 </protocol>
 
             </datawriter_qos>
 
-            <!-- QoS used to configure the data reader created in the example code -->                
+            <!-- QoS used to configure the data reader -->                
             <datareader_qos>
 
-		<!-- Streaming video data can be reliable or best-effort depending on 
-		     network characteristics --> 
+                <!-- Streaming video data can be reliable or best-effort depending on 
+                network characteristics --> 
                 <reliability>
                     <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
                 </reliability>
 
                 <!-- Reliably deliver 50 last updates to video stream.  Do not  
-                     block if reader has not received all updates. -->
+                block if reader has not received all updates. -->
                 <history>
                     <!-- If you need strict reliability, this should be changed
-                         to keep all history. -->
+                    to keep all history. -->
                     <kind>KEEP_LAST_HISTORY_QOS</kind>
                     <depth>50</depth>
                 </history>
 
                 <!-- Resource limits: to allow the application to specify
-                       a different number of maximum frames that can be handled
-                       at once, the resource limits are being set in code. 
-                       -->
+                a different number of maximum frames that can be handled
+                at once, the resource limits are being set in code. 
+                -->
                 <!--<resource_limits>
                     <max_samples>128</max_samples>
                     <max_instances>64</max_instances>
@@ -178,10 +178,10 @@
                 </resource_limits>-->
 
                 <!-- Response delays in the DataReader are useful if there is a
-                       large fanout of readers to writers - they prevent the 
-                       readers from simultaneously resonding to heartbeats and 
-                       flooding the writers.  With smaller numbers of readers the
-                       delays can be set to zero.  -->
+                large fanout of readers to writers - they prevent the 
+                readers from simultaneously resonding to heartbeats and 
+                flooding the writers.  With smaller numbers of readers the
+                delays can be set to zero.  -->
                 <protocol>
                     <rtps_reliable_reader>
                         <min_heartbeat_response_delay>
@@ -200,55 +200,61 @@
         </qos_profile>
     </qos_library>
 
-    <!-- types. Definido en 3.4 -->
+    <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->
     <types>
-         <const name="MAX_BUFFER_SIZE" type="long" value="1048576"/> <!-- 1 MB -->
-         <const name="MAX_ID_SIZE"     type="long" value="16" />
-         <const name="MAX_STRING_SIZE" type="long" value="32" />
+        <const name="MAX_BUFFER_SIZE" type="long" value="1048576"/> <!-- 1 MB -->
+        <const name="MAX_ID_SIZE"     type="long" value="16" />
+        <const name="MAX_STRING_SIZE" type="long" value="32" />
          
-         <struct name="VideoData">
-             <member name="camId" type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
-             <member name="sala"  type="string" stringMaxLength="MAX_STRING_SIZE" />
-             <member name="posX"  type="double" />
-             <member name="posY"  type="double" />
-             <member name="angle" type="double" />
-             <member name="codecInfo" type="string" stringMaxLength="MAX_STRING_SIZE" />
-             <member name="width"     type="long" />
-             <member name="height"    type="long" />
-             <member name="buffer"    type="octet" sequenceMaxLength="MAX_BUFFER_SIZE" /> <!-- -1 sin límite -->
-          </struct>
+        <!-- Estructura con los datos de transmisión de vídeo -->
+        <struct name="VideoData">
+            <member name="camId" type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"  type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="posX"  type="double" />
+            <member name="posY"  type="double" />
+            <member name="angle" type="double" />
+            <member name="codecInfo" type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="width"     type="long" />
+            <member name="height"    type="long" />
+            <member name="buffer"    type="octet" sequenceMaxLength="MAX_BUFFER_SIZE" /> <!-- -1 sin límite -->
+        </struct>
+          
+        <!-- Estructura con los datos de posición del niño -->
+        <struct name="ChildData">
+            <member name="calidad" type="double" key="true" />
+            <member name="id"      type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="camId"   type="string" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"    type="string" />
+            <member name="posX"    type="double" />
+            <member name="posY"    type="double" />              
+            <member name="nombre"  type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="apodo"   type="string" stringMaxLength="MAX_STRING_SIZE" />
+        </struct>
     </types>
 
-    <!-- Domain Library -->
-    <domain_library name="MyDomainLibrary" >
+    <!-- Biblioteca de dominios -->
+    <domain_library name="BibliotecaDominios" >
 
-        <domain name="LocaviewerDomain" domain_id="0">
-        	<register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
-        	<topic name="VideoDataTopic" register_type_ref="VideoDataType">
-                    <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
-		</topic>
+        <domain name="DominioLocaviewer" domain_id="0">
+            <!-- Registro el tipo de datos de vídeo y creo un tópico para él. -->   
+            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
+            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
+                <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
+            </topic>
+            
+            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
+            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
+            <topic name="ChildDataTopic" register_type_ref="ChildDataTopic" />
         </domain>
         
     </domain_library>
 
-    <!-- Participant library -->
-    <participant_library name="MyParticipantLibrary">
-
-        <domain_participant name="PublicationParticipant" 
-                            domain_ref="MyDomainLibrary::LocaviewerDomain">
-            <publisher name="MyPublisher">
-                <data_writer name="VideoDataWriter0" topic_ref="VideoDataTopic">
-                    <datawriter_qos name="datawriter_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_writer>
-                <data_writer name="VideoDataWriter1" topic_ref="VideoDataTopic">
-                    <datawriter_qos name="datawriter_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_writer>
-            </publisher>
-        </domain_participant>
+    <!-- Biblioteca de participantes en el dominio -->
+    <participant_library name="ParticipantesPC">
         
-        <domain_participant name="SubscriptionParticipant" 
-                            domain_ref="MyDomainLibrary::LocaviewerDomain"> 
-            <subscriber name="MySubscriber">
+        <!-- Participante de tópico de vídeo -->
+        <domain_participant name="ParticipanteVideo" domain_ref="BibliotecaDominios::DominioLocaviewer"> 
+            <subscriber name="SuscriptorVideo">
                 <data_reader name="VideoDataReader0" topic_ref="VideoDataTopic" >
                     <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
                 </data_reader>
@@ -264,6 +270,9 @@
             </subscriber>     
         </domain_participant>
        
+        <!-- Participante de tópico de niños -->
+        <!-- No creo suscriptores ya que estos variarán en tiempo de ejecución. -->
+        <domain_participant name="ParticipanteNino" domain_ref="BibliotecaDominios::DominioLocaviewer" />
     </participant_library>
 
 </dds>

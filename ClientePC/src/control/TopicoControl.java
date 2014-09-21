@@ -25,31 +25,23 @@ import com.rti.dds.dynamicdata.DynamicDataReader;
 /**
  * Clase para crear y destruir lectores sobre un tópico.
  */
-public class TopicoControl {   
-    private final static int MAX_LECTORES = 4;
-    
+public abstract class TopicoControl {   
+
     private final DomainParticipant participante;
-    private final String[] keys;
-    private final DynamicDataReader[] lectoresUsados = new DynamicDataReader[MAX_LECTORES];
     
     /**
      * Crea una nueva instancia de control de tópico.
      * 
-     * @param keys Claves para discernir los datos en el tópico.
+     * @param partName Nombre del participante en el XML.
      */
-    public TopicoControl(final String[] keys) {
+    protected TopicoControl(final String partName) {
         // Crea un participante de dominio
         this.participante = DomainParticipantFactory.get_instance()
-                .create_participant_from_config("MyParticipantLibrary::SubscriptionParticipant");
+                .create_participant_from_config(partName);
         if (this.participante == null) {
-            System.err.println("No se pudo obtener el dominio.");
+            System.err.println("No se pudo obtener el participante.");
             System.exit(1);
         }
-        
-        // Las claves se usan para filtrar datos en los lectores y obtener
-        // vídeo de la cámara que se quiere. Este filtro se añadirá al crear
-        // un lector.
-        this.keys = keys;
     }
     
     /**
@@ -61,21 +53,12 @@ public class TopicoControl {
     }
     
     /**
-     * Número de claves de las que se dispone para discernir datos.
+     * Obtiene el participante del dominio.
      * 
-     * @return Claves.
+     * @return Participante del dominio.
      */
-    public int getNumKeys() {
-        return this.keys.length;
-    }
-
-    /**
-     * Obtiene las claves para discernir datos en el tópico.
-     * 
-     * @return Claves para discernir datos.
-     */
-    public String[] getKeys() {
-        return this.keys;
+    protected DomainParticipant getParticipante() {
+        return this.participante;
     }
     
     /**
@@ -83,35 +66,12 @@ public class TopicoControl {
      * 
      * @return Lector del tópico.
      */
-    public DynamicDataReader creaLector() {
-        // Primero buscamos un lector que no se esté usando
-        int i;
-        for (i = 0; i < this.lectoresUsados.length; i++)
-            if (this.lectoresUsados[i] == null)
-                break;
-        
-        this.lectoresUsados[i] = (DynamicDataReader)this.participante
-                .lookup_datareader_by_name("MySubscriber::VideoDataReader" + i);
-        
-        if (this.lectoresUsados[i] == null)
-            System.out.println("No se pudo crear el lector.");
-        
-        return this.lectoresUsados[i];
-    }
+    public abstract DynamicDataReader creaLector();
     
     /**
      * Elimina un lector de este tópico.
      * 
      * @param reader Lector del tópico.
      */
-    public void eliminaLector(final DynamicDataReader reader) {
-        // Lo libera de los usados
-        for (int i = 0; i < this.lectoresUsados.length; i++)
-            if (this.lectoresUsados[i] == reader)
-                this.lectoresUsados[i] = null;
-        
-        // NOTA:
-        // NO se puede eliminar del dominio porque si no no se podría volver a
-        // recuperar. Simplemente le quitamos el listener y las condiciones.
-    }
+    public abstract void eliminaLector(final DynamicDataReader reader);
 }
