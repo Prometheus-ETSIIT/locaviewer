@@ -19,6 +19,7 @@
 package gui;
 
 import control.TopicoControl;
+import control.TopicoControlDinamico;
 import java.awt.Color;
 import java.awt.Toolkit;
 
@@ -129,12 +130,10 @@ public class InicioSesion extends javax.swing.JFrame {
         // TODO: Inicio de sesión en servidor
         
         // TODO: Obtener keys de niños de los que se puede recibir datos
-        // TEMP: Por ahora sólo admite recibir desde el tópico de las cámaras
-        String[] topicos = new String[] { "0", "1" };
+        String[] keys = new String[] { "86159283", "64239283" };
         
-        // Creo un control de dominio y la ventana principal
-        TopicoControl dominio = new TopicoControl(topicos);
-        new MainWindow(dominio).setVisible(true);
+        // Turno de la ventana principal
+        new MainWindow(keys).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);

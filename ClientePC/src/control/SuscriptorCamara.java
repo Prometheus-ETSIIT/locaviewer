@@ -49,7 +49,7 @@ public class SuscriptorCamara extends SuscriptorBase {
      */
     public SuscriptorCamara(final TopicoControl control, final String key,
             final VideoComponent videocomp) {
-        super(control, key);
+        super(control, "camId = %0", new String[] { "'" + key + "'" });
         this.videocomp = videocomp;
         
         this.creaTuberia();

@@ -33,6 +33,7 @@ import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.ViewStateKind;
+import java.util.Arrays;
 
 /**
  * Clase abstracta para recibir datos de un tópico y filtrarlos según un key.
@@ -41,32 +42,29 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
     private final TopicoControl control;
     private final DynamicDataReader reader;
     private final QueryCondition condition;
-    private final String key;
+    
+    private boolean parado;
     
     /**
      * Crea una base de suscriptor.
      * 
      * @param control Control de tópico actual.
-     * @param key Parámetro key para distiguir los datos.
+     * @param expresion Expresión para la condición al discernir los datos.
+     * @param params Parámetros de la expresión
      */
-    protected SuscriptorBase(final TopicoControl control, final String key) {
+    protected SuscriptorBase(final TopicoControl control, final String expresion,
+            final String[] params) {
         this.control = control;
         this.reader  = control.creaLector();
-        this.key     = key;
-                
-        // Crea el filtro de datos.
-        StringSeq queryParams = new StringSeq(1);
-        queryParams.add("'" + key + "'");
+        this.parado  = true;
         
+        // Crea el filtro de datos.       
         this.condition = reader.create_querycondition(
                 SampleStateKind.ANY_SAMPLE_STATE,
                 ViewStateKind.ANY_VIEW_STATE,
                 InstanceStateKind.ANY_INSTANCE_STATE,
-                "camId = %0",
-                queryParams);
-
-        // Le añade el listener para recibir datos.
-        reader.set_listener(this, StatusKind.STATUS_MASK_ALL);
+                expresion,
+                new StringSeq(Arrays.asList(params)));
     }
     
     /**
@@ -78,13 +76,26 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
         this.control.eliminaLector(this.reader);
     }
     
-    /**
-     * Obtiene la clave que está discerniendo los datos en este lector.
-     * 
-     * @return Clave del lector. 
-     */
-    public String getKey() {
-        return this.key;
+    public final void cambioParametros(final String[] params) {        
+        this.condition.set_query_parameters(new StringSeq(Arrays.asList(params)));
+    }
+    
+    public void parar() {
+        if (this.parado)
+            return;
+        
+        // Le quita el listener luego no recibe datos.
+        reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
+        this.parado = true;
+    }
+    
+    public void reanudar() {
+        if (!this.parado)
+            return;
+        
+        // Le añade el listener para recibir datos.
+        reader.set_listener(this, StatusKind.STATUS_MASK_ALL);
+        this.parado = false;
     }
     
     /**
@@ -100,7 +111,12 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
      * @param dataReader Lector de datos
      */
     @Override
-    public void on_data_available(DataReader dataReader) {   
+    public void on_data_available(DataReader dataReader) {
+        if (this.condition == null) {
+            System.out.println("¡No hay condición!");
+            return;
+        }
+        
         // Obtiene todos los sample de DDS
         DynamicDataReader dynamicReader = (DynamicDataReader)dataReader;
         DynamicDataSeq dataSeq = new DynamicDataSeq();
