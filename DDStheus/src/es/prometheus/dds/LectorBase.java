@@ -38,7 +38,7 @@ import java.util.Arrays;
 /**
  * Clase abstracta para recibir datos de un tópico y filtrarlos según un key.
  */
-public abstract class SuscriptorBase extends DataReaderAdapter {
+public abstract class LectorBase extends DataReaderAdapter {
     private final TopicoControl control;
     private final DynamicDataReader reader;
     private final QueryCondition condition;
@@ -46,13 +46,13 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
     private boolean parado;
     
     /**
-     * Crea una base de suscriptor.
+     * Crea una base de lector.
      * 
      * @param control Control de tópico actual.
      * @param expresion Expresión para la condición al discernir los datos.
      * @param params Parámetros de la expresión
      */
-    protected SuscriptorBase(final TopicoControl control, final String expresion,
+    protected LectorBase(final TopicoControl control, final String expresion,
             final String[] params) {
         this.control = control;
         this.reader  = control.creaLector();
@@ -68,7 +68,7 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
     }
     
     /**
-     * Libera los recursos del suscriptor.
+     * Libera los recursos del lector.
      */
     public void dispose() {
         this.reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
@@ -76,10 +76,18 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
         this.control.eliminaLector(this.reader);
     }
     
+    /**
+     * Cambia los parámetros de la expresión de filtro del lector.
+     * 
+     * @param params Nuevos parámetros.
+     */
     public final void cambioParametros(final String[] params) {        
         this.condition.set_query_parameters(new StringSeq(Arrays.asList(params)));
     }
     
+    /**
+     * Para de recibir datos de DDS.
+     */
     public void parar() {
         if (this.parado)
             return;
@@ -89,6 +97,9 @@ public abstract class SuscriptorBase extends DataReaderAdapter {
         this.parado = true;
     }
     
+    /**
+     * Continua con la recepción de datos de DDS.
+     */
     public void reanudar() {
         if (!this.parado)
             return;
