@@ -53,7 +53,7 @@ public class Escritor {
      * 
      * @return Estructura de datos para enviar.
      */
-    public DynamicData createDatos() {
+    public DynamicData creaDatos() {
         // Para que la estructura pueda tener más de 64 KB de datos
         // (aunque sólo se utilizarán los que se necesiten, no el máximo).
         DynamicDataProperty_t propiedades = new DynamicDataProperty_t();

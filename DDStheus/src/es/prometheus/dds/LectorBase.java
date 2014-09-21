@@ -37,7 +37,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 
 /**
- * Clase abstracta para recibir datos de un tópico y filtrarlos según un key.
+ * Clase abstracta para recibir datos dinámicos de un tópico y filtrarlos según un key.
  */
 public abstract class LectorBase extends DataReaderAdapter {
     private final TopicoControl control;
@@ -52,7 +52,7 @@ public abstract class LectorBase extends DataReaderAdapter {
      * 
      * @param control Control de tópico actual.
      * @param expresion Expresión para la condición al discernir los datos.
-     * @param params Parámetros de la expresión
+     * @param params Parámetros de la expresión del filtro.
      */
     protected LectorBase(final TopicoControl control, final String expresion,
             final String[] params) {
@@ -60,7 +60,7 @@ public abstract class LectorBase extends DataReaderAdapter {
         this.reader  = control.creaLector();
         this.parado  = true;
         
-        // Crea el filtro de datos.       
+        // Crea el filtro de datos.
         this.condition = reader.create_querycondition(
                 SampleStateKind.ANY_SAMPLE_STATE,
                 ViewStateKind.ANY_VIEW_STATE,
@@ -93,8 +93,11 @@ public abstract class LectorBase extends DataReaderAdapter {
      * 
      * @param params Nuevos parámetros.
      */
-    public final void cambioParametros(final String[] params) {        
+    public final void cambioParametros(final String[] params) {
+        // Paro la recepción para poder cambiar el parámetro.
+        this.parar();
         this.condition.set_query_parameters(new StringSeq(Arrays.asList(params)));
+        this.reanudar();
     }
     
     /**
@@ -103,7 +106,7 @@ public abstract class LectorBase extends DataReaderAdapter {
     public void parar() {
         if (this.parado)
             return;
-        
+
         // Le quita el listener luego no recibe datos.
         reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
         this.parado = true;
@@ -135,11 +138,6 @@ public abstract class LectorBase extends DataReaderAdapter {
      */
     @Override
     public void on_data_available(DataReader dataReader) {
-        if (this.condition == null) {
-            System.out.println("¡No hay condición!");
-            return;
-        }
-        
         // Obtiene todos los sample de DDS
         DynamicDataReader dynamicReader = (DynamicDataReader)dataReader;
         DynamicDataSeq dataSeq = new DynamicDataSeq();

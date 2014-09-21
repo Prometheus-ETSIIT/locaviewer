@@ -28,7 +28,7 @@ import com.rti.dds.dynamicdata.DynamicDataWriter;
  */
 public abstract class TopicoControl {   
 
-    private final DomainParticipant participante;
+    private DomainParticipant participante;
     
     /**
      * Crea una nueva instancia de control de tópico.
@@ -37,12 +37,21 @@ public abstract class TopicoControl {
      *  (BibliotecaParticipantes::NombreParticipante).
      */
     protected TopicoControl(final String partName) {
-        // Crea un participante de dominio
+        // Buscamos si ya está creado el participante para recuperarlo.
+        // ¡Se asume que sólo se permite UN dominio!
+        String nombre = partName.substring(partName.indexOf("::") + 2);
         this.participante = DomainParticipantFactory.get_instance()
-                .create_participant_from_config(partName);
+                .lookup_participant_by_name(nombre);
+        
+        // No ha sido creado previamente -> Crea un participante de dominio.
         if (this.participante == null) {
-            System.err.println("No se pudo obtener el participante.");
-            System.exit(1);
+            this.participante = DomainParticipantFactory.get_instance()
+                    .create_participant_from_config(partName);
+            
+            if (this.participante == null) {
+                System.err.println("No se puedo crear ni recuperar el participante.");
+                System.exit(1);
+            }
         }
     }
     

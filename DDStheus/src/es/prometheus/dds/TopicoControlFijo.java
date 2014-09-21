@@ -93,13 +93,15 @@ public class TopicoControlFijo extends TopicoControl {
             }
         }
         
+        System.err.println("No hay suficiente lectores definidos en el XML.");
         return null;
     }
     
     @Override
     public void eliminaLector(final DynamicDataReader reader) {
-        // Nos aseguramos de que no tenga listener
+        // Nos aseguramos de que no tenga listener ni condición
         reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
+        reader.delete_contained_entities();
         
         // Marca el lector como disponible
         for (DynamicDataReader mapReader : this.lectores.keySet()) {
@@ -121,6 +123,7 @@ public class TopicoControlFijo extends TopicoControl {
             }
         }
         
+        System.err.println("No hay suficiente escritores definidos en el XML.");
         return null;
     }
 

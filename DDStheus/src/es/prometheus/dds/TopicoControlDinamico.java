@@ -34,7 +34,6 @@ public class TopicoControlDinamico extends TopicoControl {
     /**
      * Crea una nueva instancia del control de tópico a partir de los nombres
      * del XML del participante y tópico.
-     * NOTA: En el XML se tiene que definir un Topic, no un ContentFilterTopic.
      * 
      * @param partName Nombre del participante en el XML
      *  (BibliotecaParticipantes::NombreParticipante).
@@ -43,7 +42,6 @@ public class TopicoControlDinamico extends TopicoControl {
      */
     public TopicoControlDinamico(final String partName, final String topicName) {
         super(partName);
-        
         this.topico = (Topic)this.getParticipante().lookup_topicdescription(topicName);
     }
 
