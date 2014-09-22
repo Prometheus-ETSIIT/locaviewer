@@ -21,6 +21,8 @@ package control;
 import com.rti.dds.dynamicdata.DynamicData;
 import es.prometheus.dds.LectorBase;
 import es.prometheus.dds.TopicoControl;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import org.gstreamer.swing.VideoComponent;
 
 /**
@@ -53,6 +55,15 @@ public class LectorNino extends LectorBase {
      */
     public LectorCamara getSuscriptorCamara() {
         return this.lectorCam;
+    }
+    
+    /**
+     * Obtiene el último dato sobre información del niño en el tópico.
+     * 
+     * @return Dato de niño.
+     */
+    public DatosNino getUltimoDato() {
+        return this.ultDato;
     }
     
     /**
