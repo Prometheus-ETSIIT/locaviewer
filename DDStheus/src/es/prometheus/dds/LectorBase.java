@@ -24,6 +24,7 @@ import com.rti.dds.dynamicdata.DynamicDataSeq;
 import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.WaitSet;
@@ -161,7 +162,8 @@ public abstract class LectorBase {
             while (!this.terminar) {
                 // Esperamos a obtener la siguiente muestra que cumpla la condición
                 ConditionSeq activadas = new ConditionSeq();
-                this.waitset.wait(activadas, duracion);
+                try { this.waitset.wait(activadas, duracion); }
+                catch (RETCODE_TIMEOUT e) { continue; }
                 
                 // Si nos dicen que paremos, nosotros paramos.
                 if (this.parado)

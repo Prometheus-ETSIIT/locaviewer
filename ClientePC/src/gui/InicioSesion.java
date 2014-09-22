@@ -126,11 +126,11 @@ public class InicioSesion extends javax.swing.JFrame {
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
         
-        // TODO: Obtener key de niño que puede recibir datos
-        String key = "86159283";
+        // TODO: Obtener key de los niños que puede recibir datos
+        String[] keys = new String[] { "86159283", "23958309" };
         
         // Turno de la ventana principal
-        new MainWindow(key).setVisible(true);
+        new MainWindow(keys).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);

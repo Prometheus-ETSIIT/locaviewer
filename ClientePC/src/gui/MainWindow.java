@@ -30,7 +30,8 @@ import java.awt.Toolkit;
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
-    //private String ninoKeys;
+    private boolean stop;
+    private String[] ninoKeys;
     private LectorNino susNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
@@ -54,18 +55,27 @@ public class MainWindow extends javax.swing.JFrame {
     /**
      * Crea una nueva ventana que participa en un dominio.
      * 
-     * @param ninoKey Claves para discernir los datos en el tópico de los niños.
+     * @param ninoKeys Claves para discernir los datos en el tópico de los niños.
      */
-    public MainWindow(final String ninoKey) {
+    public MainWindow(final String[] ninoKeys) {
         this();
         
-        //this.ninoKeys    = ninoKey;
         this.controlNino = new TopicoControlDinamico("ParticipantesPC::ParticipanteVideo",
                 "ChildDataTopic");
         this.controlCamaras = new TopicoControlFijo("ParticipantesPC::ParticipanteVideo",
                 "SuscriptorVideo", null);
         
-        this.susNino = new LectorNino(controlNino, ninoKey, controlCamaras);
+        this.susNino = new LectorNino(controlNino, ninoKeys[0], controlCamaras);
+        
+        // Establece las posibles claves
+        // TODO: Que aperazca el apodo en lugar del ID
+        // Por ejemplo, no activando filtros momentáneamente y poniendo el listener extra
+        this.ninoKeys = ninoKeys;
+        this.stop = true;
+        this.comboNino.removeAllItems();
+        for (String k : ninoKeys)
+            this.comboNino.addItem(k);
+        this.stop = false;
     }
     
     @SuppressWarnings("unchecked")
@@ -76,8 +86,8 @@ public class MainWindow extends javax.swing.JFrame {
         lblStatus = new javax.swing.JLabel();
         panelCam1 = new javax.swing.JPanel();
         lblCam1Child = new javax.swing.JLabel();
-        comboCam1 = new javax.swing.JComboBox();
-        btnCam1 = new javax.swing.JToggleButton();
+        comboNino = new javax.swing.JComboBox();
+        btnCam = new javax.swing.JToggleButton();
         lblCam1Tag = new javax.swing.JLabel();
         lblCam1Place = new javax.swing.JLabel();
         panelVideo = new javax.swing.JPanel();
@@ -101,18 +111,18 @@ public class MainWindow extends javax.swing.JFrame {
 
         lblCam1Child.setText("Niño:");
 
-        comboCam1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        comboCam1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
-        comboCam1.addActionListener(new java.awt.event.ActionListener() {
+        comboNino.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        comboNino.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
+        comboNino.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateCams(evt);
+                comboNinoSelected(evt);
             }
         });
 
-        btnCam1.setText("Activar cámara");
-        btnCam1.addActionListener(new java.awt.event.ActionListener() {
+        btnCam.setText("Activar cámara");
+        btnCam.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateCams(evt);
+                btnCamClick(evt);
             }
         });
 
@@ -125,8 +135,8 @@ public class MainWindow extends javax.swing.JFrame {
         panelCam1.setLayout(panelCam1Layout);
         panelCam1Layout.setHorizontalGroup(
             panelCam1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(comboCam1, 0, 0, Short.MAX_VALUE)
-            .addComponent(btnCam1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(comboNino, 0, 0, Short.MAX_VALUE)
+            .addComponent(btnCam, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(panelCam1Layout.createSequentialGroup()
                 .addGroup(panelCam1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblCam1Child)
@@ -141,9 +151,9 @@ public class MainWindow extends javax.swing.JFrame {
             .addGroup(panelCam1Layout.createSequentialGroup()
                 .addComponent(lblCam1Child)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(comboCam1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(comboNino, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnCam1)
+                .addComponent(btnCam)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelCam1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblCam1Tag)
@@ -209,12 +219,12 @@ public class MainWindow extends javax.swing.JFrame {
      * 
      * @param evt Evento que lo dispara.
      */
-    private void updateCams(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCams
+    private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
         // Elimina la vista antigua
         this.panelVideo.removeAll();
         
         // Si el botón está desactivado, borrar la pantalla.
-        if (!this.btnCam1.isSelected()) {
+        if (!this.btnCam.isSelected()) {
             this.susNino.parar();
             this.panelVideo.revalidate();
             this.panelVideo.repaint();
@@ -227,11 +237,19 @@ public class MainWindow extends javax.swing.JFrame {
         
         // Actualiza
         this.panelVideo.revalidate();
-    }//GEN-LAST:event_updateCams
+    }//GEN-LAST:event_btnCamClick
+
+    private void comboNinoSelected(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboNinoSelected
+        if (this.stop)
+            return;
+
+        // Cambia la clave en el lector de niños
+        this.susNino.cambiarNinoId(this.ninoKeys[this.comboNino.getSelectedIndex()]);
+    }//GEN-LAST:event_comboNinoSelected
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton btnCam1;
-    private javax.swing.JComboBox comboCam1;
+    private javax.swing.JToggleButton btnCam;
+    private javax.swing.JComboBox comboNino;
     private javax.swing.JLabel lblCam1Child;
     private javax.swing.JLabel lblCam1Place;
     private javax.swing.JLabel lblCam1Tag;

@@ -26,7 +26,7 @@ import es.prometheus.dds.TopicoControlDinamico;
  * Programa que simula estar localizando a un niño.
  */
 public class Program {
-    private static final int MAX_ITER = 200; // Máximas iteraciones => ~6.5 min
+    private static final int MAX_ITER = 200;    // Máximas iteraciones
     private static final int SLEEP_TIME = 5000; // Tiempo entre iteración
     
     /**

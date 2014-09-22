@@ -43,7 +43,7 @@ public class LectorNino extends LectorBase {
     public LectorNino(final TopicoControl controlNino, final String ninoId,
             final TopicoControl controlCam) {
         super(controlNino, EXPRESION, new String[] { "'" + ninoId + "'" });
-        this.lectorCam = new LectorCamara(controlCam, "", new VideoComponent());
+        this.lectorCam = new LectorCamara(controlCam, "'-1'", new VideoComponent());
     }
 
     /**
@@ -53,6 +53,18 @@ public class LectorNino extends LectorBase {
      */
     public LectorCamara getSuscriptorCamara() {
         return this.lectorCam;
+    }
+    
+    /**
+     * Cambia la ID del niño en el que se están obteniendo los datos.
+     * 
+     * @param ninoId Nuevo ID de niño.
+     */
+    public void cambiarNinoId(final String ninoId) {
+        this.cambioParametros(new String[] { "'" + ninoId + "'" });
+        
+        // Ponemos el ID de la cámara a -1 para que no muestre el vídeo anterior.
+        this.lectorCam.cambioParametros(new String[] { "'-1'" });
     }
     
     @Override
