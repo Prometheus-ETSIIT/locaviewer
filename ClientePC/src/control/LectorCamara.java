@@ -104,6 +104,15 @@ public class LectorCamara extends LectorBase {
     }
     
     /**
+     * Obtiene el último dato recibido en el tópico.
+     * 
+     * @return Dato recibido.
+     */
+    public DatosCamara getUltimoDato() {
+        return this.ultDatos;
+    }
+    
+    /**
      * Obtiene el componente para ver el vídeo.
      * 
      * @return Componente de vídeo.
