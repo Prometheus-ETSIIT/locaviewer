@@ -30,8 +30,6 @@ import java.awt.Toolkit;
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
-    private boolean stop;
-    
     //private String ninoKeys;
     private LectorNino susNino;
     private TopicoControl controlNino;
@@ -68,7 +66,6 @@ public class MainWindow extends javax.swing.JFrame {
                 "SuscriptorVideo", null);
         
         this.susNino = new LectorNino(controlNino, ninoKey, controlCamaras);
-        this.susNino.reanudar();
     }
     
     @SuppressWarnings("unchecked")
@@ -112,7 +109,6 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
-        btnCam1.setSelected(true);
         btnCam1.setText("Activar cámara");
         btnCam1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -214,17 +210,14 @@ public class MainWindow extends javax.swing.JFrame {
      * @param evt Evento que lo dispara.
      */
     private void updateCams(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCams
-        // Si estamos modificando los datos de los controles (añdiendo elementos
-        // a los combox) no queremos que este evento se dispare.
-        if (this.stop)
-            return;
-
         // Elimina la vista antigua
         this.panelVideo.removeAll();
         
         // Si el botón está desactivado, borrar la pantalla.
         if (!this.btnCam1.isSelected()) {
             this.susNino.parar();
+            this.panelVideo.revalidate();
+            this.panelVideo.repaint();
             return;
         }
         
@@ -233,7 +226,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.panelVideo.add(this.susNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualiza
-        this.panelVideo.validate();
+        this.panelVideo.revalidate();
     }//GEN-LAST:event_updateCams
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
