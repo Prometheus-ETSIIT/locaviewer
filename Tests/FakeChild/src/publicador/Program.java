@@ -27,7 +27,7 @@ import es.prometheus.dds.TopicoControlDinamico;
  */
 public class Program {
     private static final int MAX_ITER = 200; // Máximas iteraciones => ~6.5 min
-    private static final int SLEEP_TIME = 2000; // Tiempo entre iteración
+    private static final int SLEEP_TIME = 5000; // Tiempo entre iteración
     
     /**
      * Inicia el programa.
