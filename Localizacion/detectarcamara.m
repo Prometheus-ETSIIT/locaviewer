@@ -1,5 +1,5 @@
 function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2,ancho_habitacion,alto_habitacion,angulo_pos)
-%Sugerencia: devolver en la funcion todas las camaras que tienen al niño en
+%Sugerencia: devolver en la funcion todas las camaras que tienen al ni?o en
 %el ángulo de vision
 
 
@@ -48,7 +48,21 @@ if contador==length(rssi)
     H=[hx',hy'];
 
     m=(inv(H'*H)*H')*C; %posicion x e y del objeto
-
+%%
+  %Posible mejora para localizarlo:
+    %Una vez que se ha hecho triangulacion se busca la posicion dentro del
+    %circulo de potencia mas cercana a la posicion de triangulacion
+    %del bluetooth que tiene al niño mas cerca. Ya que el error aumenta con
+    %la distancia, será mas fiable si suponemos que el niño esta alrededor
+    %de circulo de potencia que tiene al niño mas cerca.
+    
+    d=min(r)%BUscamos la posicion del minimo en r
+    min_d=find(r==d,1) %De que bluetooth esta mas cerca el niño
+    vector_prin=[m(1)-posicion_bluetooth(min_d,1),m(2)-posicion_bluetooth(min_d,2)]%Del bluetooth a la posicion de la triangulacion
+    modulo_prin=norm(vector_prin,2)%modulo
+    m_prima=[(vector_prin(1)./modulo_prin).*d+posicion_bluetooth(min_d,1),(vector_prin(2)./modulo_prin).*d+posicion_bluetooth(min_d,2)]
+    m=m_prima
+    
 %%
 
 %Deteccion de la mejor camara para observar al objetivo:
@@ -64,8 +78,8 @@ if contador==length(rssi)
                 dentro_rango_vision=0;
                 
                 %Cambio de origen+Rotacion respecto a la camara actual
-                %1ºCambio de origen al (0,0) respecto a la camara
-                %2ºRotacion de un vector https://es.wikipedia.org/wiki/Matriz_de_rotaci%C3%B3n
+                %1?Cambio de origen al (0,0) respecto a la camara
+                %2?Rotacion de un vector https://es.wikipedia.org/wiki/Matriz_de_rotaci%C3%B3n
                 posicion_chavea_nueva=[posicion_chavea(1)-posicion_camara2(i,1),posicion_chavea(2)-posicion_camara2(i,2)];
                 posicion_chavea_final=[posicion_chavea_nueva(1)*cos(-angulo_pos(i))-posicion_chavea_nueva(2)*sin(-angulo_pos(i)),posicion_chavea_nueva(1)*sin(-angulo_pos(i))+posicion_chavea_nueva(2)*cos(-angulo_pos(i))];
 
@@ -73,7 +87,7 @@ if contador==length(rssi)
                 encima_recta_inferior=0;
                 debajo_recta_superior=0;
                 %recta inferior
-                punto_2_recta_inferior(i)=-tan(angulo_vision/2)*posicion_chavea_final(1);%Calculamos el punto de la recta superior como si estuviera traslada al (0,0) y girada hasta el angulo 0º
+                punto_2_recta_inferior(i)=-tan(angulo_vision/2)*posicion_chavea_final(1);%Calculamos el punto de la recta superior como si estuviera traslada al (0,0) y girada hasta el angulo 0?
                 if posicion_chavea_final(2)>=punto_2_recta_inferior(i)
                     encima_recta_inferior=1;
                 end
@@ -127,5 +141,5 @@ if contador==length(rssi)
 else
     posicion=-1;
 end
-end
 
+end
