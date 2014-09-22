@@ -136,8 +136,8 @@ public abstract class LectorBase {
         private final Duration_t duracion;
         
         private ActionListener extraListener;
-        private boolean parado   = false;
-        private boolean terminar = false;
+        private boolean parado;
+        private boolean terminar;
         
         /**
          * Crea una nueva instancia para un lector con condición dada.
@@ -146,6 +146,9 @@ public abstract class LectorBase {
          * @param condicion Condición a aplicar sobre los datos.
          */
         public DataCallback(final DynamicDataReader reader, final QueryCondition condicion) {
+            this.parado  = true;
+            this.terminar = false;
+            
             this.reader    = reader;
             this.condicion = condicion;
             this.duracion  = new Duration_t(5, 0);
