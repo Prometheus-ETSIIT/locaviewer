@@ -15,21 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package gava;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.dynamicdata.DynamicDataProperty_t;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
-import com.rti.dds.infrastructure.RETCODE_ILLEGAL_OPERATION;
-import com.rti.dds.infrastructure.RETCODE_OUT_OF_RESOURCES;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.*;
+import es.prometheus.dds.TopicoControl;
+import es.prometheus.dds.TopicoControlFactoria;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.List;
+import java.util.ArrayList;
 import org.gstreamer.Buffer;
 import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
@@ -40,118 +41,181 @@ import org.gstreamer.Pipeline;
 import org.gstreamer.State;
 import org.gstreamer.elements.AppSink;
 
-public class Publicador implements Runnable {
-    private final String device;
-    private final String camId;
-    
-    private DomainParticipant participant;
-    private DynamicDataWriter writer;
-    private DynamicData instance;
-    
-    private Pipeline pipe;
-    private AppSink appsink;
-    
-    public Publicador(final String device, final String camId) {
-        this.device = device;
-        this.camId  = camId;
-    }
-    
+public class Publicador {
+    private static ShutdownThread Shutdown = new ShutdownThread();
+
     /**
      * Inicia la aplicación.
-     * 
-     * @param args La(s) camara(s). Ej: "/dev/video1". 
-     *             Si no se pasa ningún parámetro, inicia todas.
+     *
+     * @param args La(s) camara(s). Ej: "/dev/video1". Si no se pasa ningún
+     * parámetro, inicia todas.
      */
     public static void main(String[] args) {
         args = Gst.init("Gava", args);
+        Runtime.getRuntime().addShutdownHook(Shutdown);
         
-        if (args.length > 0) {
+        if (args.length > 0)
             for (int i = 0; i < args.length; i++)
-                new Thread(new Publicador("/dev/video" + args[i], args[i])).start();
-        } else {
+                AddThread("/dev/video" + args[i]);
+        else
             StartAll();
-        }
     }
     
-    private static void StartAll() {
+    private static void AddThread(String dev) {
+        String id = dev.substring(10);
+        Servicio p = new Servicio(dev, id);
+        Shutdown.addPublicador(p);
+        new Thread(p).start();
+    }
+
+    private static void StartAll() {        
         // Obtiene una lista de cámaras conectadas (/dev/video*)
         String[] cams = new File("/dev/").list(new FilenameFilter() {
             @Override
             public boolean accept(File parentDir, String filename) {
-                return parentDir.getAbsolutePath().equals("/dev") &&
-                       filename.startsWith("video");
+                return parentDir.getAbsolutePath().equals("/dev")
+                        && filename.startsWith("video");
             }
         });
-        
+
         // Para cada cámara crea un publicador
         for (String cam : cams) {
             System.out.println("Iniciando cámara " + cam);
-            
-            // Parsea el ID
-            int id = Integer.parseInt(cam.substring(5));
-            
-            // Crea el publicador
-            new Thread(new Publicador("/dev/" + cam, "" + id)).start();
+            AddThread("/dev/" + cam);
         }
     }
     
-    @Override
-    public void run() {
-        // Inicia DDS y obtiene el escritor
-        this.iniciaDds();
-
-        // Crea los elementos de la tubería
-        // 1º Origen de vídeo, del códec v4l2
-        Element videosrc = ElementFactory.make("v4l2src", null);
-        videosrc.set("device", device);
+    private static class ShutdownThread extends Thread {
+        List<Servicio> publicadores = new ArrayList<>();
         
-        // 2º Datos del vídeo
-        Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
-        
-        Element videorate = ElementFactory.make("videorate", null);
-        
-        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
-        Element codec = ElementFactory.make("jpegenc", null);
-        Element codec2 = ElementFactory.make("multipartmux", null);
-        
-        // 3º Salida de vídeo
-        this.appsink = (AppSink)ElementFactory.make("appsink", null);
-       
-        // Crea la tubería
-        this.pipe = new Pipeline();
-        this.pipe.addMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
-        Element.linkMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
-
-        // Configura el APPSINK
-        this.appsink.setQOSEnabled(true);
-        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");        
-        
-        // Play!
-        // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
-        this.pipe.play();
-        State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
-        if (retState == State.NULL) {
-            System.err.println("Error al cambiar de estado.");
-            System.exit(-1);
+        @Override
+        public void run() {
+            System.out.println("Parando");
+            for (Servicio p : publicadores)
+                p.stop();
         }
-                
-        // Mientras no se acabe, coje cada frame y lo envía.
-        while (!appsink.isEOS()) {
-            Buffer buffer = appsink.pullBuffer();            
+        
+        public void addPublicador(final Servicio p) {
+            this.publicadores.add(p);
+        }
+    }
+
+    private static class Servicio implements Runnable {
+        private final String device;
+        private final String camId;
+
+        private TopicoControl topico;
+        private DynamicDataWriter writer;
+        private DynamicData instance;
+
+        private Pipeline pipe;
+        private AppSink appsink;
+        private boolean continua;
+
+        public Servicio(final String device, final String camId) {
+            this.device   = device;
+            this.camId    = camId;
+            this.continua = true;
+        }
+
+        @Override
+        public void run() {
+            // Inicia DDS y obtiene el escritor
+            this.iniciaDds();
+
+            // Inicia GStreamer
+            this.iniciaGStreamer();
+
+            // Transmite de forma indefinida (o hasta que se desconecte la cámara)
+            // Mientras no se acabe, coje cada frame y lo envía.
+            while (!appsink.isEOS() && this.continua)
+                this.transmite();
+            
+            this.topico.dispose();
+        }
+
+        private void iniciaDds() {
+            // Obtiene el participante de dominio creado en el XML.
+            this.topico = TopicoControlFactoria.crearControlDinamico(
+                    "MyParticipantLibrary::PublicationParticipant",
+                    "VideoDataTopic");
+
+            this.writer = topico.creaEscritor();
+            if (this.writer == null) {
+                System.err.println("No se pudo crear el escritor -> " + this.camId);
+                System.exit(1);
+            }
+
+            this.writer.set_listener(new DataWriterListener(camId), StatusKind.STATUS_MASK_ALL);
+
+            // Como en la estructura tenemos un campo (buffer) que puede ser mayor
+            // de 64 KB, se necesita aumentar algunos límites. Más info:
+            // http://community.rti.com/content/forum-topic/ddsdynamicdatasetoctetseq-returns-ddsretcodeoutofresources
+            DynamicDataProperty_t propiedades = new DynamicDataProperty_t();
+            propiedades.buffer_initial_size = 100;
+            propiedades.buffer_max_size = 1048576;
+
+            // Crea una estructura de datos como la que hemos definido en el XML.
+            this.instance = this.writer.create_data(propiedades);
+            if (this.instance == null) {
+                System.err.println("No se pudo crear la instancia de datos.");
+                System.exit(1);
+            }
+        }
+
+        private void iniciaGStreamer() {
+            // Crea los elementos de la tubería
+            // 1º Origen de vídeo, del códec v4l2
+            Element videosrc = ElementFactory.make("v4l2src", null);
+            videosrc.set("device", device);
+
+            // 2º Datos del vídeo
+            Element videofilter = ElementFactory.make("capsfilter", null);
+            videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
+
+            Element videorate = ElementFactory.make("videorate", null);
+
+            Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
+            Element codec = ElementFactory.make("jpegenc", null);
+            Element codec2 = ElementFactory.make("multipartmux", null);
+
+            // 3º Salida de vídeo
+            this.appsink = (AppSink) ElementFactory.make("appsink", null);
+
+            // Crea la tubería
+            this.pipe = new Pipeline();
+            this.pipe.addMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
+            Element.linkMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
+
+            // Configura el APPSINK
+            this.appsink.setQOSEnabled(true);
+            GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");
+
+            // Play!
+            // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
+            this.pipe.play();
+            State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+            if (retState == State.NULL) {
+                System.err.println("Error al cambiar de estado.");
+                System.exit(-1);
+            }
+        }
+
+        private void transmite() {            
+            Buffer buffer = appsink.pullBuffer();
             if (buffer == null)
-                 continue;
+                return;
 
             // Transfiere los datos a un buffer intermedio
             byte[] tmp = new byte[buffer.getSize()];
             buffer.getByteBuffer().get(tmp);
-            
+
             // Crea la estructura de datos
             try {
                 // NOTA: Limpiar siempre, que si no se acumulan datos en byte_seq
                 // y falla porque no tiene recursos suficientes.
-                this.instance.clear_all_members(); 
-                
+                this.instance.clear_all_members();
+
                 this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
                 this.instance.set_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
                 this.instance.set_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
@@ -168,9 +232,9 @@ public class Publicador implements Runnable {
                 // las propiedades cuando se crea 'instance'. Ahora mismo puesto
                 // a 1 MB. Si se da el error, descartamos el frame.
                 System.out.println("¡Aumentar recursos! -> " + tmp.length);
-                continue;
+                return;
             }
-            
+
             // Publica la estructura de datos generada en DDS
             try {
                 this.writer.write(this.instance, InstanceHandle_t.HANDLE_NIL);
@@ -179,43 +243,27 @@ public class Publicador implements Runnable {
                 System.exit(1);
             }
         }
-    }
-    
-    private void iniciaDds() {
-        // Obtiene el participante de dominio creado en el XML.
-        this.participant = DomainParticipantFactory.get_instance()
-                .create_participant_from_config("MyParticipantLibrary::PublicationParticipant");
-        if (participant == null) {
-            System.err.println("No se pudo crear el dominio.");
-            System.exit(1);
+
+        private void stop() {
+            this.continua = false;
         }
         
-        // Obtiene el escritor creado en el XML.
-        /* NOTA IMPORTANTE:
-            No se pueden crear dos tópicos con el mismo nombre.
-            Tampoco se pueden tener dos Writer con el mismo nombre, por ello
-            para cada cámara habrá que definir un nuevo Writer en el XML, que será
-            básicamente su ID.
-        */
-        this.writer = (DynamicDataWriter)participant
-                .lookup_datawriter_by_name("MyPublisher::VideoDataWriter" + camId);
-        if (this.writer == null) {
-            System.err.println("No se pudo crear el escritor.");
-            System.exit(1);
-        }
-        
-        // Como en la estructura tenemos un campo (buffer) que puede ser mayor
-        // de 64 KB, se necesita aumentar algunos límites. Más info:
-        // http://community.rti.com/content/forum-topic/ddsdynamicdatasetoctetseq-returns-ddsretcodeoutofresources
-        DynamicDataProperty_t propiedades = new DynamicDataProperty_t();
-        propiedades.buffer_initial_size = 100;
-        propiedades.buffer_max_size = 1048576;
-        
-        // Crea una estructura de datos como la que hemos definido en el XML.
-        this.instance = this.writer.create_data(propiedades);
-        if (this.instance == null) {
-            System.err.println("No se pudo crear la instancia de datos.");
-            System.exit(1);
+        private class DataWriterListener extends DataWriterAdapter {
+            private final String id;
+
+            public DataWriterListener(String id) {
+                this.id = id;
+            }
+
+            @Override
+            public void on_publication_matched(DataWriter writer, PublicationMatchedStatus status) {
+                System.out.println("DataWriterListener: on_publication_matched()\n");
+                if (status.current_count_change < 0) {
+                    System.out.println("lost a subscription" + id + "\n");
+                } else {
+                    System.out.println("found a subscription" + id + "\n");
+                }
+            }
         }
     }
 }

@@ -8,6 +8,12 @@
         <qos_profile name="DefaultProfile">
             
             <participant_qos>
+                
+                <transport_builtin>
+                    <mask>MASK_NONE</mask>
+                </transport_builtin>
+
+                   
                 <receiver_pool>
                     <buffer_size>65507</buffer_size>
                 </receiver_pool>
@@ -15,6 +21,27 @@
                 <property>
                     <value>
 
+                        <element>
+                            <name>"dds.transport.load_plugins</name>
+                            <value>dds.transport.wan_plugin.wan</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.library</name>
+                            <value>libnddstransportwan.so</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.create_function</name>
+                            <value>NDDS_Transport_WAN_create</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.server</name>
+                            <value>192.168.3.50</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.transport_instance_id</name>
+                            <value>1</value>
+                        </element>
+                        
                         <!--  Configure UDP transport for higher throughput: -->
                         <element>
                             <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
@@ -221,43 +248,24 @@
 
     <!-- Domain Library -->
     <domain_library name="MyDomainLibrary" >
-
-        <domain name="LocaviewerDomain" domain_id="0">
-        	<register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
-        	<topic name="VideoDataTopic" register_type_ref="VideoDataType">
-                    <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
-		</topic>
-        </domain>
-        
+        <domain name="LocaviewerDomain" domain_id="0" />
     </domain_library>
 
     <!-- Participant library -->
     <participant_library name="MyParticipantLibrary">
 
-        <domain_participant name="PublicationParticipant" 
-                            domain_ref="MyDomainLibrary::LocaviewerDomain">
-            <publisher name="MyPublisher">
-                <data_writer name="VideoDataWriter0" topic_ref="VideoDataTopic">
-                    <datawriter_qos name="datawriter_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_writer>
-                <data_writer name="VideoDataWriter1" topic_ref="VideoDataTopic">
-                    <datawriter_qos name="datawriter_qos" base_name="qosLibrary::DefaultProfile"/>
-                </data_writer>
-            </publisher>
+        <domain_participant name="PublicationParticipant" domain_ref="MyDomainLibrary::LocaviewerDomain">
+            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
+            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
+                <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
+            </topic>
         </domain_participant>
         
-        <domain_participant name="SubscriptionParticipant" 
-                            domain_ref="MyDomainLibrary::LocaviewerDomain"> 
-            <subscriber name="MySubscriber">
-                <data_reader name="VideoDataReader" topic_ref="VideoDataTopic" >
-                    <datareader_qos name="datareader_qos" base_name="qosLibrary::DefaultProfile"/>
-                    <!--
-                    <filter name="VideoDataTopic" kind="builtin.sql">
-                        <expression> camId = '0' </expression>
-                    </filter>
-                    -->
-                </data_reader>
-            </subscriber>     
+        <domain_participant name="SubscriptionParticipant" domain_ref="MyDomainLibrary::LocaviewerDomain"> 
+            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
+            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
+                <topic_qos name="VideoData_qos" base_name="qosLibrary::DefaultProfile"/>
+            </topic>  
         </domain_participant>
        
     </participant_library>
