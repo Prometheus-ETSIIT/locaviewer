@@ -5,7 +5,38 @@
     
     <!-- Qos Library -->
     <qos_library name="qosLibrary">
-        <qos_profile name="ChildProfile">            
+        <qos_profile name="ChildProfile"> 
+            <participant_qos> 
+                                
+                <transport_builtin>
+                    <mask>MASK_NONE</mask>
+                </transport_builtin>
+                
+                <property>
+                    <value>
+                        <element>
+                            <name>"dds.transport.load_plugins</name>
+                            <value>dds.transport.wan_plugin.wan</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.library</name>
+                            <value>libnddstransportwan.so</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.create_function</name>
+                            <value>NDDS_Transport_WAN_create</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.server</name>
+                            <value>192.168.3.50</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.transport_instance_id</name>
+                            <value>1</value>
+                        </element>
+                    </value>
+                </property>
+            </participant_qos>          
         </qos_profile>
     </qos_library>
 
