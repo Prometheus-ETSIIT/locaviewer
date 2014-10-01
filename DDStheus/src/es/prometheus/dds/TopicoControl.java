@@ -22,14 +22,17 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.dynamicdata.DynamicDataReader;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Clase para crear y destruir lectores y escritores sobre un tópico.
  */
 public abstract class TopicoControl {   
 
+    private static Map<DomainParticipant, Integer> Instances = new HashMap<>();
     private DomainParticipant participante;
-        
+    
     /**
      * Crea una nueva instancia de control de tópico.
      * 
@@ -53,14 +56,23 @@ public abstract class TopicoControl {
                 System.exit(1);
             }
         }
+        
+        // Añade la instancia
+        int num = (Instances.containsKey(participante) ? Instances.get(participante) : 0);
+        Instances.put(participante, num + 1);
     }
     
     /**
      * Libera recursos del sistema.
      */
     public void dispose() {
-        this.participante.delete_contained_entities();
-        DomainParticipantFactory.get_instance().delete_participant(this.participante);
+        int num = Instances.get(participante);
+        Instances.put(participante, --num);
+        
+        if (num == 0) {
+            this.participante.delete_contained_entities();
+            DomainParticipantFactory.get_instance().delete_participant(this.participante);
+        }
     }
     
     /**
