@@ -49,7 +49,7 @@ public class TopicoControlFijo extends TopicoControl {
      * @param publiName Nombre del publicador en el XML
      *  (NombreParticipante::NombrePublicador).
      */
-    public TopicoControlFijo(final String partName, final String suscripName,
+    protected TopicoControlFijo(final String partName, final String suscripName,
             final String publiName) {
         super(partName);
         

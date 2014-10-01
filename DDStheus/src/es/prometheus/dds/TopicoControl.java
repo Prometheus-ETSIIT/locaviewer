@@ -29,14 +29,14 @@ import com.rti.dds.dynamicdata.DynamicDataWriter;
 public abstract class TopicoControl {   
 
     private DomainParticipant participante;
-    
+        
     /**
      * Crea una nueva instancia de control de tópico.
      * 
      * @param partName Nombre del participante en el XML
      *  (BibliotecaParticipantes::NombreParticipante).
      */
-    protected TopicoControl(final String partName) {
+    protected TopicoControl(final String partName) {                
         // Buscamos si ya está creado el participante para recuperarlo.
         // ¡Se asume que sólo se permite UN dominio!
         String nombre = partName.substring(partName.indexOf("::") + 2);

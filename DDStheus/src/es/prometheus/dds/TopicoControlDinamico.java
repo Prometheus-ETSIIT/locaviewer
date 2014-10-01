@@ -37,12 +37,14 @@ public class TopicoControlDinamico extends TopicoControl {
      * 
      * @param partName Nombre del participante en el XML
      *  (BibliotecaParticipantes::NombreParticipante).
-     * @param topicName Nombre del tópico en el XML
-     *  (NombreDominio::NombreTopico).
+     * @param topicName Nombre del tópico en el XML (NombreTopico).
      */
-    public TopicoControlDinamico(final String partName, final String topicName) {
+    protected TopicoControlDinamico(final String partName, final String topicName) {
         super(partName);
+        
         this.topico = (Topic)this.getParticipante().lookup_topicdescription(topicName);
+        if (this.topico == null)
+            System.err.println("No se pudo recuerar el tópico -> " + topicName);
     }
 
     @Override
