@@ -10,15 +10,22 @@ import java.util.Map.Entry;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.dynamicdata.DynamicDataSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.StringDataReader;
 import com.rti.dds.type.builtin.StringDataWriter;
@@ -47,7 +54,8 @@ public class Servidor extends DataReaderAdapter{
      		posiciones.add(hola);
     		 hola = new CamaraPos(6,3,"Camara 4");
      		posiciones.add(hola);
-    		
+
+    	
 		  triangulacion = new TriangulacionOctave(
 		             "detectarcamara.m",
 		             "detectarcamara",
@@ -59,6 +67,7 @@ public class Servidor extends DataReaderAdapter{
      		
     		System.out.println(posiciones.get(0).getPosX()+" "+posiciones.get(0).getPosY());
     		
+    		
             DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                     0, 
                     DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
@@ -69,23 +78,25 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
 
-           
+            
             Topic topic = participant.create_topic(
             		"1", 
                     StringTypeSupport.get_type_name(), 
                     DomainParticipant.TOPIC_QOS_DEFAULT, 
                     null, // listener
                     StatusKind.STATUS_MASK_NONE);
+            
             if (topic == null) {
                 System.err.println("Unable to create topic.");
                 return;
             }
             try {
-				Thread.sleep(1000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+            
+            System.out.println("HAYTA QQUI");
             
             Topic clasificadorPadres = participant.create_topic(
             		"clasificador", 
@@ -99,7 +110,8 @@ public class Servidor extends DataReaderAdapter{
             }
             
             //Escritor
-            dataWriter =
+            
+        /*   dataWriter =
                 (StringDataWriter) participant.create_datawriter(
                     topic, 
                     Publisher.DATAWRITER_QOS_DEFAULT,
@@ -108,7 +120,8 @@ public class Servidor extends DataReaderAdapter{
             if (dataWriter == null) {
                 System.err.println("Unable to create data writer\n");
                 return;
-            }
+            }*/
+
 
             //Lector
             StringDataReader dataReader =
@@ -122,12 +135,14 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
             
- 
+
+
     		
     		
             while(true){//Para que el programa no finalice
             	try {
-					Thread.sleep(10000);
+					Thread.sleep(1000);
+					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -138,31 +153,34 @@ public class Servidor extends DataReaderAdapter{
         public void on_data_available(DataReader reader) {
             StringDataReader stringReader = (StringDataReader) reader;
             SampleInfo info = new SampleInfo();
-            for (;;) {
+            
+            StringSeq dataSeq = new StringSeq();
+            SampleInfoSeq infoSeq = new SampleInfoSeq();
+            
+            stringReader.take(dataSeq, infoSeq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,SampleStateKind.ANY_SAMPLE_STATE,ViewStateKind.ANY_VIEW_STATE,InstanceStateKind.ANY_INSTANCE_STATE );
+            
+            for(int i =0; i<dataSeq.size();i++){
+            	String sample = (String) dataSeq.get(i);
+            	Dato datoNuevo = new Dato(sample);
+            	
+            	if(datosNinos.containsKey(datoNuevo.getIDNino())){
+            		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
+            		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
+            		datos.add(datoNuevo);
+            		if(datos.size()>3){
+            			String camId = triangulacion.triangular(datos);
+            			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
+            			datos.clear();
 
-                    String sample = stringReader.take_next_sample(info);
-                    if (info.valid_data) {
-                    	Dato datoNuevo = new Dato(sample);
-                    	if(datosNinos.containsKey(datoNuevo.getIDNino())){
-                    		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
-                    		datos.add(datoNuevo);
-                    		if(datos.size()>2){
-                    			String camId = triangulacion.triangular(datos);
-                    			datos.clear();
-                    			
-                    			System.out.println(camId+" "+datoNuevo.getIDNino());
-            					dataWriter.write(camId, InstanceHandle_t.HANDLE_NIL); //Al padre correspondiente
-                    		}
-                    	}
-                    	else{
-                    		ArrayList<Dato> nuevo = new ArrayList<Dato>();
-                    		nuevo.add(datoNuevo);
-                    		datosNinos.put(datoNuevo.getIDNino(), nuevo);
-                    	}
-                    	
-               
-                    	}
-                    
+            		}
+            	}
+            	else{
+            		ArrayList<Dato> nuevo = new ArrayList<Dato>();
+            		nuevo.add(datoNuevo);
+            		datosNinos.put(datoNuevo.getIDNino(), nuevo);
+            		System.out.print("Niño NUEVO "+ datoNuevo.getIDNino()+" ");
+            		System.out.println("Tenemos ahora a "+ datosNinos.size());
+            	}
             }
         }
 }
