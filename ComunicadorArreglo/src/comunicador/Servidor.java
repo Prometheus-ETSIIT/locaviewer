@@ -47,7 +47,8 @@ public class Servidor extends DataReaderAdapter{
      		posiciones.add(hola);
     		 hola = new CamaraPos(6,3,"Camara 4");
      		posiciones.add(hola);
-    		
+
+    	
 		  triangulacion = new TriangulacionOctave(
 		             "detectarcamara.m",
 		             "detectarcamara",
@@ -59,6 +60,7 @@ public class Servidor extends DataReaderAdapter{
      		
     		System.out.println(posiciones.get(0).getPosX()+" "+posiciones.get(0).getPosY());
     		
+    		
             DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                     0, 
                     DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
@@ -68,14 +70,17 @@ public class Servidor extends DataReaderAdapter{
                 System.err.println("Unable to create domain participant");
                 return;
             }
+            
+            System.out.println("Hola, he llegado");
 
-           
+            
             Topic topic = participant.create_topic(
             		"1", 
                     StringTypeSupport.get_type_name(), 
                     DomainParticipant.TOPIC_QOS_DEFAULT, 
                     null, // listener
                     StatusKind.STATUS_MASK_NONE);
+            
             if (topic == null) {
                 System.err.println("Unable to create topic.");
                 return;
@@ -86,6 +91,8 @@ public class Servidor extends DataReaderAdapter{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+            
+            System.out.println("HAYTA QQUI");
             
             Topic clasificadorPadres = participant.create_topic(
             		"clasificador", 
@@ -99,6 +106,7 @@ public class Servidor extends DataReaderAdapter{
             }
             
             //Escritor
+            
             dataWriter =
                 (StringDataWriter) participant.create_datawriter(
                     topic, 
@@ -109,6 +117,7 @@ public class Servidor extends DataReaderAdapter{
                 System.err.println("Unable to create data writer\n");
                 return;
             }
+
 
             //Lector
             StringDataReader dataReader =
@@ -122,12 +131,14 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
             
- 
+
+
     		
     		
             while(true){//Para que el programa no finalice
             	try {
 					Thread.sleep(10000);
+					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -139,6 +150,9 @@ public class Servidor extends DataReaderAdapter{
             StringDataReader stringReader = (StringDataReader) reader;
             SampleInfo info = new SampleInfo();
             for (;;) {
+                System.out.println("FIN FIN FIN");
+            	
+            	/*
 
                     String sample = stringReader.take_next_sample(info);
                     if (info.valid_data) {
@@ -161,7 +175,7 @@ public class Servidor extends DataReaderAdapter{
                     	}
                     	
                
-                    	}
+                    	}*/
                     
             }
         }
