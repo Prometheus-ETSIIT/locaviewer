@@ -77,8 +77,6 @@ public class Servidor extends DataReaderAdapter{
                 System.err.println("Unable to create domain participant");
                 return;
             }
-            
-            System.out.println("Hola, he llegado");
 
             
             Topic topic = participant.create_topic(
@@ -93,9 +91,8 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
             try {
-				Thread.sleep(1000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
             
@@ -168,45 +165,22 @@ public class Servidor extends DataReaderAdapter{
             	
             	if(datosNinos.containsKey(datoNuevo.getIDNino())){
             		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
+            		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
+            		datos.add(datoNuevo);
+            		if(datos.size()>3){
+            			String camId = triangulacion.triangular(datos);
+            			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
+            			datos.clear();
 
+            		}
             	}
             	else{
             		ArrayList<Dato> nuevo = new ArrayList<Dato>();
             		nuevo.add(datoNuevo);
             		datosNinos.put(datoNuevo.getIDNino(), nuevo);
-            		System.out.println("Niño NUEVO "+ datoNuevo.getIDNino());
+            		System.out.print("Niño NUEVO "+ datoNuevo.getIDNino()+" ");
             		System.out.println("Tenemos ahora a "+ datosNinos.size());
             	}
             }
-            
-            /*for (;;) {
-            	System.out.println("salto");
-                    String sample = stringReader.take_next_sample(info);
-                    if (info.valid_data) {
-                    	System.out.println("FIN FIN FIN");
-                    	
-                    	System.out.println(datoNuevo.getIDNino() + " "+datoNuevo.getIntensidad());
-                    	/*
-                    	if(datosNinos.containsKey(datoNuevo.getIDNino())){
-                    		/*ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
-                    		datos.add(datoNuevo);
-                    		if(datos.size()>2){
-                    			String camId = triangulacion.triangular(datos);
-                    			datos.clear();
-                    			
-                    			System.out.println(camId+" "+datoNuevo.getIDNino());
-            					dataWriter.write(camId, InstanceHandle_t.HANDLE_NIL); //Al padre correspondiente
-                    		}
-                    	 }*/
-                    	/*else{
-                    		ArrayList<Dato> nuevo = new ArrayList<Dato>();
-                    		nuevo.add(datoNuevo);
-                    		datosNinos.put(datoNuevo.getIDNino(), nuevo);
-                    	}
-                    	
-               
-                    	}
-                    
-            }*/
         }
 }
