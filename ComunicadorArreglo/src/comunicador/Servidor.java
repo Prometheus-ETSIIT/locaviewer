@@ -165,7 +165,18 @@ public class Servidor extends DataReaderAdapter{
             for(int i =0; i<dataSeq.size();i++){
             	String sample = (String) dataSeq.get(i);
             	Dato datoNuevo = new Dato(sample);
-            	System.out.println(datoNuevo.getID());
+            	
+            	if(datosNinos.containsKey(datoNuevo.getIDNino())){
+            		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
+
+            	}
+            	else{
+            		ArrayList<Dato> nuevo = new ArrayList<Dato>();
+            		nuevo.add(datoNuevo);
+            		datosNinos.put(datoNuevo.getIDNino(), nuevo);
+            		System.out.println("Niño NUEVO "+ datoNuevo.getIDNino());
+            		System.out.println("Tenemos ahora a "+ datosNinos.size());
+            	}
             }
             
             /*for (;;) {
