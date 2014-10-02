@@ -1,0 +1,6 @@
+1º Generamos nuestro propio certificado
+keytool -keystore mySrvKeystore -keypasswd 123456 -genkey -keyalg RSA -alias mycert
+
+2º LLevamos el certificado a la carpeta del proyecto
+
+3º Cambia las contraseñas de los SH por la de tu almacén de claves (con el que generaste el certificado)
