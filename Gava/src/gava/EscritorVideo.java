@@ -36,13 +36,12 @@ import org.gstreamer.ClockTime;
 import org.gstreamer.Element;
 import org.gstreamer.ElementFactory;
 import org.gstreamer.Pipeline;
-import org.gstreamer.State;
 import org.gstreamer.elements.AppSink;
 
 /**
  * Obtiene vídeo de la cámara y lo escribe en DDS.
  */
-public class EscritorVideo implements Runnable {
+public class EscritorVideo extends Thread {
     private final String device;
     private final String camId;
     private boolean parar;
@@ -151,8 +150,8 @@ public class EscritorVideo implements Runnable {
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
         this.pipe.play();
-        State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
-        if (retState == State.NULL) {
+        org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+        if (retState == org.gstreamer.State.NULL) {
             System.err.println("Error al cambiar de estado.");
             System.exit(-1);
         }
@@ -207,7 +206,7 @@ public class EscritorVideo implements Runnable {
     /**
      * Para la transmisión de vídeo y elimina las instancias de DDS creadas.
      */
-    public void stop() {
+    public void parar() {
         this.parar = true;
     }
 

@@ -60,7 +60,7 @@ public class Publicador {
         String id  = dev.substring(10);                 // Saca el ID de la ruta
         EscritorVideo p = new EscritorVideo(dev, id);   // Crea un escritor
         Shutdown.addPublicador(p);                      // Lo añade al listener
-        new Thread(p).start();                          // Lo inica.
+        p.start();                                      // Lo inica.
     }
 
     /**
@@ -92,9 +92,13 @@ public class Publicador {
         
         @Override
         public void run() {
-            System.out.println("Parando");
-            for (EscritorVideo p : publicadores)
-                p.stop();
+            System.out.println("Parando. . .");
+            for (EscritorVideo p : publicadores) {
+                p.parar();
+                try { p.join(5000); }
+                catch (InterruptedException ex) { System.err.println("TimeOver!"); }
+            }
+            
         }
         
         /**
