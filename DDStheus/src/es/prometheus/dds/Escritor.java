@@ -21,6 +21,8 @@ import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.dynamicdata.DynamicDataProperty_t;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriterAdapter;
 
 /**
  * Clase para escribir datos dinámicos en un tópico.
@@ -37,6 +39,10 @@ public class Escritor {
     public Escritor(final TopicoControl control) {
         this.control = control;
         this.writer  = control.creaEscritor();
+        if (this.writer == null) {
+            System.err.println("No se pudo crear el escritor");
+            System.exit(1);
+        }
     }
     
     /**
@@ -44,6 +50,16 @@ public class Escritor {
      */
     public void dispose() {
         this.control.eliminaEscritor(this.writer);
+    }
+    
+    /**
+     * Establece el listener con la máscara.
+     * 
+     * @param listener Listener del escritor
+     * @param status Máscara para recepción de eventos.
+     */
+    public void setListener(DataWriterAdapter listener, int status) {
+        this.writer.set_listener(listener, status);
     }
     
     /**
@@ -61,7 +77,13 @@ public class Escritor {
         propiedades.buffer_max_size = 1048576;
         
         // Crea una estructura de datos como la que hemos definido en el XML.
-        return this.writer.create_data(propiedades);
+        DynamicData instance = this.writer.create_data(propiedades);
+        if (instance == null) {
+            System.err.println("No se pudo crear la instancia de datos.");
+            System.exit(1);
+        }
+        
+        return instance;
     }
     
     /**
