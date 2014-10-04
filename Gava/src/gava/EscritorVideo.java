@@ -28,6 +28,7 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.DataWriter;
 import com.rti.dds.publication.DataWriterAdapter;
 import com.rti.dds.publication.PublicationMatchedStatus;
+import es.prometheus.dds.Escritor;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
 import org.gstreamer.Buffer;
@@ -47,7 +48,7 @@ public class EscritorVideo extends Thread {
     private boolean parar;
     
     private TopicoControl topico;
-    private DynamicDataWriter writer;
+    private Escritor writer;
     private DynamicData instance;
 
     private Pipeline pipe;
@@ -92,28 +93,11 @@ public class EscritorVideo extends Thread {
                 "VideoDataTopic");
 
         // Crea el escritor.
-        this.writer = topico.creaEscritor();
-        if (this.writer == null) {
-            System.err.println("No se pudo crear el escritor -> " + this.camId);
-            System.exit(1);
-        }
-
-        // DEBUG: Le añade el listener de prueba.
-        this.writer.set_listener(new DataWriterListener(camId), StatusKind.STATUS_MASK_ALL);
-
-        // Como en la estructura tenemos un campo (buffer) que puede ser mayor
-        // de 64 KB, se necesita aumentar algunos límites. Más info:
-        // http://community.rti.com/content/forum-topic/ddsdynamicdatasetoctetseq-returns-ddsretcodeoutofresources
-        DynamicDataProperty_t propiedades = new DynamicDataProperty_t();
-        propiedades.buffer_initial_size = 100;
-        propiedades.buffer_max_size = 1048576;
+        this.writer = new Escritor(this.topico);
+        this.writer.setListener(new DataWriterListener(this.camId), StatusKind.STATUS_MASK_ALL);
 
         // Crea una estructura de datos como la que hemos definido en el XML.
-        this.instance = this.writer.create_data(propiedades);
-        if (this.instance == null) {
-            System.err.println("No se pudo crear la instancia de datos.");
-            System.exit(1);
-        }
+        this.instance = this.writer.creaDatos();
     }
 
     /**
@@ -145,7 +129,7 @@ public class EscritorVideo extends Thread {
 
         // Configura el APPSINK
         this.appsink.setQOSEnabled(true);
-        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");
+        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");
 
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
@@ -197,7 +181,7 @@ public class EscritorVideo extends Thread {
 
         // Publica la estructura de datos generada en DDS
         try {
-            this.writer.write(this.instance, InstanceHandle_t.HANDLE_NIL);
+            this.writer.escribeDatos(this.instance);
         } catch (RETCODE_ERROR e) {
             System.out.println("Write error: " + e.getMessage());
         }
