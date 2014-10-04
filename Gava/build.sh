@@ -1,2 +1,2 @@
 #!/bin/bash
-ant -f ./ -Dnb.internal.action.name=rebuild clean jar 
+ant -f ./build.xml -Dnb.internal.action.name=rebuild clean jar 
