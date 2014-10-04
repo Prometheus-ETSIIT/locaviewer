@@ -24,12 +24,16 @@ import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Crea y elimina lectores y escritores sobre un tópico definido en el XML.
  */
 public class TopicoControlDinamico extends TopicoControl {
     private final Topic topico;
+    private final List<DynamicDataReader> readers = new ArrayList<>();
+    private final List<DynamicDataWriter> writers = new ArrayList<>();
     
     /**
      * Crea una nueva instancia del control de tópico a partir de los nombres
@@ -49,34 +53,56 @@ public class TopicoControlDinamico extends TopicoControl {
 
     @Override
     public DynamicDataReader creaLector() {
-        return (DynamicDataReader)this.getParticipante().create_datareader(
-                topico,
-                Subscriber.DATAREADER_QOS_DEFAULT,
-                null,
-                StatusKind.STATUS_MASK_NONE);
+        DynamicDataReader reader = (DynamicDataReader)this.getParticipante()
+                .create_datareader(
+                    topico,
+                    Subscriber.DATAREADER_QOS_DEFAULT,
+                    null,
+                    StatusKind.STATUS_MASK_NONE);
+        
+        this.readers.add(reader);
+        return reader;
     }
 
     @Override
     public void eliminaLector(DynamicDataReader reader) {
+        // Comprueba que sea este controlador el que lo haya creado
+        if (!this.readers.contains(reader))
+            return;
+        
         // Nos aseguramos de eliminar las condiciones que pueda tener
         reader.delete_contained_entities();
         
         // Lo eliminamos el tópico.
         reader.get_subscriber().delete_datareader(reader);
+        
+        // Lo eliminamos de la lista
+        this.readers.remove(reader);
     }
 
     @Override
     public DynamicDataWriter creaEscritor() {
-        return (DynamicDataWriter)this.getParticipante().create_datawriter(
-                topico,
-                Publisher.DATAWRITER_QOS_DEFAULT,
-                null,
-                StatusKind.STATUS_MASK_NONE);
+        DynamicDataWriter writer = (DynamicDataWriter)this.getParticipante()
+                .create_datawriter(
+                    topico,
+                    Publisher.DATAWRITER_QOS_DEFAULT,
+                    null,
+                    StatusKind.STATUS_MASK_NONE);
+        
+        this.writers.add(writer);
+        return writer;
     }
 
     @Override
     public void eliminaEscritor(DynamicDataWriter writer) {
+        // Comprueba que sea este controlador el que lo haya creado
+        if (!this.writers.contains(writer))
+            return;
+        
         // Automáticamente desregistrará todas las instancias del writer.
         this.getParticipante().delete_datawriter(writer);
+        
+        // Lo eliminamos de la lista
+        this.writers.remove(writer);
     }
 }
