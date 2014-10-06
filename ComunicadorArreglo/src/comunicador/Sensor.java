@@ -125,7 +125,7 @@ public class Sensor extends DataReaderAdapter{
 				 
 				 recibido = peticion.split("\\s+");
 				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
-				 prueba = new Dato (MAC,2,0,recibido[0],rssi);
+				 prueba = new Dato (MAC,8,0,recibido[0],rssi);
 				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
 	 		
 				
@@ -137,7 +137,7 @@ public class Sensor extends DataReaderAdapter{
 				 
 				 recibido = peticion.split("\\s+");
 				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
-				 prueba = new Dato (MAC,0,5,recibido[0],rssi);
+				 prueba = new Dato (MAC,0,7,recibido[0],rssi);
 				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
      		}
      		} catch (SocketException e1) {

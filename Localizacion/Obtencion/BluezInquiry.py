@@ -8,6 +8,10 @@
 #   - Implementación de descubrimiento básico #
 # V 1.3: Benito Palacios Sánchez              #
 #   - Añadido envío por sockets               #
+# V 1.5: Nicolás Guerrero García              #
+#   - Administracion de los datos que llegan  #
+#   - Implementacion de algoritmo para        #
+#     reducir el ruido del RSSI               #
 #                                             #
 # Copyright Prometheus 2014                   #
 ###############################################
@@ -23,6 +27,9 @@ import socket
 #  Documentación de bluez con comando de python: help(bluez)
 
 # Implementación de búsqueda con RSSI con Bluez
+
+potencias={}
+
 class BluezInquiry:
     
     def __init__(self, dev_id, port):
@@ -77,11 +84,52 @@ class BluezInquiry:
         bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
 
         self.inquiring = True
+    
+    def maximo(self,vector):
+        for i in range(len(vector)):
+            if max(vector)== vector[i]:
+                indice=i
+        return indice
+
+    def optimizar(self,rssi_vect):
+        for i in range(5): #Nos quedamos con X valores 
+            buffererror=[]  #Vaciamos el vector de errores
+                
+            for n in range(len(rssi_vect)):
+                rssi_copia=rssi_vect[:] #Hacemos una copia del vector
+                del rssi_copia[n] #Borramos el que se va a evaluar
+                media1=(sum(rssi_copia)/len(rssi_copia)) #hacemos la media de los restantes
+                buffererror.append(abs(rssi_vect[n]-media1)) #Comparamos y el resultado lo añadimos a un vector de errores
+
+            
+            del rssi_vect[self.maximo(buffererror)] #Eliminamos el que tiene mas error
         
+        media= sum(rssi_vect)/len(rssi_vect) # Hacemos 
+        return media 
+
+    def procesamiento(self, addr,rssi):
+        tam_vect=15
+        global potencias
+        #el diccionario tiene que ser global
+
+        #Si no esta en el diccionario se crea una nueva clave si no se añade al vector y se comprueba si ha llegado al tamaño maximo
+        #!!! Hay que poner que si tarda mucho el dato en llegar hay que descartar el dato y vaciar el vector
+        if addr in potencias:
+            potencias[addr].append(rssi)
+            if len(potencias[addr])>=tam_vect:
+                rssi_bueno=self.optimizar(potencias[addr])
+                potencias[addr]=[] #Vaciado
+                print "Envio: " + str(rssi_bueno)
+                self.sendSocket.sendto(str(addr) + " " + str(rssi_bueno), (self.host, self.port)) #Envio
+        else:
+            potencias[addr]=[rssi]
+
     def process_event(self):
+	    
+
         if self.inquiring == False:
             return
-    
+        addr_nino="20:14" 
         # Leer 258 bytes (tamaño máximo: 3 cabecera + 255 datos)
         pkt = self.socket.recv(258)
         ptype, event, plen = struct.unpack("BBB", pkt[:3])
@@ -98,7 +146,10 @@ class BluezInquiry:
                 print addr, rssi
                 #r = -0.00680102923817849*(int(rssi)**3) - 1.04905123190747*(int(rssi)**2) - 59.2087843354658*int(rssi) - 1106.35595941215
                 #print r
-                self.sendSocket.sendto(str(addr) + " " + str(rssi), (self.host, self.port))
+                rssi=float(rssi)
+                if addr[0:5] == addr_nino:
+                    self.procesamiento(addr,rssi)  # Organiza los valores recividos,eliminar errores, y envia un valor RSSI
+
 
         elif event == bluez.EVT_INQUIRY_COMPLETE:
             pass
@@ -117,7 +168,7 @@ class BluezInquiry:
             pass        
         elif event == 255: #Suponemos que no lee ningun evento y por eso devuelve 255
             return
-	elif event == bluez.EVT_INQUIRY_RESULT:
+        elif event == bluez.EVT_INQUIRY_RESULT:
             nrsp = struct.unpack("B", pkt[0])[0]    # Número de respuestas
             for i in range(nrsp):
                 addr = bluez.ba2str( pkt[1+6*i:1+6*i+6] )
