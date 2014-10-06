@@ -182,7 +182,6 @@ public class Servidor extends DataReaderAdapter{
             			String camId = triangulacion.triangular(datos);
             			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
             			datos.clear();
-            			dataWriter.write(datos.size()+" "+camId+" "+datoNuevo.getIDNino(),InstanceHandle_t.HANDLE_NIL);
             		}
             	}
             	else{
