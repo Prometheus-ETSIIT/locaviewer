@@ -166,6 +166,13 @@ public class Servidor extends DataReaderAdapter{
             	if(datosNinos.containsKey(datoNuevo.getIDNino())){
             		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
             		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
+            		
+            		for(int k=0;k<datos.size();k++){
+            			if(datos.get(k).getID().equals(datoNuevo.getID())){
+            				datos.remove(k);
+            			}
+            		}
+            		
             		datos.add(datoNuevo);
             		
         			long date = new Date().getTime();
@@ -181,6 +188,7 @@ public class Servidor extends DataReaderAdapter{
             			String camId = triangulacion.triangular(datos);
             			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
             			datos.clear();
+            			dataWriter.write(datos.size()+" "+camId+" "+datoNuevo.getIDNino(), InstanceHandle_t.HANDLE_NIL );
             		}
             	}
             	else{
