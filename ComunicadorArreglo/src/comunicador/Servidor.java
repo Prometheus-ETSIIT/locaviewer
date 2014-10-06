@@ -96,7 +96,6 @@ public class Servidor extends DataReaderAdapter{
 				e.printStackTrace();
 			}
             
-            System.out.println("HAYTA QQUI");
             
             Topic clasificadorPadres = participant.create_topic(
             		"clasificador", 
@@ -111,7 +110,7 @@ public class Servidor extends DataReaderAdapter{
             
             //Escritor
             
-        /*   dataWriter =
+           dataWriter =
                 (StringDataWriter) participant.create_datawriter(
                     topic, 
                     Publisher.DATAWRITER_QOS_DEFAULT,
@@ -120,7 +119,7 @@ public class Servidor extends DataReaderAdapter{
             if (dataWriter == null) {
                 System.err.println("Unable to create data writer\n");
                 return;
-            }*/
+            }
 
 
             //Lector
@@ -151,6 +150,8 @@ public class Servidor extends DataReaderAdapter{
         
 
         public void on_data_available(DataReader reader) {
+
+        	
             StringDataReader stringReader = (StringDataReader) reader;
             SampleInfo info = new SampleInfo();
             
@@ -158,7 +159,6 @@ public class Servidor extends DataReaderAdapter{
             SampleInfoSeq infoSeq = new SampleInfoSeq();
             
             stringReader.take(dataSeq, infoSeq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,SampleStateKind.ANY_SAMPLE_STATE,ViewStateKind.ANY_VIEW_STATE,InstanceStateKind.ANY_INSTANCE_STATE );
-            
             for(int i =0; i<dataSeq.size();i++){
             	String sample = (String) dataSeq.get(i);
             	Dato datoNuevo = new Dato(sample);
@@ -167,11 +167,22 @@ public class Servidor extends DataReaderAdapter{
             		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
             		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
             		datos.add(datoNuevo);
-            		if(datos.size()>3){
+            		
+        			long date = new Date().getTime();
+        			
+        			for(int j=0;j<datos.size();j++){
+        				System.out.println(date-datos.get(j).getCreacion());
+        				if(date-datos.get(j).getCreacion()>20000){//Si tiene más de 20 segundos, seborra
+        					datos.remove(j);
+        					j--;
+        				}
+        			}
+            		
+            		if(datos.size()>3){//Ya se puede triangular           			
             			String camId = triangulacion.triangular(datos);
             			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
             			datos.clear();
-
+            			//dataWriter.write(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
             		}
             	}
             	else{
