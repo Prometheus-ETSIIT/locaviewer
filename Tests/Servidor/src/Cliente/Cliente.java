@@ -39,7 +39,7 @@ public class Cliente {
             // de autoridades de certificación:
             System.setProperty(
                     "javax.net.ssl.trustStore",
-                    "./src/cert/autoridades_certificadoras_fiables.keys"
+                    "./src/cert/cacerts.jks"
             );
             
           

@@ -25,7 +25,7 @@ public class Servidor {
 
     public static void main(String[] args) {
 
-        char[] password = "contrasenia_servidor".toCharArray();
+        char[] password = "Prometheus".toCharArray();
                 
         int puerto  =6556;
         System.out.println("Iniciando servicio en puerto " + puerto);
@@ -41,9 +41,8 @@ public class Servidor {
 
             KeyStore ks = KeyStore.getInstance("JKS");
 
-            ks.load(new FileInputStream("src/cert/anillo_certificado_servidor.keys"), password);
-            kmf.init(ks, password);
-
+            ks.load(new FileInputStream("src/cert/keystore.jks"), password);
+            kmf.init(ks, "PrometheuS".toCharArray());
 
             context.init(kmf.getKeyManagers(), null, null);
             SSLServerSocketFactory factory = context.getServerSocketFactory();

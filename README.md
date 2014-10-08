@@ -18,6 +18,12 @@ En cada programa existe un script de ejecución (*run.sh*) y otro de compilació
 + El usuario ha de tener la variable de entorno **RTI_CONNEXT_PATH** apuntando a la carpeta *RTI* (en mayúscula, la que contiene *ndds5.1.0* con las bibliotecas). Puedes poner esta variable en el fichero *.bashrc* de tu carpeta personal o similar.
 
 ### Configuración previa
+Para el funcionamiento de los sensores *Bluetooth* se necesita el paquete *bluetooth*.
+En sistemas operativos basados en *Debian* usa el siguiente comando:
+``` shell
+sudo apt-get install bluetooth
+```
+
 Para compilar los programas se necesita *ant*. En sistemas basados en *Debian* usa:
 ``` shell
 sudo apt-get install ant
@@ -44,3 +50,8 @@ sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstapp-0.10.so.0 /usr/lib/arm-linux-g
 ### Instrucciones para Net Beans
 Para aquellos programas que han sido desarrollados en *Net Beans* es necesario que antes de abrirlos configures el IDE de la siguiente forma:
 Ve al menú *Tools* -> *Ant Variables* y añade la una variable con el nombre *RTI_CONNEXT_PATH* y que apunte a la misma ruta que la variable de entorno previamente configurada.
+
+
+## Generar certificados servidor
+Para generar los tres archivos de certificados utilizados en el servidor se puede
+consultar la siguiente web: http://docs.oracle.com/cd/E19798-01/821-1841/gjrgy/index.html 
