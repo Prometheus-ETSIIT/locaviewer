@@ -70,7 +70,7 @@ public abstract class LectorBase {
         this.reader = this.creaLector();
         
         // Craeamos una nueva hebra para recibir los datos de forma síncrona.
-        this.callback = new DataCallback(this.reader, StatusKind.DATA_AVAILABLE_STATUS);
+        this.callback = new DataCallback(this.reader, 0x5000);
         this.dataThread = new Thread(this.callback);
     }
     
@@ -79,9 +79,9 @@ public abstract class LectorBase {
      */
     public void dispose() {
         // Paramos de recibir datos
-        this.callback.suspender();
-        try { this.dataThread.join(); }
-        catch (InterruptedException e) { }
+        this.callback.terminar();
+        try { this.dataThread.join(5000); }
+        catch (InterruptedException e) { System.err.println("TimeOver!"); }
         
         // Eliminamos los datos
         this.reader.delete_contained_entities();
@@ -120,6 +120,33 @@ public abstract class LectorBase {
     }
     
     /**
+     * Obtiene el control de tópico actual.
+     * 
+     * @return Control de tópico.
+     */
+    public TopicoControl getTopicoControl() {
+        return this.control;
+    }
+    
+    /**
+     * Obtiene la hebra que está obteniendo datos del lector.
+     * Útil para dejar otra hebra bloqueada junto a esta.
+     * 
+     * @return Hebra que recibe datos de forma síncrona.
+     */
+    public Thread getCallbackThread() {
+        return this.dataThread;
+    }
+    
+    /**
+     * Comienza a recibir datos
+     */
+    public void iniciar() {
+        if (!this.dataThread.isAlive())
+            this.dataThread.start();
+    }
+    
+    /**
      * Para de recibir datos de DDS.
      */
     public void suspender() {
@@ -145,7 +172,7 @@ public abstract class LectorBase {
                 this.topico,
                 Subscriber.DATAREADER_QOS_DEFAULT,
                 null,
-                StatusKind.STATUS_MASK_NONE);
+                StatusKind.DATA_AVAILABLE_STATUS);
     }
     
     /**
@@ -178,7 +205,7 @@ public abstract class LectorBase {
          * @param condicion Condición a aplicar sobre los datos.
          */
         public DataCallback(final DynamicDataReader reader, final int mask) {
-            this.procesar = false;
+            this.procesar = true;
             this.terminar = false;
             
             this.reader    = reader;
@@ -198,15 +225,10 @@ public abstract class LectorBase {
                 try { this.waitset.wait(activadas, duracion); }
                 catch (RETCODE_TIMEOUT e) { continue; }
                 
-                // Por si es por un cambio en la condición
-                if (activadas.size() == 0)
-                    continue;
-                
                 // Compruebo que se haya disparado por la condición que queremos
-                if (this.reader.get_status_changes() != this.mask)
+                if ((this.reader.get_status_changes() & this.mask) == 0)
                     continue;
-                
-                                
+
                 // Si estamos paramos, omitimos los datos recibidos.
                 if (!this.procesar)
                     continue;
@@ -252,9 +274,7 @@ public abstract class LectorBase {
                         this.extraListener.actionPerformed(null);
                 }
             } catch (RETCODE_NO_DATA e) {
-                // Con el StatusCondition esto NO debería pasar...
                 // No hace nada, al filtrar datos pues se da la cosa de que no haya
-                System.err.println("[DDStheus::LectorBase] No hay datos");
             } finally {
                 // Es para liberar recursos del sistema.
                 this.reader.return_loan(dataSeq, infoSeq);
