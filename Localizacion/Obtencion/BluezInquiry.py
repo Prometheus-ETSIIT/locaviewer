@@ -33,7 +33,8 @@ potencias={}
 class BluezInquiry:
     
     def __init__(self, dev_id, port):
-        self.dev_id     = dev_id # El número del bluetooth (si hay más de uno)
+        self.addr_nino  = "18:E7"
+	self.dev_id     = dev_id # El número del bluetooth (si hay más de uno)
         self.inquiring  = False
         self.socket     = None
         self.port       = port
@@ -129,7 +130,7 @@ class BluezInquiry:
 
         if self.inquiring == False:
             return
-        addr_nino="20:14" 
+       
         # Leer 258 bytes (tamaño máximo: 3 cabecera + 255 datos)
         pkt = self.socket.recv(258)
         ptype, event, plen = struct.unpack("BBB", pkt[:3])
@@ -147,7 +148,7 @@ class BluezInquiry:
                 #r = -0.00680102923817849*(int(rssi)**3) - 1.04905123190747*(int(rssi)**2) - 59.2087843354658*int(rssi) - 1106.35595941215
                 #print r
                 rssi=float(rssi)
-                if addr[0:5] == addr_nino:
+                if addr[0:5] == self.addr_nino:
                     self.procesamiento(addr,rssi)  # Organiza los valores recividos,eliminar errores, y envia un valor RSSI
 
 
