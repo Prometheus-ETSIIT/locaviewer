@@ -60,16 +60,13 @@ public class LectorVideo extends LectorBase {
     public void dispose() {
         super.dispose();
         this.getTopicoControl().dispose();
-        
+
         org.gstreamer.StateChangeReturn retState = this.pipe.stop();
         if (retState == org.gstreamer.StateChangeReturn.FAILURE)
             System.err.println("Error al parar.");
-        
+
         this.pipe.dispose();
         this.appsrc.dispose();
-        
-        this.frame.setVisible(false);
-        this.frame.dispose();
     }
     
     private void iniciaGStreamer() {
@@ -129,14 +126,14 @@ public class LectorVideo extends LectorBase {
         String codecInfo = sample.get_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED);
         int width  = sample.get_int("width", DynamicData.MEMBER_ID_UNSPECIFIED);
         int height = sample.get_int("height", DynamicData.MEMBER_ID_UNSPECIFIED);
-
+        
         // Crea el buffer de GStreamer
         ByteSeq bufferSeq = new ByteSeq();
         sample.get_byte_seq(bufferSeq, "buffer", DynamicData.MEMBER_ID_UNSPECIFIED);
 
         Buffer buffer = new Buffer(bufferSeq.size());
         buffer.getByteBuffer().put(bufferSeq.toArrayByte(null));
-
+        
         // Lo mete en la tubería
         if (this.appsrc != null)
             this.appsrc.pushBuffer(buffer);

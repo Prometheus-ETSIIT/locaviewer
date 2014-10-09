@@ -19,10 +19,7 @@
 package gava;
 
 import com.rti.dds.dynamicdata.DynamicData;
-import com.rti.dds.dynamicdata.DynamicDataProperty_t;
-import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.ByteSeq;
-import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.DataWriter;
