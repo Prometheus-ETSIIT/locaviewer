@@ -22,6 +22,10 @@ import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.dynamicdata.DynamicDataReader;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
+import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.topic.ContentFilteredTopic;
+import com.rti.dds.topic.Topic;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,6 +79,21 @@ public abstract class TopicoControl {
         }
     }
     
+    public ContentFilteredTopic createCFT(final String name, final String expr,
+            final String[] params) {
+       ContentFilteredTopic topic = (ContentFilteredTopic)this.participante
+               .lookup_topicdescription(name);
+       if (topic != null)
+           return topic;
+        
+        return this.participante.create_contentfilteredtopic(
+                name,
+                this.getTopicDescription(),
+                expr,
+                new StringSeq(Arrays.asList(params))
+        );
+    }
+    
     /**
      * Obtiene el participante del dominio.
      * 
@@ -83,6 +102,13 @@ public abstract class TopicoControl {
     protected DomainParticipant getParticipante() {
         return this.participante;
     }
+    
+    /**
+     * Obtiene el tópico asociado.
+     * 
+     * @return Tópico.
+     */
+    public abstract Topic getTopicDescription();
     
     /**
      * Crear un lector del tópico.
