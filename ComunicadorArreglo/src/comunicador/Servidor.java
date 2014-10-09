@@ -178,7 +178,7 @@ public class Servidor extends DataReaderAdapter{
         			long date = new Date().getTime();
         			
         			for(int j=0;j<datos.size();j++){
-        				if(date-datos.get(j).getCreacion()>20000){//Si tiene más de 20 segundos, seborra
+        				if(date-datos.get(j).getCreacion()>20000){//Si tiene más de 20 segundos, se borra
         					datos.remove(j);
         					j--;
         				}
