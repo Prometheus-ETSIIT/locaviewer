@@ -71,11 +71,51 @@ public class Padre {
         for (int i = 0; i < result.length; i++) {
             sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
         }
-         
         return sb.toString();
     }
     
-    public Padre getInstanceOf(String padre, String pass,int nino){
+    
+    public static Padre getPadre(String IDpadre){
+         BaseDatos conexion = new BaseDatos();
+            
+            String query = "SELECT * FROM padres where padre = ? ";
+            PreparedStatement consulta = null;
+        try {
+            consulta = conexion.getConnection().prepareStatement(query);
+        } catch (SQLException ex) {
+            Logger.getLogger(Padre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            consulta.setString(1, IDpadre);
+        } catch (SQLException ex) {
+            Logger.getLogger(Padre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            ResultSet res = null;
+        try {
+            res = consulta.executeQuery();
+        } catch (SQLException ex) {
+            Logger.getLogger(Padre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        try {
+            if(res.next()){
+                return new Padre(IDpadre,null,0);  
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Padre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+          
+        return null;
+    }
+    
+    
+    public boolean removePadre(){
+        
+    }
+    
+    
+    
+    public static Padre getInstanceOf(String padre, String pass,int nino){
         Padre p = new Padre(padre,pass,nino);
         if(p.getID()==null){
             return null;
@@ -97,5 +137,8 @@ public class Padre {
     public String getKey(){
         return key;
     }
+    
+    
+    
     
 }
