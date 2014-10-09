@@ -76,7 +76,7 @@ public class Facade {
      * Comandos disponibles:
      * registrar [id padre] [pass] [idnino] [key que se le pone al niño]
      * borrar [id padre] [idnino]
-     * modificar  [id padre] [pass] [idnino] [key que se le pone al niño]
+     * modificar  [id padre] [pass] [idnino] [key que se le pone al niño] [nuevo id nino]
      */
     public String commands(String[] command){
         if(isAdmin){   
@@ -86,7 +86,7 @@ public class Facade {
                 case "borrar":
                     return borrarPadre(command[1],Integer.parseInt(command[2]));
                 case "modificar":
-                    return modificarPadre(command[1],command[2],Integer.parseInt(command[3]),command[4]);
+                    return modificarPadre(command[1],command[2],Integer.parseInt(command[3]),command[4],Integer.parseInt(command[5]));
             }
         }
         else{
@@ -188,21 +188,27 @@ public class Facade {
     }
     
     
-    public String modificarPadre(String padre, String pass, int nino, String clave){
+    public String modificarPadre(String padreID, String pass, int nino, String clave, int nuevoIDnino){
       try {
+            
             BaseDatos conexion = new BaseDatos();
-            String query = "UPDATE padres SET  padre =  ?, nino = ?  WHERE  nino = ? AND padre = ?;";
+            String query = "UPDATE padres SET  pass = ?, nino= ?, clave = ?  WHERE  nino = ? AND padre = ?;";
 
             PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
-            consulta.setString(1, padre);
-            consulta.setInt(2, nino);
+            
+            consulta.setString(1, pass);
+            consulta.setInt(2, nuevoIDnino);
+            consulta.setString(3, clave);
+            consulta.setInt(4, nino);
+            consulta.setString(5, padreID);
+            
             consulta.executeQuery();
             
             conexion.desconectar();
         } catch (SQLException ex) {
-            return "No se pudo borrar al padre";
+            return "No se pudo modificar al padre";
         }
-        return "Padre borrado correctamente";
+        return "Padre modificado";
     
     }
 }
