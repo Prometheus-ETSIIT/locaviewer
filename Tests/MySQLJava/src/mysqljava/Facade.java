@@ -143,20 +143,24 @@ public class Facade {
             Statement estatuto = conexion.getConnection().createStatement();
             String passwordCifrada = cifrarPass(pass);
             estatuto.executeUpdate("INSERT INTO padres VALUES ('"+nino+"', '"+padre+"', '"+clave+"', '"+passwordCifrada+"');");
+            conexion.desconectar();
         } catch (SQLException ex) {
             return "No se pudo registrar";
         }
         return "Registrado satisfactoriamente";
+        
     }
     
     
     private String cifrarPass(String pass){
         MessageDigest mDigest = null;
+
         try {
             mDigest = MessageDigest.getInstance("SHA1");
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(Padre.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Facade.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         byte[] result = mDigest.digest(pass.getBytes());
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < result.length; i++) {
@@ -167,13 +171,21 @@ public class Facade {
     }
     
     public String borrarPadre(String padre,int nino){
-        Padre p = Padre.getPadre(padre);
-        if(p.removePadre()){
-            return "Borrado satisfactoriamente";
-        }
-        else{
+        try {
+
+            BaseDatos conexion = new BaseDatos();
+            String query ="DELETE FROM padres  WHERE padre = ? AND padre = ?";
+     
+            PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
+            consulta.setString(1, padre);
+            consulta.setInt(2, nino);
+            consulta.executeQuery();
+            
+            conexion.desconectar();
+        } catch (SQLException ex) {
             return "No se pudo borrar al padre";
         }
+        return "Padre borrado correctamente";
     }
     
     

@@ -15,9 +15,7 @@ public class MySQLJava {
 
     public static void main(String[] args) {
 
-        new Padre("75981236H", "cosas", 20, "00:1B:44:11:3A:22");
-            
-    
+      
         
     }
     
