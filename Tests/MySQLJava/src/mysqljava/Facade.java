@@ -172,7 +172,6 @@ public class Facade {
     
     public String borrarPadre(String padre,int nino){
         try {
-
             BaseDatos conexion = new BaseDatos();
             String query ="DELETE FROM padres  WHERE padre = ? AND padre = ?";
      
@@ -190,6 +189,20 @@ public class Facade {
     
     
     public String modificarPadre(String padre, String pass, int nino, String clave){
-        return "";
+      try {
+            BaseDatos conexion = new BaseDatos();
+            String query = "UPDATE padres SET  padre =  ?, nino = ?  WHERE  nino = ? AND padre = ?;";
+
+            PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
+            consulta.setString(1, padre);
+            consulta.setInt(2, nino);
+            consulta.executeQuery();
+            
+            conexion.desconectar();
+        } catch (SQLException ex) {
+            return "No se pudo borrar al padre";
+        }
+        return "Padre borrado correctamente";
+    
     }
 }
