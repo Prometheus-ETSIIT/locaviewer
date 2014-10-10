@@ -24,8 +24,12 @@ import es.prometheus.dds.LectorBase;
 import es.prometheus.dds.TopicoControlFactoria;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JFrame;
 import org.gstreamer.Buffer;
+import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
 import org.gstreamer.Element;
 import org.gstreamer.ElementFactory;
@@ -71,28 +75,31 @@ public class LectorVideo extends LectorBase {
     
     private void iniciaGStreamer() {
         // Crea los elementos de la tubería
+        List<Element> elements = new ArrayList<>();
+        
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
-        
-        // 2º Decodificación
-        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
-        Element codec = ElementFactory.make("jpegdec", null);
+        this.appsrc.setLive(true);
+        this.appsrc.setLatency(0, 100000000);
+        this.appsrc.setTimestamp(true);
+        this.appsrc.setFormat(Format.TIME);
+        this.appsrc.setStreamType(AppSrc.Type.STREAM);
+        elements.add(this.appsrc);
+    
+        // 2º Códec
+        Element[] codec = this.getDecVp8();
+        elements.addAll(Arrays.asList(codec));
         
         // 3º Salida de vídeo
         VideoComponent videoComponent = new VideoComponent();
         Element videosink = videoComponent.getElement();
-       
+        elements.add(videosink);
+        
         // Crea la tubería
         this.pipe = new Pipeline();
-        this.pipe.addMany(this.appsrc, codec, videoconvert, videosink);
-        Element.linkMany(this.appsrc, codec, videoconvert, videosink);
-        
-        // Configura el APPSRC
-        appsrc.setLive(true);
-        appsrc.setLatency(0, 100);
-        appsrc.setTimestamp(true);
-        appsrc.setFormat(Format.TIME);
-        appsrc.setStreamType(AppSrc.Type.STREAM);
+        this.pipe.addMany(elements.toArray(new Element[0]));
+        Element.linkMany(elements.toArray(new Element[0]));
+        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor"); // DEBG
         
         // Crea la ventana y la muestra
         this.frame = new JFrame("Gava suscriptor testing");
@@ -110,10 +117,36 @@ public class LectorVideo extends LectorBase {
             System.err.println("Error al cambio de estado.");
             System.exit(1);
         }
-        
-        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor");
     }
 
+    /**
+     * Obtiene los elementos de la tubería para la decodiciación en formato JPEG.
+     * 
+     * @return Decodificadores JPEG.
+     */
+    private Element[] getDecJpeg() {
+        // Codec JPEG
+        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
+        Element codec = ElementFactory.make("jpegdec", null);
+        
+        return new Element[] { videoconvert, codec };
+    }
+    
+    /**
+     * Obtiene los elementos de la tubería para la decodiciación en formato VP8.
+     * 
+     * @return Decodificadores VP8.
+     */
+    private Element[] getDecVp8() {
+        // Codec VP8
+        Element capsSrc = ElementFactory.make("capsfilter", null);
+        capsSrc.setCaps(Caps.fromString("video/x-vp8"));
+        
+        Element codec = ElementFactory.make("vp8dec", null);
+        
+        return new Element[] { capsSrc, codec };
+    }
+    
     @Override
     public void getDatos(DynamicData sample) {
         // Deserializa los datos

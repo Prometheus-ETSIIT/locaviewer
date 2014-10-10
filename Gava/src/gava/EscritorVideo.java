@@ -28,6 +28,9 @@ import com.rti.dds.publication.PublicationMatchedStatus;
 import es.prometheus.dds.Escritor;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.gstreamer.Buffer;
 import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
@@ -102,31 +105,39 @@ public class EscritorVideo extends Thread {
      */
     private void iniciaGStreamer() {
         // Crea los elementos de la tubería
+        List<Element> elements = new ArrayList<>();
+        
         // 1º Origen de vídeo, del códec v4l2
         Element videosrc = ElementFactory.make("v4l2src", null);
         videosrc.set("device", device);
+        elements.add(videosrc);
 
-        // 2º Datos del vídeo
-        Element videofilter = ElementFactory.make("capsfilter", null);
-        videofilter.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
-
+        // 2º Datos de captura de vídeo: establecemos tamaño y framerate
+        Element capsSrc = ElementFactory.make("capsfilter", null);
+        capsSrc.setCaps(Caps.fromString("video/x-raw width=640 height=480 framerate=15/1"));
+        elements.add(capsSrc);
+        
         Element videorate = ElementFactory.make("videorate", null);
-
+        elements.add(videorate);
+        
+        // 3º Conversor de vídeo
         Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
-        Element codec = ElementFactory.make("jpegenc", null);
-        Element codec2 = ElementFactory.make("multipartmux", null);
-
-        // 3º Salida de vídeo
+        elements.add(videoconvert);
+        
+        // 4º Codecs
+        Element[] codecs = this.getEncVp8();
+        elements.addAll(Arrays.asList(codecs));
+        
+        // 5º Salida de vídeo
         this.appsink = (AppSink) ElementFactory.make("appsink", null);
+        this.appsink.setQOSEnabled(true);
+        elements.add(appsink);
 
         // Crea la tubería
         this.pipe = new Pipeline();
-        this.pipe.addMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
-        Element.linkMany(videosrc, videorate, videofilter, videoconvert, codec, codec2, this.appsink);
-
-        // Configura el APPSINK
-        this.appsink.setQOSEnabled(true);
-        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador");
+        this.pipe.addMany(elements.toArray(new Element[0]));
+        Element.linkMany(elements.toArray(new Element[0]));
+        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador"); // DEBUG
 
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
@@ -138,6 +149,35 @@ public class EscritorVideo extends Thread {
         }
     }
 
+    /**
+     * Obtiene los elementos de la tubería para la codiciación en formato JPEG.
+     * 
+     * @return Codificadores JPEG.
+     */
+    private Element[] getEncJpeg() {        
+        // Codec JPEG
+        Element codec = ElementFactory.make("jpegenc", null);
+        Element mux   = ElementFactory.make("multipartmux", null);
+        
+        return new Element[] { codec, mux };
+    }
+    
+    /**
+     * Obtiene los elementos de la tubería para la codiciación en formato VP8.
+     * 
+     * @return Codificadores VP8.
+     */
+    private Element[] getEncVp8() {
+        // Codec VP8 (WebM)
+        Element codec = ElementFactory.make("vp8enc", null);
+        
+        // Caps del nuevo formato
+        Element capsDst = ElementFactory.make("capsfilter", null);
+        capsDst.setCaps(Caps.fromString("video/x-vp8 profile=(string)2"));
+        
+        return new Element[] { codec, capsDst };
+    }
+    
     /**
      * Obtiene un buffer y lo transmite por DDS.
      */
