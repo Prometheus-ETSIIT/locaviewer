@@ -69,12 +69,14 @@ public class LectorVideo extends LectorBase {
         super.dispose();
         this.getTopicoControl().dispose();
 
-        org.gstreamer.StateChangeReturn retState = this.pipe.stop();
-        if (retState == org.gstreamer.StateChangeReturn.FAILURE)
-            System.err.println("Error al parar.");
+        if (this.pipe != null) {
+            org.gstreamer.StateChangeReturn retState = this.pipe.stop();
+            if (retState == org.gstreamer.StateChangeReturn.FAILURE)
+                System.err.println("Error al parar.");
 
-        this.pipe.dispose();
-        this.appsrc.dispose();
+            this.pipe.dispose();
+            this.appsrc.dispose();
+        }
     }
     
     /**
