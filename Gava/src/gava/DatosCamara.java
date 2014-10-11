@@ -119,6 +119,25 @@ public class DatosCamara {
     }
     
     /**
+     * Crea una nueva instancia a partir de un resumen en cadena de caracteres.
+     * 
+     * @param summary Resumen de los datos de la cámara.
+     * @return Instancia de esta clase.
+     */
+    public static DatosCamara FromStringSummary(final String summary) {
+        DatosCamara datos = new DatosCamara();
+        String[] fields = summary.split(",");
+        
+        datos.camId = fields[0];
+        datos.sala  = fields[1];
+        datos.posX  = Double.parseDouble(fields[2]);
+        datos.posY  = Double.parseDouble(fields[3]);
+        datos.angle = Double.parseDouble(fields[4]);
+        
+        return datos;
+    }
+    
+    /**
      * Shortcut to get the text in a XML entry.
      * 
      * @param el XML entry element.
@@ -289,6 +308,17 @@ public class DatosCamara {
      */
     public void setBuffer(byte[] buffer) {
         this.buffer = buffer;
+    }
+    
+    /**
+     * Crea un resumen de datos de la cámara.
+     * Se usa como metadatos en el escritor.
+     * 
+     * @return Resumen de datos de cámara.
+     */
+    public String getSummary() {
+        return this.camId + "," + this.sala + "," + this.posX + "," + 
+                this.posY + "," + this.angle;
     }
     
     /**

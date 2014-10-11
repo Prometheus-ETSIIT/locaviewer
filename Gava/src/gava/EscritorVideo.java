@@ -20,6 +20,12 @@ package gava;
 
 import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
+import com.rti.dds.publication.DataWriterQos;
+import com.rti.dds.publication.Publisher;
+import es.prometheus.dds.DiscoveryChange;
+import es.prometheus.dds.DiscoveryChangeStatus;
+import es.prometheus.dds.DiscoveryData;
+import es.prometheus.dds.DiscoveryListener;
 import es.prometheus.dds.Escritor;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
@@ -38,12 +44,16 @@ import org.gstreamer.elements.AppSink;
 /**
  * Obtiene vídeo de la cámara y lo escribe en DDS.
  */
-public class EscritorVideo extends Thread {
+public class EscritorVideo extends Thread implements DiscoveryListener {
     private final String device;
     private final DatosCamara info;
+    
+    private int numSubs;
+    private boolean pausar;
     private boolean parar;
     
     private TopicoControl topico;
+    private String topicName;
     private Escritor writer;
     private DynamicData instance;
 
@@ -58,24 +68,31 @@ public class EscritorVideo extends Thread {
      * @param info  Información de la cámara.
      */
     public EscritorVideo(final String device, final DatosCamara info) {
-        this.device = device;
-        this.info   = info;
-        this.parar  = false;
+        this.device  = device;
+        this.info    = info;
+        this.parar   = false;
+        this.pausar  = false;
+        this.numSubs = 0;
     }
 
     @Override
-    public void run() {
-        // Inicia DDS y obtiene el escritor
-        this.iniciaDds();
-
+    public synchronized void run() {
         // Inicia GStreamer
         this.iniciaGStreamer();
+        
+        // Inicia DDS y obtiene el escritor
+        this.iniciaDds();
 
         // Mientras no se acabe, coje cada frame y lo envía.
         while (!appsink.isEOS() && !this.parar)
             this.transmite();
         
         // Una vez terminado, paramos de transmitir.
+        if (!this.pausar) {
+            this.pipe.stop();
+            this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+        }
+        
         this.topico.dispose();
     }
 
@@ -87,9 +104,26 @@ public class EscritorVideo extends Thread {
         this.topico = TopicoControlFactoria.crearControlDinamico(
                 "MyParticipantLibrary::PublicationParticipant",
                 "VideoDataTopic");
-
-        // Crea el escritor.
-        this.writer = new Escritor(this.topico);
+        
+        // Obtiene el nombre de tópico
+        this.topicName = this.topico.getTopicDescription().get_name();
+        
+        // Obtiene todos los lectores suscriptos a este escritor.
+        for (DiscoveryData data : this.topico.getParticipanteControl().getDiscoveryReaderData())
+            this.updateNumSubs(data, DiscoveryChangeStatus.ANADIDO);
+        
+        // Añade el listener (este clase) al descubridor
+        this.topico.getParticipanteControl().addDiscoveryReaderListener(this);
+        
+        // Si no tenemos ningún suscriptor paramos de coger vídeo.
+        if (this.numSubs == 0)
+            this.pausar();
+        
+        // Crea el escritor con QOS.
+        DataWriterQos qos = Publisher.DATAWRITER_QOS_DEFAULT;
+        qos.user_data.value.clear();
+        qos.user_data.value.addAllByte(this.info.getSummary().getBytes());
+        this.writer = new Escritor(this.topico, qos);
 
         // Crea una estructura de datos como la que hemos definido en el XML.
         this.instance = this.writer.creaDatos();
@@ -226,5 +260,75 @@ public class EscritorVideo extends Thread {
      */
     public void parar() {
         this.parar = true;
+    }
+    
+    /**
+     * Pausa la obtención de vídeo.
+     */
+    public void pausar() {
+        if (this.pausar)
+            return;
+        
+        this.pausar = true;
+        this.pipe.pause();
+        org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+        if (retState == org.gstreamer.State.NULL)
+            System.err.println("No se pudo pausar");
+        else
+            System.out.println("Pausado");
+    }
+    
+    /**
+     * Reanuda la obtención de vídeo.
+     */
+    public void reanudar() {
+        if (!this.pausar)
+            return;
+        
+        this.pausar = false;
+        this.pipe.play();
+        org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+        if (retState == org.gstreamer.State.NULL)
+            System.err.println("No se pudo reanudar");
+        else
+            System.out.println("Reanudado");
+    }
+
+    @Override
+    public void onChange(DiscoveryChange[] changes) {
+        for (DiscoveryChange change : changes)
+            this.updateNumSubs(change.getData(), change.getStatus());
+        
+        if (this.numSubs > 0)
+            this.reanudar();
+        else
+            this.pausar();
+    }
+    
+    /**
+     * Actualiza el número de suscriptores de este escritor según los datos
+     * recibidos en el descubridor.
+     * 
+     * @param data Datos del lector.
+     * @param status Estado de descubrimiento.
+     */
+    private void updateNumSubs(final DiscoveryData data, final DiscoveryChangeStatus status) {
+        // Compara si coincide el tópico.
+        if (!this.topicName.equals(data.getTopicName()))
+            return;
+
+        // Obtiene el ID de la cámara, le quita los ' porque se envía como
+        // parámetro en la expresión del filtro.
+        String camId = new String(data.getUserData().toArrayByte(null));
+        camId = camId.replaceAll("'", "");
+        
+        // Compara si coinciden el camId.
+        if (!this.info.getCamId().equals(camId))
+            return;
+
+        if (status == DiscoveryChangeStatus.ANADIDO)
+            this.numSubs++;
+        else if (status == DiscoveryChangeStatus.ELIMINADO)
+            this.numSubs--;
     }
 }
