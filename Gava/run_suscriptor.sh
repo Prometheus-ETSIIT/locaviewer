@@ -13,4 +13,4 @@ source $RTI_CONNEXT_PATH/rti_set_bash_5.1.0
 export LD_LIBRARY_PATH=$NDDSHOME/lib/$RTI_ARCH:$LD_LIBRARY_PATH
 
 export GST_DEBUG_DUMP_DOT_DIR=$HOME
-java -Djna.nosys=true -cp ../../../DDStheus/dist/DDStheus.jar:../../../Libs/gstreamer-java/gstreamer-java-1.6.jar:../../../Libs/JNA/jna-4.1.0.jar:../../../Libs/JNA/jna-platform-4.1.0.jar:$NDDSHOME/class/nddsjavad.jar:./ gava.Suscriptor
+java -Djna.nosys=true -cp ../../../DDStheus/dist/DDStheus.jar:../../../Libs/gstreamer-java/gstreamer-java-1.6.jar:../../../Libs/JNA/jna-4.1.0.jar:../../../Libs/JNA/jna-platform-4.1.0.jar:$NDDSHOME/class/nddsjavad.jar:./ gava.Suscriptor $@

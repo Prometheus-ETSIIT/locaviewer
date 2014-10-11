@@ -145,7 +145,7 @@ public class EscritorVideo extends Thread {
         this.pipe = new Pipeline();
         this.pipe.addMany(elements.toArray(new Element[0]));
         Element.linkMany(elements.toArray(new Element[0]));
-        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador"); // DEBUG
+        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador"); // DEBUG
 
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
