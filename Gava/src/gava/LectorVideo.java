@@ -43,6 +43,7 @@ import org.gstreamer.swing.VideoComponent;
 public class LectorVideo extends LectorBase {
     private static final String EXPRESION = "camId = %0";
     
+    private String codecName;
     private Pipeline pipe;
     private AppSrc appsrc;
     private JFrame frame;
@@ -60,8 +61,6 @@ public class LectorVideo extends LectorBase {
             EXPRESION,
             new String[] { "'" + camId + "'" }
         );
-        
-        this.iniciaGStreamer();
     }
     
     @Override
@@ -94,8 +93,12 @@ public class LectorVideo extends LectorBase {
         elements.add(this.appsrc);
     
         // 2º Códec
-        Element[] codec = this.getDecJpeg();
-        elements.addAll(Arrays.asList(codec));
+        Element[] codecs = null;
+        switch (this.codecName) {
+            case "JPEG": codecs = this.getDecJpeg(); break;
+            case "VP8":  codecs = this.getDecVp8();  break;
+        }
+        elements.addAll(Arrays.asList(codecs));
         
         // 3º Salida de vídeo
         VideoComponent videoComponent = new VideoComponent();
@@ -159,6 +162,12 @@ public class LectorVideo extends LectorBase {
         // DEBUG: sample.print(null, 0); // Para mostrarlo formateado por la consola
         DatosCamara datos = DatosCamara.FromDds(sample);
 
+        // Inicializamos GStreamer si es la primera vez
+        if (this.pipe == null) {
+            this.codecName = datos.getCodecInfo();
+            this.iniciaGStreamer();
+        }
+        
         Buffer buffer = new Buffer(datos.getBuffer().length);
         buffer.getByteBuffer().put(datos.getBuffer());
         
