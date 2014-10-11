@@ -339,6 +339,11 @@ public abstract class LectorBase {
             this.extraListener = listener;
         }
         
+        /**
+         * Cambia el lector para obtener datos.
+         * 
+         * @param reader Nuevo lector.
+         */
         public void cambiaReader(final DynamicDataReader reader) {
             // Elimina la condición anterior
             this.waitset.detach_condition(this.reader.get_statuscondition());

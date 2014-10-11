@@ -21,14 +21,17 @@ package es.prometheus.dds;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.infrastructure.ConditionSeq;
+import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicData;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataDataReader;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataSeq;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataTypeSupport;
 import com.rti.dds.subscription.DataReader;
-import com.rti.dds.subscription.DataReaderAdapter;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -52,10 +55,12 @@ public class Participante {
     private final static Map<DomainParticipant, Integer> CountInstancias = new HashMap<>();
     
     private DomainParticipant participante;
-    private DataReader discovReader;
-    private DiscoveryReaders discovReaderListener;
-    private DataReader discovWriter;
-    private DiscoveryWriters discovWriterListener;
+    private final DataReader discovReader;
+    private final DiscoveryReaders discovReaderListener;
+    private final Thread discovReaderThread;
+    private final DataReader discovWriter;
+    private final DiscoveryWriters discovWriterListener;
+    private final Thread discovWriterThread;
     
     /**
      * Crea una nueva instancia de participante en tópico.
@@ -72,39 +77,40 @@ public class Participante {
                 .lookup_participant_by_name(simpleName);
         
         // No ha sido creado previamente -> Crea un participante de dominio.
-        if (this.participante != null)
-            return;
-        
-        // Lo creamos deshabilitado para que a los listener lleguen todos los datos.
-        DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
-        DomainParticipantFactory.get_instance().get_qos(qos);
-        qos.entity_factory.autoenable_created_entities = false;
-        DomainParticipantFactory.get_instance().set_qos(qos);
-        
-        // Creamos el participante
-        this.participante = DomainParticipantFactory.get_instance()
-                    .create_participant_from_config(name);
-        
-        // No ha habido forma de crearlo :(
-        if (this.participante == null) {
-            System.err.println("[DDStheus::Participante] No se pudo crear.");
-            System.exit(1);
+        if (this.participante == null) {        
+            // Lo creamos deshabilitado para que a los listener lleguen todos los datos.
+            DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
+            DomainParticipantFactory.get_instance().get_qos(qos);
+            qos.entity_factory.autoenable_created_entities = false;
+            DomainParticipantFactory.get_instance().set_qos(qos);
+
+            // Creamos el participante
+            this.participante = DomainParticipantFactory.get_instance()
+                        .create_participant_from_config(name);
+
+            // No ha habido forma de crearlo :(
+            if (this.participante == null) {
+                System.err.println("[DDStheus::Participante] No se pudo crear.");
+                System.exit(1);
+            }
+
+            // Volvemos a habilitarlo para dejarlo en su valor por defecto.
+            qos.entity_factory.autoenable_created_entities = true;
+            DomainParticipantFactory.get_instance().set_qos(qos);
         }
-        
-        // Volvemos a habilitarlo para dejarlo en su valor por defecto.
-        qos.entity_factory.autoenable_created_entities = true;
-        DomainParticipantFactory.get_instance().set_qos(qos);
         
         // Establece los discovery listener
         Subscriber spSubs = this.participante.get_builtin_subscriber();
         
-        this.discovWriterListener = new DiscoveryWriters();
-        this.discovReader = spSubs.lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
-        this.discovReader.set_listener(this.discovWriterListener, StatusKind.DATA_AVAILABLE_STATUS);
+        this.discovWriter = spSubs.lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
+        this.discovWriterListener = new DiscoveryWriters(this.discovWriter);
+        this.discovWriterThread = new Thread(this.discovWriterListener);
+        this.discovWriterThread.start();
         
-        this.discovReaderListener = new DiscoveryReaders();
-        this.discovWriter = spSubs.lookup_datareader(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME);
-        this.discovWriter.set_listener(this.discovReaderListener, StatusKind.DATA_AVAILABLE_STATUS);
+        this.discovReader = spSubs.lookup_datareader(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME);
+        this.discovReaderListener = new DiscoveryReaders(this.discovReader);
+        this.discovReaderThread = new Thread(this.discovReaderListener);
+        this.discovReaderThread.start();
         
         // Finalmente ya lo podemos habilitar
         this.participante.enable();
@@ -137,8 +143,19 @@ public class Participante {
         // Si ya nadie lo está usando, lo eliminamos
         // TODO: Esto está fallando
         if (num == 0) {
-            discovReader.delete_contained_entities();
-            discovWriter.delete_contained_entities();
+            // Paramos de recibir datos
+            try {
+                this.discovWriterListener.terminar();
+                this.discovWriterThread.join(5000);
+                
+                this.discovReaderListener.terminar();
+                this.discovReaderThread.join(5000);
+            } catch (InterruptedException e) { 
+                System.err.println("TimeOver!");
+            }
+            
+            this.discovReader.delete_contained_entities();
+            this.discovWriter.delete_contained_entities();
             this.participante.get_builtin_subscriber().delete_contained_entities();
             this.participante.delete_contained_entities();
             DomainParticipantFactory.get_instance().delete_participant(this.participante);
@@ -213,10 +230,51 @@ public class Participante {
      * 
      * @param <T> Entidad a descubrir.
      */
-    private static abstract class DiscoveryAdapter<T> extends DataReaderAdapter {
+    private static abstract class DiscoveryAdapter<T> implements Runnable {
+        private static final int MAX_TIME_SEC  = 3;
+        private static final int MAX_TIME_NANO = 0;
+       
+        protected final DataReader reader;
+        private final WaitSet waitset;
+        private final Duration_t duracion;
+        private boolean terminar;
+        
         protected final List<DiscoveryListener> listeners = new ArrayList<>();
         protected final List<DiscoveryData> data = new ArrayList<>();
         protected final List<DiscoveryChange> changes = new ArrayList<>();
+        
+        protected DiscoveryAdapter(final DataReader reader) {
+            this.terminar = false;
+            this.reader   = reader;
+            this.duracion = new Duration_t(MAX_TIME_SEC, MAX_TIME_NANO);
+            this.waitset  = new WaitSet();
+            this.waitset.attach_condition(reader.get_statuscondition());
+        }
+        
+        @Override
+        public void run() {
+            while (!this.terminar) {
+                // Esperamos a obtener la siguiente muestra que cumpla la condición
+                ConditionSeq activadas = new ConditionSeq();
+                try { this.waitset.wait(activadas, duracion); }
+                catch (RETCODE_TIMEOUT e) { continue; }
+                
+                // Procesamos los datos recibidos.
+                this.processData();
+            }
+        }
+        
+        /**
+         * Termina la ejecución en la próxima iteración.
+         */
+        public void terminar() {
+            this.terminar = true;
+        }
+        
+        /**
+         * Procesa los datos obtenidos de DDS.
+         */
+        protected abstract void processData();
         
         /**
          * Obtiene las entidades en acción.
@@ -233,7 +291,6 @@ public class Participante {
          * @param l Listener de cambio en descubrimiento.
          */
         public void addListener(DiscoveryListener l) {
-            System.out.println(l == null);
             if (!this.listeners.contains(l))
                 this.listeners.add(l);
         }
@@ -301,6 +358,15 @@ public class Participante {
      * Listener de descubridor de lectores.
      */
     private static class DiscoveryReaders extends DiscoveryAdapter<SubscriptionBuiltinTopicData> {
+        /**
+         * Crea una nueva instancia a partir del lector dado.
+         * 
+         * @param reader Lector a usar.
+         */
+        public DiscoveryReaders(final DataReader reader) {
+            super(reader);
+        }
+        
         @Override
         protected DiscoveryData convertData(SubscriptionBuiltinTopicData datum,
                 SampleInfo info) {
@@ -311,38 +377,43 @@ public class Participante {
         }
         
         @Override
-        public void on_data_available(DataReader reader) {
+        public void processData() {
             SampleInfoSeq infoSeq = new SampleInfoSeq();
             SubscriptionBuiltinTopicDataSeq sampleSeq = 
                     new SubscriptionBuiltinTopicDataSeq();
             
             SubscriptionBuiltinTopicDataDataReader builtinReader = 
-                    (SubscriptionBuiltinTopicDataDataReader)reader;
+                    (SubscriptionBuiltinTopicDataDataReader)this.reader;
             
-            // Lee las muestras
-            builtinReader.take(
-                    sampleSeq,
-                    infoSeq,
-                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                    SampleStateKind.ANY_SAMPLE_STATE,
-                    ViewStateKind.ANY_VIEW_STATE,
-                    InstanceStateKind.ANY_INSTANCE_STATE
-            );
+            try {
+                // Lee las muestras
+                builtinReader.take(
+                        sampleSeq,
+                        infoSeq,
+                        ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                        SampleStateKind.ANY_SAMPLE_STATE,
+                        ViewStateKind.ANY_VIEW_STATE,
+                        InstanceStateKind.ANY_INSTANCE_STATE
+                );
 
-            // Procesa cada muestra
-            for (int i = 0; i < sampleSeq.size(); i++) {
-                SampleInfo info = (SampleInfo)infoSeq.get(i);
-                SubscriptionBuiltinTopicData sample = 
-                        (SubscriptionBuiltinTopicData)sampleSeq.get(i);
+                // Procesa cada muestra
+                for (int i = 0; i < sampleSeq.size(); i++) {
+                    SampleInfo info = (SampleInfo)infoSeq.get(i);
+                    SubscriptionBuiltinTopicData sample = 
+                            (SubscriptionBuiltinTopicData)sampleSeq.get(i);
 
-                if (!info.valid_data)
-                    this.removeElement(info);
-                else
-                    this.addElement(sample, info);
+                    if (!info.valid_data)
+                        this.removeElement(info);
+                    else
+                        this.addElement(sample, info);
+                }
+            } catch (RETCODE_NO_DATA e) {
+                // No hace nada, al filtrar datos pues se da la cosa de que no haya
+            } finally {
+                // Es para liberar recursos del sistema.
+                builtinReader.return_loan(sampleSeq, infoSeq);
+                this.notifyListeners();
             }
-            
-            builtinReader.return_loan(sampleSeq, infoSeq);
-            this.notifyListeners();
         }
     }
     
@@ -350,6 +421,15 @@ public class Participante {
      * Listener de descubridor de escritores.
      */
     private static class DiscoveryWriters extends DiscoveryAdapter<PublicationBuiltinTopicData> {
+        /**
+         * Crea una nueva instancia a partir del lector dado.
+         * 
+         * @param reader Lector a usar.
+         */
+        public DiscoveryWriters(final DataReader reader) {
+            super(reader);
+        }
+        
         @Override
         protected DiscoveryData convertData(PublicationBuiltinTopicData datum,
                 SampleInfo info) {
@@ -360,7 +440,7 @@ public class Participante {
         }
         
         @Override
-        public void on_data_available(DataReader reader) {
+        public void processData() {
             SampleInfoSeq infoSeq = new SampleInfoSeq();
             PublicationBuiltinTopicDataSeq sampleSeq = 
                     new PublicationBuiltinTopicDataSeq();
@@ -368,30 +448,35 @@ public class Participante {
             PublicationBuiltinTopicDataDataReader builtinReader = 
                     (PublicationBuiltinTopicDataDataReader)reader;
             
-            // Lee las muestras
-            builtinReader.take(
-                    sampleSeq,
-                    infoSeq,
-                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                    SampleStateKind.ANY_SAMPLE_STATE,
-                    ViewStateKind.ANY_VIEW_STATE,
-                    InstanceStateKind.ANY_INSTANCE_STATE
-            );
+            try {
+                // Lee las muestras
+                builtinReader.take(                 
+                        sampleSeq,
+                        infoSeq,
+                        ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                        SampleStateKind.ANY_SAMPLE_STATE,
+                        ViewStateKind.ANY_VIEW_STATE,
+                        InstanceStateKind.ANY_INSTANCE_STATE
+                );
 
-            // Procesa cada muestra
-            for (int i = 0; i < sampleSeq.size(); i++) {
-                SampleInfo info = (SampleInfo)infoSeq.get(i);
-                PublicationBuiltinTopicData sample = 
-                        (PublicationBuiltinTopicData)sampleSeq.get(i);
+                // Procesa cada muestra
+                for (int i = 0; i < sampleSeq.size(); i++) {
+                    SampleInfo info = (SampleInfo)infoSeq.get(i);
+                    PublicationBuiltinTopicData sample = 
+                            (PublicationBuiltinTopicData)sampleSeq.get(i);
 
-                if (!info.valid_data)
-                    this.removeElement(info);
-                else
-                    this.addElement(sample, info);
+                    if (!info.valid_data)
+                        this.removeElement(info);
+                    else
+                        this.addElement(sample, info);
+                }
+            } catch (RETCODE_NO_DATA e) {
+                // No hace nada, al filtrar datos pues se da la cosa de que no haya
+            } finally {
+                // Es para liberar recursos del sistema.
+                builtinReader.return_loan(sampleSeq, infoSeq);
+                this.notifyListeners();
             }
-            
-            builtinReader.return_loan(sampleSeq, infoSeq);
-            this.notifyListeners();
         }
     }
 }
