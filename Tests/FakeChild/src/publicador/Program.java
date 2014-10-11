@@ -20,7 +20,8 @@ package publicador;
 
 import com.rti.dds.dynamicdata.DynamicData;
 import es.prometheus.dds.Escritor;
-import es.prometheus.dds.TopicoControlDinamico;
+import es.prometheus.dds.TopicoControl;
+import es.prometheus.dds.TopicoControlFactoria;
 
 /**
  * Programa que simula estar localizando a un niño.
@@ -36,7 +37,7 @@ public class Program {
      */
     public static void main(String[] args) {
         // Crea un escritor para el dominio
-        TopicoControlDinamico topico = new TopicoControlDinamico(
+        TopicoControl topico = TopicoControlFactoria.crearControlDinamico(
                 "ParticipantesPC::ParticipanteNino",
                 "ChildDataTopic");
         Escritor escritor = new Escritor(topico);
@@ -52,9 +53,9 @@ public class Program {
         
         // Versiones alteradas de los datos
         DatosNino[] valoresNino = new DatosNino[3];
-        valoresNino[0] = MueveNino(nino, "0", 3.0, 1.0);
-        valoresNino[1] = MueveNino(nino, "0", 2.5, 2.3);        
-        valoresNino[2] = MueveNino(nino, "1", 2.0, 5.1);
+        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0);
+        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3);        
+        valoresNino[2] = MueveNino(nino, "test1", 2.0, 5.1);
 
         // Alterna entre los datos y los envía
         for (int i = 0; i < MAX_ITER; i++) {          
