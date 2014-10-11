@@ -19,7 +19,6 @@
 package gava;
 
 import com.rti.dds.dynamicdata.DynamicData;
-import com.rti.dds.infrastructure.ByteSeq;
 import es.prometheus.dds.LectorBase;
 import es.prometheus.dds.TopicoControlFactoria;
 import java.awt.BorderLayout;
@@ -39,7 +38,7 @@ import org.gstreamer.elements.AppSrc;
 import org.gstreamer.swing.VideoComponent;
 
 /**
- * 
+ * Obtiene vídeo de DDS y lo muestra en una nueva ventana.
  */
 public class LectorVideo extends LectorBase {
     private static final String EXPRESION = "camId = %0";
@@ -48,6 +47,11 @@ public class LectorVideo extends LectorBase {
     private AppSrc appsrc;
     private JFrame frame;
     
+    /**
+     * Crea una nueva instancia del lector a partir del ID de la cámara a ver.
+     * 
+     * @param camId 
+     */
     public LectorVideo(final String camId) {
         // Inicia DDS creando un control de tópico dinámico
         super(
@@ -73,6 +77,9 @@ public class LectorVideo extends LectorBase {
         this.appsrc.dispose();
     }
     
+    /**
+     * Crea la tubería de GStreamer.
+     */
     private void iniciaGStreamer() {
         // Crea los elementos de la tubería
         List<Element> elements = new ArrayList<>();
@@ -87,7 +94,7 @@ public class LectorVideo extends LectorBase {
         elements.add(this.appsrc);
     
         // 2º Códec
-        Element[] codec = this.getDecVp8();
+        Element[] codec = this.getDecJpeg();
         elements.addAll(Arrays.asList(codec));
         
         // 3º Salida de vídeo
@@ -126,10 +133,9 @@ public class LectorVideo extends LectorBase {
      */
     private Element[] getDecJpeg() {
         // Codec JPEG
-        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
         Element codec = ElementFactory.make("jpegdec", null);
         
-        return new Element[] { videoconvert, codec };
+        return new Element[] { codec };
     }
     
     /**
@@ -151,21 +157,10 @@ public class LectorVideo extends LectorBase {
     public void getDatos(DynamicData sample) {
         // Deserializa los datos
         // DEBUG: sample.print(null, 0); // Para mostrarlo formateado por la consola
-        String camId = sample.get_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED);
-        String sala  = sample.get_string("sala", DynamicData.MEMBER_ID_UNSPECIFIED);
-        double posX  = sample.get_double("posX", DynamicData.MEMBER_ID_UNSPECIFIED);
-        double posY  = sample.get_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED);
-        double angle = sample.get_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED);
-        String codecInfo = sample.get_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED);
-        int width  = sample.get_int("width", DynamicData.MEMBER_ID_UNSPECIFIED);
-        int height = sample.get_int("height", DynamicData.MEMBER_ID_UNSPECIFIED);
-        
-        // Crea el buffer de GStreamer
-        ByteSeq bufferSeq = new ByteSeq();
-        sample.get_byte_seq(bufferSeq, "buffer", DynamicData.MEMBER_ID_UNSPECIFIED);
+        DatosCamara datos = DatosCamara.FromDds(sample);
 
-        Buffer buffer = new Buffer(bufferSeq.size());
-        buffer.getByteBuffer().put(bufferSeq.toArrayByte(null));
+        Buffer buffer = new Buffer(datos.getBuffer().length);
+        buffer.getByteBuffer().put(datos.getBuffer());
         
         // Lo mete en la tubería
         if (this.appsrc != null)

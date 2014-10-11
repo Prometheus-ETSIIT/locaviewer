@@ -19,12 +19,7 @@
 package gava;
 
 import com.rti.dds.dynamicdata.DynamicData;
-import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.DataWriter;
-import com.rti.dds.publication.DataWriterAdapter;
-import com.rti.dds.publication.PublicationMatchedStatus;
 import es.prometheus.dds.Escritor;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
@@ -44,7 +39,7 @@ import org.gstreamer.elements.AppSink;
  */
 public class EscritorVideo extends Thread {
     private final String device;
-    private final String camId;
+    private final DatosCamara info;
     private boolean parar;
     
     private TopicoControl topico;
@@ -59,11 +54,11 @@ public class EscritorVideo extends Thread {
      * especificada.
      * 
      * @param device Ruta a la cámara deseada (Ej: /dev/video0).
-     * @param camId  ID de la cámara.
+     * @param info  Información de la cámara.
      */
-    public EscritorVideo(final String device, final String camId) {
+    public EscritorVideo(final String device, final DatosCamara info) {
         this.device = device;
-        this.camId  = camId;
+        this.info   = info;
         this.parar  = false;
     }
 
@@ -94,7 +89,6 @@ public class EscritorVideo extends Thread {
 
         // Crea el escritor.
         this.writer = new Escritor(this.topico);
-        this.writer.setListener(new DataWriterListener(this.camId), StatusKind.STATUS_MASK_ALL);
 
         // Crea una estructura de datos como la que hemos definido en el XML.
         this.instance = this.writer.creaDatos();
@@ -116,6 +110,9 @@ public class EscritorVideo extends Thread {
         Element capsSrc = ElementFactory.make("capsfilter", null);
         capsSrc.setCaps(Caps.fromString("video/x-raw width=640 height=480 framerate=15/1"));
         elements.add(capsSrc);
+               
+        Element videoscale = ElementFactory.make("videoscale", null);
+        elements.add(videoscale);
         
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
@@ -125,7 +122,11 @@ public class EscritorVideo extends Thread {
         elements.add(videoconvert);
         
         // 4º Codecs
-        Element[] codecs = this.getEncVp8();
+        Element[] codecs = null;
+        switch (this.info.getCodecInfo()) {
+            case "JPEG": codecs = this.getEncJpeg(); break;
+            case "VP8":  codecs = this.getEncVp8();  break;
+        }
         elements.addAll(Arrays.asList(codecs));
         
         // 5º Salida de vídeo
@@ -193,20 +194,8 @@ public class EscritorVideo extends Thread {
 
         // Crea la estructura de datos
         try {
-            // NOTA: Limpiar siempre, que si no se acumulan datos en byte_seq
-            // y falla porque no tiene recursos suficientes.
-            this.instance.clear_all_members();
-
-            this.instance.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
-            this.instance.set_string("sala",  DynamicData.MEMBER_ID_UNSPECIFIED, "Torreón");
-            this.instance.set_double("posX",  DynamicData.MEMBER_ID_UNSPECIFIED, 4.0);
-            this.instance.set_double("posY",  DynamicData.MEMBER_ID_UNSPECIFIED, 3.2);
-            this.instance.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, 90.0);
-
-            this.instance.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, "jpgenc");
-            this.instance.set_int("width",        DynamicData.MEMBER_ID_UNSPECIFIED, 640);
-            this.instance.set_int("height",       DynamicData.MEMBER_ID_UNSPECIFIED, 480);
-            this.instance.set_byte_seq("buffer",  DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(tmp));
+            this.info.setBuffer(tmp);
+            this.info.escribeDds(this.instance);
         } catch (com.rti.dds.infrastructure.RETCODE_OUT_OF_RESOURCES e) {
             // Se da cuando la estructura interna de datos no puede guardar
             // todos los bytes del buffer. Para arreglarlo hay que aumentar
@@ -229,26 +218,5 @@ public class EscritorVideo extends Thread {
      */
     public void parar() {
         this.parar = true;
-    }
-
-    /**
-     * DEBUG: Listener del escritor de DDS.
-     */
-    private class DataWriterListener extends DataWriterAdapter {
-        private final String id;
-
-        public DataWriterListener(String id) {
-            this.id = id;
-        }
-
-        @Override
-        public void on_publication_matched(DataWriter writer, PublicationMatchedStatus status) {
-            System.out.println("DataWriterListener: on_publication_matched()\n");
-            if (status.current_count_change < 0) {
-                System.out.println("lost a subscription" + id + "\n");
-            } else {
-                System.out.println("found a subscription" + id + "\n");
-            }
-        }
     }
 }
