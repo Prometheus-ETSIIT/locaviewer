@@ -26,6 +26,7 @@ import es.prometheus.dds.TopicoControlFactoria;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.gstreamer.elements.Queue;
 import org.gstreamer.Buffer;
 import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
@@ -117,11 +118,17 @@ public class EscritorVideo extends Thread {
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
         
-        // 3º Conversor de vídeo
+        // 3º Cola que elimina paquetes en lugar de acumular
+        Queue queue = (Queue)ElementFactory.make("queue", null);
+        queue.set("leaky", 2);  // Drops old buffer
+        queue.set("max-size-time", 50*1000*1000);   // 50 ms
+        elements.add(queue);
+        
+        // 4º Conversor de vídeo
         Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
         elements.add(videoconvert);
         
-        // 4º Codecs
+        // 5º Codecs
         Element[] codecs = null;
         switch (this.info.getCodecInfo()) {
             case "JPEG": codecs = this.getEncJpeg(); break;
@@ -129,7 +136,7 @@ public class EscritorVideo extends Thread {
         }
         elements.addAll(Arrays.asList(codecs));
         
-        // 5º Salida de vídeo
+        // 6º Salida de vídeo
         this.appsink = (AppSink) ElementFactory.make("appsink", null);
         this.appsink.setQOSEnabled(true);
         elements.add(appsink);
