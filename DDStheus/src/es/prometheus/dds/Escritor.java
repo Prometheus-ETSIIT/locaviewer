@@ -21,8 +21,8 @@ import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.dynamicdata.DynamicDataProperty_t;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.publication.DataWriterAdapter;
+import com.rti.dds.publication.DataWriterQos;
 
 /**
  * Clase para escribir datos dinámicos en un tópico.
@@ -38,7 +38,22 @@ public class Escritor {
      */
     public Escritor(final TopicoControl control) {
         this.control = control;
-        this.writer  = control.creaEscritor();
+        this.writer  = control.creaEscritor(null);
+        if (this.writer == null) {
+            System.err.println("No se pudo crear el escritor");
+            System.exit(1);
+        }
+    }
+    
+    /**
+     * Crea una nueva instancia del escritor sobre el tópico especificado.
+     * 
+     * @param control Tópico con el que se creará el escritor.
+     * @param qos QOS usado para crear el escritor.
+     */
+    public Escritor(final TopicoControl control, final DataWriterQos qos) {
+        this.control = control;
+        this.writer  = control.creaEscritor(qos);
         if (this.writer == null) {
             System.err.println("No se pudo crear el escritor");
             System.exit(1);

@@ -21,12 +21,13 @@ package es.prometheus.dds;
 import com.rti.dds.dynamicdata.DynamicDataReader;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriterQos;
 import com.rti.dds.publication.DataWriterSeq;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.DataReaderSeq;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
-import com.rti.dds.topic.TopicDescription;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,7 +99,7 @@ public class TopicoControlFijo extends TopicoControl {
     }
     
     @Override
-    public DynamicDataReader creaLector() {
+    public DynamicDataReader creaLector(final DataReaderQos qos) {
         // Buscamos un lector que no esté en uso
         for (DynamicDataReader reader : this.lectores.keySet()) {
             // Comprobamos su estado y si no está en uso lo usamos
@@ -128,7 +129,7 @@ public class TopicoControlFijo extends TopicoControl {
     }
 
     @Override
-    public DynamicDataWriter creaEscritor() {
+    public DynamicDataWriter creaEscritor(final DataWriterQos qos) {
         // Buscamos un escritor que no esté en uso
         for (DynamicDataWriter writer : this.escritores.keySet()) {
             // Comprobamos su estado y si no está en uso lo usamos

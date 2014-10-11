@@ -29,6 +29,7 @@ import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.WaitSet;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
@@ -65,9 +66,17 @@ public abstract class LectorBase {
         // Crea el tópico con filtro de datos.
         this.topico = this.control.createCFT(UUID.randomUUID().toString(), expresion, params);
         
+        // Prepara el QOS con los metadatos del lector (primer parámetro)
+        DataReaderQos qos = Subscriber.DATAREADER_QOS_DEFAULT;
+        if (params.length > 0) {
+            String userData = params[0];
+            qos.user_data.value.clear();
+            qos.user_data.value.addAllByte(userData.getBytes());
+        }
+        
         // Crea el lector sobre ese filtro, de esta forma sólo se reciben
         // los datos necesarios y se reduce ancho de banda.
-        this.reader = this.creaLector();
+        this.reader = this.creaLector(qos);
         
         // Craeamos una nueva hebra para recibir los datos de forma síncrona.
         this.callback = new DataCallback(this.reader, 0x5000);
@@ -108,7 +117,13 @@ public abstract class LectorBase {
         this.topico.set_expression_parameters(new StringSeq(Arrays.asList(params)));
         
         // Creo el nuevo reader
-        DynamicDataReader newReader = this.creaLector();
+        DataReaderQos qos = Subscriber.DATAREADER_QOS_DEFAULT;
+        if (params.length > 0) {
+            String userData = params[0];
+            qos.user_data.value.clear();
+            qos.user_data.value.addAllByte(userData.getBytes());
+        }
+        DynamicDataReader newReader = this.creaLector(qos);
         
         // Lo intercambia en el listener
         this.callback.cambiaReader(newReader);
@@ -167,10 +182,23 @@ public abstract class LectorBase {
      */
     protected abstract void getDatos(DynamicData sample);
     
-    private DynamicDataReader creaLector() {
+    /**
+     * Crea un lector a partir del tópico con filtro y con QOS.
+     * 
+     * @param qos QOS a usar.
+     * @return Nuevo lector.
+     */
+    private DynamicDataReader creaLector(final DataReaderQos qos) {
+        // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
+        DataReaderQos partQos = new DataReaderQos();
+        this.control.getParticipante().get_default_datareader_qos(partQos);
+        partQos.user_data.copy_from(qos.user_data);
+        this.control.getParticipante().set_default_datareader_qos(partQos);
+        
+        // Crea el lector
         return (DynamicDataReader)this.control.getParticipante().create_datareader(
                 this.topico,
-                Subscriber.DATAREADER_QOS_DEFAULT,
+                qos,
                 null,
                 StatusKind.DATA_AVAILABLE_STATUS);
     }

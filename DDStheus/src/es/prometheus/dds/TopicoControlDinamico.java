@@ -21,7 +21,9 @@ package es.prometheus.dds;
 import com.rti.dds.dynamicdata.DynamicDataReader;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.publication.DataWriterQos;
 import com.rti.dds.publication.Publisher;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.topic.Topic;
 import java.util.ArrayList;
@@ -57,11 +59,21 @@ public class TopicoControlDinamico extends TopicoControl {
     }
     
     @Override
-    public DynamicDataReader creaLector() {
+    public DynamicDataReader creaLector(DataReaderQos qos) {
+        if (qos == null) {
+            qos = Subscriber.DATAREADER_QOS_DEFAULT;
+        } else {
+            // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
+            DataReaderQos partQos = new DataReaderQos();
+            this.getParticipante().get_default_datareader_qos(partQos);
+            partQos.user_data.copy_from(qos.user_data);
+            this.getParticipante().set_default_datareader_qos(partQos);
+        }
+        
         DynamicDataReader reader = (DynamicDataReader)this.getParticipante()
                 .create_datareader(
                     topico,
-                    Subscriber.DATAREADER_QOS_DEFAULT,
+                    qos,
                     null,
                     StatusKind.STATUS_MASK_NONE);
         
@@ -86,11 +98,21 @@ public class TopicoControlDinamico extends TopicoControl {
     }
 
     @Override
-    public DynamicDataWriter creaEscritor() {
+    public DynamicDataWriter creaEscritor(DataWriterQos qos) {
+        if (qos == null) {
+            qos = Publisher.DATAWRITER_QOS_DEFAULT;
+        } else {
+            // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
+            DataWriterQos partQos = new DataWriterQos();
+            this.getParticipante().get_default_datawriter_qos(partQos);
+            partQos.user_data.copy_from(qos.user_data);
+            this.getParticipante().set_default_datawriter_qos(partQos);
+        }
+            
         DynamicDataWriter writer = (DynamicDataWriter)this.getParticipante()
                 .create_datawriter(
                     topico,
-                    Publisher.DATAWRITER_QOS_DEFAULT,
+                    qos,
                     null,
                     StatusKind.STATUS_MASK_NONE);
         

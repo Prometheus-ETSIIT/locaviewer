@@ -19,23 +19,21 @@
 package es.prometheus.dds;
 
 import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.dynamicdata.DynamicDataReader;
 import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.StringSeq;
+import com.rti.dds.publication.DataWriterQos;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Clase para crear y destruir lectores y escritores sobre un tópico.
  */
 public abstract class TopicoControl {   
 
-    private static Map<DomainParticipant, Integer> Instances = new HashMap<>();
-    private DomainParticipant participante;
+    private final Participante participante;
     
     /**
      * Crea una nueva instancia de control de tópico.
@@ -44,49 +42,32 @@ public abstract class TopicoControl {
      *  (BibliotecaParticipantes::NombreParticipante).
      */
     protected TopicoControl(final String partName) {                
-        // Buscamos si ya está creado el participante para recuperarlo.
-        // ¡Se asume que sólo se permite UN dominio!
-        String nombre = partName.substring(partName.indexOf("::") + 2);
-        this.participante = DomainParticipantFactory.get_instance()
-                .lookup_participant_by_name(nombre);
-        
-        // No ha sido creado previamente -> Crea un participante de dominio.
-        if (this.participante == null) {
-            this.participante = DomainParticipantFactory.get_instance()
-                    .create_participant_from_config(partName);
-            
-            if (this.participante == null) {
-                System.err.println("No se puedo crear ni recuperar el participante.");
-                System.exit(1);
-            }
-        }
-        
-        // Añade la instancia
-        int num = (Instances.containsKey(participante) ? Instances.get(participante) : 0);
-        Instances.put(participante, num + 1);
+        this.participante = Participante.GetInstance(partName);
     }
     
     /**
      * Libera recursos del sistema.
      */
     public void dispose() {
-        int num = Instances.get(participante);
-        Instances.put(participante, --num);
-        
-        if (num == 0) {
-            this.participante.delete_contained_entities();
-            DomainParticipantFactory.get_instance().delete_participant(this.participante);
-        }
+        this.participante.dispose();
     }
     
+    /**
+     * Crea un ContentFilteredTopic a partir del tópico actual.
+     * 
+     * @param name Nombre del nuevo TopicDescription.
+     * @param expr Expresión de filtrado.
+     * @param params Parámetros de la expresión de filtrado.
+     * @return Nuevo tópico con filtro.
+     */
     public ContentFilteredTopic createCFT(final String name, final String expr,
             final String[] params) {
        ContentFilteredTopic topic = (ContentFilteredTopic)this.participante
-               .lookup_topicdescription(name);
+               .getParticipante().lookup_topicdescription(name);
        if (topic != null)
            return topic;
         
-        return this.participante.create_contentfilteredtopic(
+        return this.participante.getParticipante().create_contentfilteredtopic(
                 name,
                 this.getTopicDescription(),
                 expr,
@@ -100,6 +81,15 @@ public abstract class TopicoControl {
      * @return Participante del dominio.
      */
     protected DomainParticipant getParticipante() {
+        return this.participante.getParticipante();
+    }
+    
+    /**
+     * Obtiene el controlador de participante.
+     * 
+     * @return Controlador de participante.
+     */
+    public Participante getParticipanteControl() {
         return this.participante;
     }
     
@@ -113,9 +103,10 @@ public abstract class TopicoControl {
     /**
      * Crear un lector del tópico.
      * 
+     * @param qos QOS utilizado para crear el escritor.
      * @return Lector del tópico.
      */
-    public abstract DynamicDataReader creaLector();
+    public abstract DynamicDataReader creaLector(final DataReaderQos qos);
     
     /**
      * Elimina un lector de este tópico.
@@ -127,9 +118,10 @@ public abstract class TopicoControl {
     /**
      * Crea un escritor del tópico.
      * 
+     * @param qos QOS utilizado para crear el escritor.
      * @return Escritor del tópico.
      */
-    public abstract DynamicDataWriter creaEscritor();
+    public abstract DynamicDataWriter creaEscritor(final DataWriterQos qos);
     
     /**
      * Elimina un escritor del este tópico.
