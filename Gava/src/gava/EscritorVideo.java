@@ -111,8 +111,8 @@ public class EscritorVideo extends Thread {
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
         
-        Element videoscale = ElementFactory.make("videoscale", null);
-        elements.add(videoscale);
+        //Element videoscale = ElementFactory.make("videoscale", null);
+        //elements.add(videoscale);
         
         Element capsSrc = ElementFactory.make("capsfilter", null);
         capsSrc.setCaps(Caps.fromString("video/x-raw-yuv,width=320,height=240,framerate=15/1"));

@@ -57,9 +57,10 @@ public class Publicador {
      * @param dev Archivo de vídeo (ej: /dev/video0)
      */
     private static void CreaPublicador(String dev) {
+	System.out.println("Iniciando: " + dev);
         String id  = dev.substring(10);                 // Saca el ID de la ruta
-        DatosCamara info = new DatosCamara(id, "Torreon", 3.0, 4.0, 90.0, "JPEG",
-        640, 480, null);
+        DatosCamara info = new DatosCamara(id, "Torreon", 3.0, 4.0, 90.0, "VP8",
+        320, 240, null);
         
         EscritorVideo p = new EscritorVideo(dev, info);   // Crea un escritor
         Shutdown.addPublicador(p);                      // Lo añade al listener
@@ -80,10 +81,8 @@ public class Publicador {
         });
 
         // Para cada cámara crea un publicador
-        for (String cam : cams) {
-            System.out.println("Iniciando cámara " + cam);
+        for (String cam : cams)
             CreaPublicador("/dev/" + cam);
-        }
     }
     
     /**
