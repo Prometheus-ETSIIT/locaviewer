@@ -35,6 +35,7 @@ import org.gstreamer.ElementFactory;
 import org.gstreamer.Format;
 import org.gstreamer.Pipeline;
 import org.gstreamer.elements.AppSrc;
+import org.gstreamer.elements.Queue;
 import org.gstreamer.swing.VideoComponent;
 
 /**
@@ -86,12 +87,17 @@ public class LectorVideo extends LectorBase {
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
         this.appsrc.setLive(true);
-        //this.appsrc.setLatency(0, 100000000);
+        this.appsrc.setLatency(0, 100000000);
         this.appsrc.setTimestamp(true);
         this.appsrc.setFormat(Format.TIME);
         this.appsrc.setStreamType(AppSrc.Type.STREAM);
         elements.add(this.appsrc);
     
+        Queue queue = (Queue)ElementFactory.make("queue", null);
+        queue.set("leaky", 2);  // Drops old buffer
+        queue.set("max-size-time", 50*1000*1000);   // 50 ms
+        elements.add(queue);
+        
         // 2º Códec
         Element[] codecs = null;
         switch (this.codecName) {
@@ -115,7 +121,7 @@ public class LectorVideo extends LectorBase {
         this.frame = new JFrame("Gava suscriptor testing");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(videoComponent, BorderLayout.CENTER);
-        videoComponent.setPreferredSize(new Dimension(720, 576));
+        videoComponent.setPreferredSize(new Dimension(320, 240));
         frame.pack();
         frame.setVisible(true);
         
@@ -148,7 +154,7 @@ public class LectorVideo extends LectorBase {
      */
     private Element[] getDecVp8() {
         // Codec VP8
-        String caps = "video/x-vp8, width=(int)640, height=(int)480, framerate=25/1";
+        String caps = "video/x-vp8, width=(int)320, height=(int)240, framerate=15/1";
         Element capsSrc = ElementFactory.make("capsfilter", null);
         capsSrc.setCaps(Caps.fromString(caps));
         

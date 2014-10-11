@@ -106,17 +106,17 @@ public class EscritorVideo extends Thread {
         Element videosrc = ElementFactory.make("v4l2src", null);
         videosrc.set("device", device);
         elements.add(videosrc);
-
-        // 2º Datos de captura de vídeo: establecemos tamaño y framerate
-        Element capsSrc = ElementFactory.make("capsfilter", null);
-        capsSrc.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
-        elements.add(capsSrc);
-               
-        //Element videoscale = ElementFactory.make("videoscale", null);
-        //elements.add(videoscale);
         
+        // 2º Datos de captura de vídeo: establecemos tamaño y framerate
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
+        
+        Element videoscale = ElementFactory.make("videoscale", null);
+        elements.add(videoscale);
+        
+        Element capsSrc = ElementFactory.make("capsfilter", null);
+        capsSrc.setCaps(Caps.fromString("video/x-raw-yuv,width=320,height=240,framerate=15/1"));
+        elements.add(capsSrc);
         
         // 3º Cola que elimina paquetes en lugar de acumular
         Queue queue = (Queue)ElementFactory.make("queue", null);
@@ -145,7 +145,7 @@ public class EscritorVideo extends Thread {
         this.pipe = new Pipeline();
         this.pipe.addMany(elements.toArray(new Element[0]));
         Element.linkMany(elements.toArray(new Element[0]));
-        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador"); // DEBUG
+        GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "publicador"); // DEBUG
 
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
