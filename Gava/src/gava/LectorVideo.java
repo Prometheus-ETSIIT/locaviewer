@@ -86,7 +86,7 @@ public class LectorVideo extends LectorBase {
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
         this.appsrc.setLive(true);
-        this.appsrc.setLatency(0, 100000000);
+        //this.appsrc.setLatency(0, 100000000);
         this.appsrc.setTimestamp(true);
         this.appsrc.setFormat(Format.TIME);
         this.appsrc.setStreamType(AppSrc.Type.STREAM);
@@ -148,12 +148,17 @@ public class LectorVideo extends LectorBase {
      */
     private Element[] getDecVp8() {
         // Codec VP8
+        String caps = "video/x-vp8, width=(int)640, height=(int)480, framerate=25/1";
         Element capsSrc = ElementFactory.make("capsfilter", null);
-        capsSrc.setCaps(Caps.fromString("video/x-vp8"));
+        capsSrc.setCaps(Caps.fromString(caps));
+        
+        Element queue = ElementFactory.make("queue2", null);
         
         Element codec = ElementFactory.make("vp8dec", null);
         
-        return new Element[] { capsSrc, codec };
+        Element convert = ElementFactory.make("ffmpegcolorspace", null);
+        
+        return new Element[] { capsSrc, queue, codec, convert };
     }
     
     @Override
