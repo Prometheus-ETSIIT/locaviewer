@@ -21,6 +21,7 @@ package gava;
 import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.infrastructure.ByteSeq;
 import es.prometheus.dds.Escritor;
+import org.w3c.dom.Element;
 
 /**
  * Representa los datos que se reciben sobre una cámara.
@@ -92,6 +93,40 @@ public class DatosCamara {
         datos.buffer = bufferSeq.toArrayByte(null);
         
         return datos;
+    }
+    
+    /**
+     * Crea una nueva instancia a partir de los datos que contiene una entrada
+     * de XML.
+     * 
+     * @param el Entrada de XML con los datos.
+     * @return Instancia de esta clase.
+     */
+    public static DatosCamara FromXml(final Element el) {
+        DatosCamara datos = new DatosCamara();
+        
+        datos.camId = GetXmlEntryValue(el, "camId");
+        datos.sala  = GetXmlEntryValue(el, "sala");
+        datos.posX  = Double.parseDouble(GetXmlEntryValue(el, "posX"));
+        datos.posY  = Double.parseDouble(GetXmlEntryValue(el, "posY"));
+        datos.angle = Double.parseDouble(GetXmlEntryValue(el, "angle"));
+        
+        datos.codecInfo = GetXmlEntryValue(el, "codecInfo");
+        datos.width  = Integer.parseInt(GetXmlEntryValue(el, "width"));
+        datos.height = Integer.parseInt(GetXmlEntryValue(el, "height"));
+        
+        return datos;
+    }
+    
+    /**
+     * Shortcut to get the text in a XML entry.
+     * 
+     * @param el XML entry element.
+     * @param name Tag name.
+     * @return Value of the entry.
+     */
+    private static String GetXmlEntryValue(final Element el, final String name) {
+        return el.getElementsByTagName(name).item(0).getTextContent();
     }
 
     /**

@@ -1,6 +1,7 @@
 #!/bin/bash
 cd build/classes
 cp ../../src/gava/USER_QOS_PROFILES.xml ./
+cp ../../src/gava/InfoCamaras.xml ./
 cp ../../../rti_license.dat ./
 
 if [ $IS_RASPBERRY_PI ]; then

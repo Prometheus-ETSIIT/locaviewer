@@ -22,7 +22,13 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
 import java.util.ArrayList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.gstreamer.Gst;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Publicador de vídeo.
@@ -57,14 +63,48 @@ public class Publicador {
      * @param dev Archivo de vídeo (ej: /dev/video0)
      */
     private static void CreaPublicador(String dev) {
-	System.out.println("Iniciando: " + dev);
-        String id  = dev.substring(10);                 // Saca el ID de la ruta
-        DatosCamara info = new DatosCamara(id, "Torreon", 3.0, 4.0, 90.0, "VP8",
-        320, 240, null);
-        
+        DatosCamara info = BuscaInfo(dev);
+        System.out.println("Iniciando: " + dev + " | " + info.getCamId());
         EscritorVideo p = new EscritorVideo(dev, info);   // Crea un escritor
-        Shutdown.addPublicador(p);                      // Lo añade al listener
-        p.start();                                      // Lo inica.
+        
+        Shutdown.addPublicador(p); // Lo añade al listener
+        p.start();                 // Lo inica.
+    }
+    
+    /**
+     * Busca y devuelve la información sobre la cámara referida.
+     * 
+     * @param dev Archivo del sistema de la cámara (ej: /dev/video).
+     * @return Datos de la cámara o null si no se han encontrado.
+     * @throws Exception Las gilipolleces de Java y eso.
+     */
+    private static DatosCamara BuscaInfo(String dev) {
+        try {        
+            // Abrimos y procesamos el XML
+            File fXmlFile = new File("InfoCamaras.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(fXmlFile);
+            doc.getDocumentElement().normalize();
+
+            // Por cada entrada de información
+            NodeList nList = doc.getElementsByTagName("camara"); 
+            for (int i = 0; i < nList.getLength(); i++) {
+                Element element = (Element)nList.item(i);
+
+                // Comparamos si el dispositivo que buscamos
+                String eDev = element.getElementsByTagName("device").item(0).getTextContent();
+                if (!eDev.equals(dev))
+                    continue;
+
+                // Lo es, así que creamos la estructura y la devolvemos
+                return DatosCamara.FromXml(element);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+        
+        return null;
     }
 
     /**
