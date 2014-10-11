@@ -88,7 +88,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             this.transmite();
         
         // Una vez terminado, paramos de transmitir.
-        if (!this.pausar) {
+        if (this.pipe.isPlaying()) {
             this.pipe.stop();
             this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
         }
@@ -260,6 +260,8 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
      */
     public void parar() {
         this.parar = true;
+        this.pipe.stop();
+        this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
     }
     
     /**

@@ -28,7 +28,7 @@ public class Suscriptor {
      * @param args Un argumento opcional como nombre del tópico.
      */
     public static void main(final String[] args) {
-        final String key = (args.length == 0) ? "0" : args[0];
+        final String key = (args.length == 0) ? "test0" : args[0];
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
