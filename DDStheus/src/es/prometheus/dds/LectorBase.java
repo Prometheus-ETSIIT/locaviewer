@@ -26,25 +26,30 @@ import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.subscription.InstanceStateKind;
-import com.rti.dds.subscription.QueryCondition;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
+import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.ContentFilteredTopic;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * Clase abstracta para recibir datos dinámicos de un tópico y filtrarlos según un key.
  */
 public abstract class LectorBase {
     private final TopicoControl control;
-    private final DynamicDataReader reader;
+    private final ContentFilteredTopic topico;
     private final DataCallback callback;
     private final Thread dataThread;
+    
+    private DynamicDataReader reader;
     
     /**
      * Crea una base de lector.
@@ -56,26 +61,29 @@ public abstract class LectorBase {
     protected LectorBase(final TopicoControl control, final String expresion,
             final String[] params) {
         this.control = control;
-        this.reader  = control.creaLector();
         
-        // Crea el filtro de datos.
-        QueryCondition condicion = reader.create_querycondition(
-                SampleStateKind.ANY_SAMPLE_STATE,
-                ViewStateKind.ANY_VIEW_STATE,
-                InstanceStateKind.ANY_INSTANCE_STATE,
-                expresion,
-                new StringSeq(Arrays.asList(params)));
+        // Crea el tópico con filtro de datos.
+        this.topico = this.control.createCFT(UUID.randomUUID().toString(), expresion, params);
         
-        this.callback = new DataCallback(this.reader, condicion);
+        // Crea el lector sobre ese filtro, de esta forma sólo se reciben
+        // los datos necesarios y se reduce ancho de banda.
+        this.reader = this.creaLector();
+        
+        // Craeamos una nueva hebra para recibir los datos de forma síncrona.
+        this.callback = new DataCallback(this.reader, 0x5000);
         this.dataThread = new Thread(this.callback);
-        this.dataThread.start();
     }
     
     /**
      * Libera los recursos del lector.
      */
     public void dispose() {
-        this.dataThread.interrupt();
+        // Paramos de recibir datos
+        this.callback.terminar();
+        try { this.dataThread.join(5000); }
+        catch (InterruptedException e) { System.err.println("TimeOver!"); }
+        
+        // Eliminamos los datos
         this.reader.delete_contained_entities();
         this.control.eliminaLector(this.reader);
     }
@@ -96,14 +104,53 @@ public abstract class LectorBase {
      * @param params Nuevos parámetros.
      */
     public final void cambioParametros(final String[] params) {
-        this.callback.cambiaParametros(params);
+        // Cambia los parámetros del tópico
+        this.topico.set_expression_parameters(new StringSeq(Arrays.asList(params)));
+        
+        // Creo el nuevo reader
+        DynamicDataReader newReader = this.creaLector();
+        
+        // Lo intercambia en el listener
+        this.callback.cambiaReader(newReader);
+        
+        // Eliminamos el antiguo y ponemos el nuevo
+        this.reader.delete_contained_entities();
+        this.control.eliminaLector(this.reader);
+        this.reader = newReader;
+    }
+    
+    /**
+     * Obtiene el control de tópico actual.
+     * 
+     * @return Control de tópico.
+     */
+    public TopicoControl getTopicoControl() {
+        return this.control;
+    }
+    
+    /**
+     * Obtiene la hebra que está obteniendo datos del lector.
+     * Útil para dejar otra hebra bloqueada junto a esta.
+     * 
+     * @return Hebra que recibe datos de forma síncrona.
+     */
+    public Thread getCallbackThread() {
+        return this.dataThread;
+    }
+    
+    /**
+     * Comienza a recibir datos
+     */
+    public void iniciar() {
+        if (!this.dataThread.isAlive())
+            this.dataThread.start();
     }
     
     /**
      * Para de recibir datos de DDS.
      */
-    public void parar() {
-        this.callback.parar();
+    public void suspender() {
+        this.callback.suspender();
     }
     
     /**
@@ -120,6 +167,14 @@ public abstract class LectorBase {
      */
     protected abstract void getDatos(DynamicData sample);
     
+    private DynamicDataReader creaLector() {
+        return (DynamicDataReader)this.control.getParticipante().create_datareader(
+                this.topico,
+                Subscriber.DATAREADER_QOS_DEFAULT,
+                null,
+                StatusKind.DATA_AVAILABLE_STATUS);
+    }
+    
     /**
      * Clase para implementar la recepción de datos de DDS con condiciones de
      * forma síncrona.
@@ -131,13 +186,16 @@ public abstract class LectorBase {
      * http://community.rti.com/kb/what-does-exclusive-area-error-message-mean
      */
     private class DataCallback implements Runnable {
-        private final DynamicDataReader reader;
-        private final QueryCondition condicion;
+        private static final int MAX_TIME_SEC  = 3;
+        private static final int MAX_TIME_NANO = 0;
+       
+        private DynamicDataReader reader;
         private final WaitSet waitset;
         private final Duration_t duracion;
+        private final int mask;
         
         private ActionListener extraListener;
-        private boolean parado;
+        private boolean procesar;
         private boolean terminar;
         
         /**
@@ -146,15 +204,17 @@ public abstract class LectorBase {
          * @param reader Lector del que recibir datos.
          * @param condicion Condición a aplicar sobre los datos.
          */
-        public DataCallback(final DynamicDataReader reader, final QueryCondition condicion) {
-            this.parado  = true;
+        public DataCallback(final DynamicDataReader reader, final int mask) {
+            this.procesar = true;
             this.terminar = false;
             
             this.reader    = reader;
-            this.condicion = condicion;
-            this.duracion  = new Duration_t(5, 0);
+            this.mask      = mask;
+            this.duracion  = new Duration_t(MAX_TIME_SEC, MAX_TIME_NANO);
             this.waitset   = new WaitSet();
-            this.waitset.attach_condition(condicion);
+            
+            // Le añado el StatusCondition de condición
+            this.waitset.attach_condition(reader.get_statuscondition());
         }
         
         @Override
@@ -165,8 +225,12 @@ public abstract class LectorBase {
                 try { this.waitset.wait(activadas, duracion); }
                 catch (RETCODE_TIMEOUT e) { continue; }
                 
-                // Si nos dicen que paremos, nosotros paramos.
-                if (this.parado)
+                // Compruebo que se haya disparado por la condición que queremos
+                if ((this.reader.get_status_changes() & this.mask) == 0)
+                    continue;
+
+                // Si estamos paramos, omitimos los datos recibidos.
+                if (!this.procesar)
                     continue;
                 
                 // Procesamos los datos recibidos.
@@ -181,13 +245,17 @@ public abstract class LectorBase {
             // Obtiene todos los sample de DDS
             DynamicDataSeq dataSeq = new DynamicDataSeq();
             SampleInfoSeq infoSeq = new SampleInfoSeq();
+            
             try {
                 // Obtiene datos aplicandole el filtro
-                this.reader.take_w_condition(
-                        dataSeq,
-                        infoSeq,
-                        ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
-                        this.condicion); 
+                this.reader.take(
+                    dataSeq,
+                    infoSeq,
+                    ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
+                    SampleStateKind.ANY_SAMPLE_STATE,
+                    ViewStateKind.ANY_VIEW_STATE,
+                    InstanceStateKind.ANY_INSTANCE_STATE
+                ); 
 
                 // Procesamos todos los datos recibidos
                 for (int i = 0; i < dataSeq.size(); i++) {
@@ -216,15 +284,15 @@ public abstract class LectorBase {
         /**
          * Deja de procesar los datos que recibe.
          */
-        public void parar() {
-            this.parado = true;
+        public void suspender() {
+            this.procesar = false;
         }
         
         /**
          * Comienza a procesar los datos recibidos de nuevo.
          */
         public void reanudar() {
-            this.parado = false;
+            this.procesar = true;
         }
         
         /**
@@ -243,13 +311,13 @@ public abstract class LectorBase {
             this.extraListener = listener;
         }
         
-        /**
-         * Cambia los parámetros de la condición.
-         * 
-         * @param params Nuevos parámetros.
-         */
-        public void cambiaParametros(final String[] params) {
-            this.condicion.set_query_parameters(new StringSeq(Arrays.asList(params)));
+        public void cambiaReader(final DynamicDataReader reader) {
+            // Elimina la condición anterior
+            this.waitset.detach_condition(this.reader.get_statuscondition());
+            
+            // Añade la nueva condición y cambia de reader
+            this.reader = reader;
+            this.waitset.attach_condition(reader.get_statuscondition());
         }
     }
 }

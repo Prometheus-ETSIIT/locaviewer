@@ -25,6 +25,8 @@ import com.rti.dds.publication.DataWriterSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.DataReaderSeq;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.topic.Topic;
+import com.rti.dds.topic.TopicDescription;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,8 @@ public class TopicoControlFijo extends TopicoControl {
     
     private final Publisher publicador;
     private final Map<DynamicDataWriter, Boolean> escritores;
+    
+    private Topic topic;
     
     /**
      * Crea una nueva instancia del control de tópico a partir de los nombres
@@ -61,12 +65,15 @@ public class TopicoControlFijo extends TopicoControl {
             
             DataReaderSeq lectoresSeq = new DataReaderSeq();
             this.suscriptor.get_all_datareaders(lectoresSeq);
-            for (Object reader : lectoresSeq.toArray())
+            for (Object reader : lectoresSeq.toArray()) {
                 this.lectores.put((DynamicDataReader)reader, false);
+                if (this.topic == null)
+                    this.topic = (Topic)((DynamicDataReader)reader).get_topicdescription();
+            }
         } else {
             this.suscriptor = null;
         }
-        
+       
         // Obtiene los escritores del XML.
         this.escritores = new HashMap<>();
         if (publiName != null) {
@@ -75,11 +82,19 @@ public class TopicoControlFijo extends TopicoControl {
             
             DataWriterSeq escritoresSeq = new DataWriterSeq();
             this.publicador.get_all_datawriters(escritoresSeq);
-            for (Object writer : escritoresSeq)
+            for (Object writer : escritoresSeq) {
                 this.escritores.put((DynamicDataWriter)writer, false);
+                if (this.topic == null)
+                    this.topic = ((DynamicDataWriter)writer).get_topic();
+            }
         } else {
             this.publicador = null;
         }
+    }
+
+    @Override
+    public Topic getTopicDescription() {
+        return this.topic;
     }
     
     @Override

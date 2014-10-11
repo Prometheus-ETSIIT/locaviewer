@@ -58,7 +58,10 @@ public class Publicador {
      */
     private static void CreaPublicador(String dev) {
         String id  = dev.substring(10);                 // Saca el ID de la ruta
-        EscritorVideo p = new EscritorVideo(dev, id);   // Crea un escritor
+        DatosCamara info = new DatosCamara(id, "Torreon", 3.0, 4.0, 90.0, "JPEG",
+        640, 480, null);
+        
+        EscritorVideo p = new EscritorVideo(dev, info);   // Crea un escritor
         Shutdown.addPublicador(p);                      // Lo añade al listener
         p.start();                                      // Lo inica.
     }

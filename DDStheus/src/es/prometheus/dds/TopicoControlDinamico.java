@@ -52,6 +52,11 @@ public class TopicoControlDinamico extends TopicoControl {
     }
 
     @Override
+    public Topic getTopicDescription() {
+        return this.topico;
+    }
+    
+    @Override
     public DynamicDataReader creaLector() {
         DynamicDataReader reader = (DynamicDataReader)this.getParticipante()
                 .create_datareader(
