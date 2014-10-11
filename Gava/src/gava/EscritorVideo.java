@@ -108,11 +108,11 @@ public class EscritorVideo extends Thread {
 
         // 2º Datos de captura de vídeo: establecemos tamaño y framerate
         Element capsSrc = ElementFactory.make("capsfilter", null);
-        capsSrc.setCaps(Caps.fromString("video/x-raw width=640 height=480 framerate=15/1"));
+        capsSrc.setCaps(Caps.fromString("video/x-raw-yuv,width=640,height=480,framerate=15/1"));
         elements.add(capsSrc);
                
-        Element videoscale = ElementFactory.make("videoscale", null);
-        elements.add(videoscale);
+        //Element videoscale = ElementFactory.make("videoscale", null);
+        //elements.add(videoscale);
         
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
@@ -171,7 +171,8 @@ public class EscritorVideo extends Thread {
     private Element[] getEncVp8() {
         // Codec VP8 (WebM)
         Element codec = ElementFactory.make("vp8enc", null);
-        
+	codec.set("threads", 5);
+
         // Caps del nuevo formato
         Element capsDst = ElementFactory.make("capsfilter", null);
         capsDst.setCaps(Caps.fromString("video/x-vp8 profile=(string)2"));
