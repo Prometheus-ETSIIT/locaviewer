@@ -37,11 +37,21 @@ public class Program {
      */
     public static void main(String[] args) {
         // Crea un escritor para el dominio
-        TopicoControl topico = TopicoControlFactoria.crearControlDinamico(
+        final TopicoControl topico = TopicoControlFactoria.crearControlDinamico(
                 "ParticipantesPC::ParticipanteNino",
                 "ChildDataTopic");
-        Escritor escritor = new Escritor(topico);
-        DynamicData datos = escritor.creaDatos();
+        final Escritor escritor = new Escritor(topico);
+        final DynamicData datos = escritor.creaDatos();
+        
+        // Listener por si se sale con Control + C
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                escritor.eliminaDatos(datos);
+                escritor.dispose();
+                topico.dispose();
+            }
+        }));
         
         // Crea los datos estándar de un niño
         DatosNino nino = new DatosNino();
