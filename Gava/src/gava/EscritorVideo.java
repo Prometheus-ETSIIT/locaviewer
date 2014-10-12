@@ -342,7 +342,8 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
                     break;
                 }
             }
-        } else if (status == DiscoveryChangeStatus.ANADIDO) {
+        } else if (status == DiscoveryChangeStatus.ANADIDO ||
+                status == DiscoveryChangeStatus.CAMBIADO) {
             this.dataSubs.add(data);
         } else if (status == DiscoveryChangeStatus.ELIMINADO) {
             this.dataSubs.remove(data);
