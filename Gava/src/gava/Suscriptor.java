@@ -18,6 +18,8 @@
 
 package gava;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.SwingUtilities;
 import org.gstreamer.Gst;
 
@@ -37,8 +39,21 @@ public class Suscriptor {
                 Gst.init("Gava", args); 
                 
                 // Crea el lector de vídeo.
-                LectorVideo lector = new LectorVideo(key);
+                final LectorVideo lector = new LectorVideo(key);
                 lector.iniciar();
+                
+                // A los 7 segundos cambiamos de cámara si estamos en el escenario
+                // de debug
+                javax.swing.Timer t = new javax.swing.Timer(7000, new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent ae) {
+                        System.out.println("Cambiando...");
+                        lector.cambioParametros(new String[] { "'test1'" });
+                    }
+                });
+                t.setRepeats(false);
+                if (args.length == 0)
+                    t.start();
                 
                 // Añade un listener que se ejecute al finalizar la aplicación (Ctl + C)
                 Runtime.getRuntime().addShutdownHook(new ShutdownThread(lector));
