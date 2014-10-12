@@ -21,7 +21,6 @@ package gava;
 import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.publication.DataWriterQos;
-import com.rti.dds.publication.Publisher;
 import es.prometheus.dds.DiscoveryChange;
 import es.prometheus.dds.DiscoveryChangeStatus;
 import es.prometheus.dds.DiscoveryData;
@@ -120,11 +119,12 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             this.pausar();
         
         // Crea el escritor con QOS.
-        DataWriterQos qos = Publisher.DATAWRITER_QOS_DEFAULT;
+        DataWriterQos qos = new DataWriterQos();
+        this.topico.getParticipante().get_default_datawriter_qos(qos);
         qos.user_data.value.clear();
         qos.user_data.value.addAllByte(this.info.getSummary().getBytes());
         this.writer = new Escritor(this.topico, qos);
-
+        
         // Crea una estructura de datos como la que hemos definido en el XML.
         this.instance = this.writer.creaDatos();
     }
@@ -277,7 +277,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         if (retState == org.gstreamer.State.NULL)
             System.err.println("No se pudo pausar");
         else
-            System.out.println("Pausado");
+            System.out.println("[" + this.info.getCamId() + "]: Pausado");
     }
     
     /**
@@ -293,7 +293,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         if (retState == org.gstreamer.State.NULL)
             System.err.println("No se pudo reanudar");
         else
-            System.out.println("Reanudado");
+            System.out.println("[" + this.info.getCamId() + "]: Reanudado");
     }
 
     @Override
@@ -332,5 +332,6 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             this.numSubs++;
         else if (status == DiscoveryChangeStatus.ELIMINADO)
             this.numSubs--;
+        System.out.println("[" + camId + "]: " + this.numSubs);
     }
 }
