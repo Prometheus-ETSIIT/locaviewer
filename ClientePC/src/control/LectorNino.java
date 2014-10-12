@@ -74,6 +74,7 @@ public class LectorNino extends LectorBase {
         
         // Ponemos el ID de la cámara a -1 para que no muestre el vídeo anterior.
         this.lectorCam.cambioParametros(new String[] { "'-1'" });
+        this.ultDato = null;
     }
     
     @Override

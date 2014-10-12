@@ -43,13 +43,11 @@ public class MainWindow extends javax.swing.JFrame {
     private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipantePC";
     
-    private boolean stop;
-    
     private LectorNino lectorNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
     private final List<DatosCamara> camData = new ArrayList<>();
-    private final List<DatosNino> childData = new ArrayList<>();
+    private DatosNino[] childData;
 
     /**
      * Crea una nueva ventana sin funcionalidad.
@@ -70,17 +68,15 @@ public class MainWindow extends javax.swing.JFrame {
     /**
      * Crea una nueva ventana que participa en un dominio.
      * 
-     * @param childrenId ID de los niños a seguir.
+     * @param children Niños a seguir.
      */
-    public MainWindow(final String[] childrenId) {
+    public MainWindow(final DatosNino[] children) {
         this();
         
-        // Creamos una lista que iremos completando poco a poco.
-        for (String id : childrenId) {
-            DatosNino d = new DatosNino();
-            d.setId(id);
-            this.childData.add(d);
-        }
+        // Añadimos los niños que podemos seguir
+        this.childData = children;
+        for (DatosNino d : children)
+            this.comboNino.addItem(d.getApodo());
         
         // Crea los dos controles de tópicos (niños y vídeo).
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
@@ -91,7 +87,7 @@ public class MainWindow extends javax.swing.JFrame {
                 VIDEO_TOPIC_NAME);
         
         // Crea el lector de vídeo.
-        this.lectorNino = new LectorNino(controlNino, childrenId[0], controlCamaras);
+        this.lectorNino = new LectorNino(controlNino, children[0].getId(), controlCamaras);
         this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualizamos las listas por cada publicador ya existente
@@ -278,7 +274,7 @@ public class MainWindow extends javax.swing.JFrame {
         );
         panelLocLayout.setVerticalGroup(
             panelLocLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 150, Short.MAX_VALUE)
+            .addGap(0, 149, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -329,7 +325,7 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Actualiza las listas de cámaras y niños a partir de los publicadores
+     * Actualiza las listas de cámaras a partir de los publicadores
      * descubiertos.
      * 
      * @param data Datos del publicador descubierto.
@@ -338,63 +334,34 @@ public class MainWindow extends javax.swing.JFrame {
     private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
         String userData = new String(data.getUserData().toArrayByte(null));
         
-        if (data.getTopicName().equals(VIDEO_TOPIC_NAME)) {
-            // Busca si ya está en la lista
-            DatosCamara info = DatosCamara.FromStringSummary(userData);
-            int idx = -1;
-            for (int i = 0; i < this.camData.size() && idx == -1; i++)
-                if (this.camData.get(i).getCamId().equals(info.getCamId()))
-                    idx = i;
+        // Solo nos centramos en las cámaras, los datos de los niños
+        // nos lo da el servidor
+        if (!data.getTopicName().equals(VIDEO_TOPIC_NAME))
+            return;
             
-            // Actualiza la lista
-            if (idx != -1 && status == DiscoveryChangeStatus.ELIMINADO) {
-                // TODO: Enviar notificación
-                this.comboIdCam.removeItemAt(idx);
-                this.camData.remove(idx);
-            } else if (idx == -1 && status == DiscoveryChangeStatus.ANADIDO) {
-                this.comboIdCam.addItem(info.getSala() + " | " + info.getCamId());
-                this.camData.add(info);
-            }
-        } else if (data.getTopicName().equals(CHILD_TOPIC_NAME)) {
-            // Busca si está en la lista
-            DatosNino info = DatosNino.FromSummary(userData);
-            int idx = -1;
-            boolean filled = false;
-            for (int i = 0; i < this.childData.size() && idx == -1; i++) {
-                if (this.childData.get(i).getId().equals(info.getId())) {
-                    idx = i;
-                    filled = this.childData.get(i).getNombre() != null;
-                }
-            }
+        // Busca si ya está en la lista
+        DatosCamara info = DatosCamara.FromStringSummary(userData);
+        int idx = -1;
+        for (int i = 0; i < this.camData.size() && idx == -1; i++)
+            if (this.camData.get(i).getCamId().equals(info.getCamId()))
+                idx = i;
 
-            // ¡No es nuestro niño!
-            if (idx == -1)
-                return;
-            
-            // Actualiza la lista
-            if (status == DiscoveryChangeStatus.ELIMINADO) {
-                if (filled) {
-                    // TODO: Enviar notificación
-                    if (this.comboNino.getSelectedIndex() == idx)
-                        this.btnCam.setSelected(false);
-                    this.comboNino.removeItemAt(idx);
-                }
-                
-                // Lo establecemos a vacío para que la próxima vez
-                // filled esté a false.
-                this.childData.get(idx).setNombre(null);
-            } else if (status == DiscoveryChangeStatus.ANADIDO) {
-                if (!filled) {
-                    // TODO: Enviar notificación
-                    this.childData.set(idx, info);
-                    this.comboNino.addItem(info.getApodo());
-                }
-            }
-            
-            this.btnCam.setEnabled(this.comboNino.getItemCount() > 0);
+        // Actualiza la lista
+        if (idx != -1 && status == DiscoveryChangeStatus.ELIMINADO) {
+            // TODO: Enviar notificación
+            this.comboIdCam.removeItemAt(idx);
+            this.camData.remove(idx);
+        } else if (idx == -1 && status == DiscoveryChangeStatus.ANADIDO) {
+            this.comboIdCam.addItem(info.getSala() + " | " + info.getCamId());
+            this.camData.add(info);
         }
     }
     
+    /**
+     * Se llama cuando se recibe un dato nuevo del niño.
+     * 
+     * @param data Último del niño.
+     */
     private void onNinoDataReceived(DatosNino data) {
         this.lblPlace.setText(data.getSala());
     }
@@ -407,7 +374,7 @@ public class MainWindow extends javax.swing.JFrame {
             return;
         }
         
-        // Cambia a la nueva
+        // Reanudamos la toma de datos.
         this.lectorNino.reanudar();
         this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(true);
         
@@ -416,15 +383,12 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCamClick
 
     private void comboNinoSelected(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboNinoSelected
-        if (this.stop)
-            return;
-
-        if (!this.btnCam.isSelected())
+        if (this.lectorNino == null)
             return;
             
         // Cambia la clave en el lector de niños
         int idx = this.comboNino.getSelectedIndex();
-        this.lectorNino.cambiarNinoId(this.childData.get(idx).getId());
+        this.lectorNino.cambiarNinoId(this.childData[idx].getId());
     }//GEN-LAST:event_comboNinoSelected
 
     private void checkManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkManualActionPerformed
@@ -447,7 +411,7 @@ public class MainWindow extends javax.swing.JFrame {
         if (!this.checkManual.isSelected())
             return;
         
-        // Cambia a la nueva
+        // Cambia a la nueva clave
         int idx = this.comboIdCam.getSelectedIndex();
         String newKey = "'" + this.camData.get(idx).getCamId() + "'";
         this.lectorNino.getSuscriptorCamara().cambioParametros(new String[] { newKey });

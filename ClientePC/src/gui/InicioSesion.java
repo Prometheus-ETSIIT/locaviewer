@@ -18,6 +18,7 @@
 
 package gui;
 
+import control.DatosNino;
 import java.awt.Color;
 import java.awt.Toolkit;
 
@@ -125,18 +126,21 @@ public class InicioSesion extends javax.swing.JFrame {
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
-        this.onSuccessLogin(new String[] { "86159283" });
+        DatosNino[] datos = new DatosNino[2];
+        datos[0] = DatosNino.FromSummary("86159283,Benito Palacios Sánchez, Beni :3");
+        datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
+        this.onSuccessLogin(datos);
     }//GEN-LAST:event_btnConnectActionPerformed
     
     /**
      * Se llama por la subventana de inicio de sesión cuando se realiza con
      * éxito el login.
      * 
-     * @param childrenId ID de los niños a los que conectarse.
+     * @param children ID de los niños a los que conectarse.
      */
-    public void onSuccessLogin(final String[] childrenId) {
+    public void onSuccessLogin(final DatosNino[] children) {
         // Turno de la ventana principal
-        new MainWindow(childrenId).setVisible(true);
+        new MainWindow(children).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);
