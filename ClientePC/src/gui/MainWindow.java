@@ -146,6 +146,11 @@ public class MainWindow extends javax.swing.JFrame {
         setMinimumSize(new java.awt.Dimension(540, 500));
         setPreferredSize(new java.awt.Dimension(540, 500));
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         toolbar.setBackground(new java.awt.Color(176, 206, 230));
         toolbar.setFloatable(false);
@@ -451,6 +456,12 @@ public class MainWindow extends javax.swing.JFrame {
         // Actualiza
         this.panelVideo.revalidate();
     }//GEN-LAST:event_updateManualView
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        this.lectorNino.dispose();
+        this.controlCamaras.dispose();
+        this.controlNino.dispose();
+    }//GEN-LAST:event_formWindowClosing
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnCam;
