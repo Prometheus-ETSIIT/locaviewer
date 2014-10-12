@@ -321,7 +321,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
 
         // Obtiene el ID de la cámara, le quita los ' porque se envía como
         // parámetro en la expresión del filtro.
-        String camId = new String(data.getUserData().toArrayByte(null));
+        String camId = (String)data.getFilterParams().get(0);
         camId = camId.replaceAll("'", "");
         
         // Compara si coinciden el camId.
