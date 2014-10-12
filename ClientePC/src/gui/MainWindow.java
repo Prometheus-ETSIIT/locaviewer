@@ -21,6 +21,10 @@ package gui;
 import control.DatosCamara;
 import control.DatosNino;
 import control.LectorNino;
+import es.prometheus.dds.DiscoveryChange;
+import es.prometheus.dds.DiscoveryChangeStatus;
+import es.prometheus.dds.DiscoveryData;
+import es.prometheus.dds.DiscoveryListener;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
 import java.awt.Color;
@@ -35,13 +39,17 @@ import java.util.ArrayList;
  * Ventana principal del programa.
  */
 public class MainWindow extends javax.swing.JFrame {
+    private static final String CHILD_TOPIC_NAME = "ChildDataTopic";
+    private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
+    private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipantePC";
+    
     private boolean stop;
     
-    private String[] ninoId;
     private LectorNino lectorNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
-    private List<String> camIds;
+    private final List<DatosCamara> camData = new ArrayList<>();
+    private final List<DatosNino> childData = new ArrayList<>();
 
     /**
      * Crea una nueva ventana sin funcionalidad.
@@ -66,35 +74,49 @@ public class MainWindow extends javax.swing.JFrame {
      */
     public MainWindow(final String[] childrenId) {
         this();
-        this.ninoId = childrenId;
         
+        // Creamos una lista que iremos completando poco a poco.
+        for (String id : childrenId) {
+            DatosNino d = new DatosNino();
+            d.setId(id);
+            this.childData.add(d);
+        }
+        
+        // Crea los dos controles de tópicos (niños y vídeo).
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
-                "MisParticipantes::ParticipantePC",
-                "ChildDataTopic");
+                PARTICIPANT_NAME,
+                CHILD_TOPIC_NAME);
         this.controlCamaras = TopicoControlFactoria.crearControlDinamico(
-                "MisParticipantes::ParticipantePC",
-                "VideoDataTopic");
+                PARTICIPANT_NAME,
+                VIDEO_TOPIC_NAME);
         
+        // Crea el lector de vídeo.
         this.lectorNino = new LectorNino(controlNino, childrenId[0], controlCamaras);
+        
+        // Actualizamos las listas por cada publicador ya existente
+        for (DiscoveryData d : this.controlNino.getParticipanteControl().getDiscoveryWriterData())
+            onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
+        
+        // Listener para cuando se descubra un publicador nuevo.
+        this.controlNino.getParticipanteControl().addDiscoveryWriterListener(new DiscoveryListener() {
+            @Override
+            public void onChange(DiscoveryChange[] changes) {
+                for (DiscoveryChange ch : changes)
+                    onWriterDiscovered(ch.getData(), ch.getStatus());
+            }
+        });
+        
+        // Listener para cuando se reciba un dato nuevo del niño.
         this.lectorNino.setExtraListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 onNinoDataReceived(lectorNino.getUltimoDato());
             }
         });
+        
+        // Le decimos que no procese las muestras y lo iniciamos.
         this.lectorNino.suspender();
         this.lectorNino.iniciar();
-        
-        this.camIds = new ArrayList<>();
-        this.comboIdCam.removeAllItems();
-        
-        // Establece las posibles claves
-        // TODO: Que aperazca el apodo en lugar del ID
-        this.stop = true;
-        this.comboNino.removeAllItems();
-        for (String k : childrenId)
-            this.comboNino.addItem(k);
-        this.stop = false;
     }
     
     @SuppressWarnings("unchecked")
@@ -137,7 +159,6 @@ public class MainWindow extends javax.swing.JFrame {
         lblChild.setText("Niño:");
 
         comboNino.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        comboNino.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Benito Palacios Sánchez", "Pleonex Pleonizando" }));
         comboNino.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 comboNinoSelected(evt);
@@ -154,7 +175,7 @@ public class MainWindow extends javax.swing.JFrame {
         lblViewing.setText("Viendo:");
 
         lblPlace.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        lblPlace.setText("Patio de recreo");
+        lblPlace.setText("null");
 
         javax.swing.GroupLayout panelAutoLayout = new javax.swing.GroupLayout(panelAuto);
         panelAuto.setLayout(panelAutoLayout);
@@ -176,7 +197,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addComponent(btnCam)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblViewing)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblPlace))
         );
 
@@ -211,7 +232,6 @@ public class MainWindow extends javax.swing.JFrame {
         lblIdCam.setText("ID Cámara:");
 
         comboIdCam.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        comboIdCam.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "C1A0", "C1A1" }));
         comboIdCam.setEnabled(false);
         comboIdCam.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -252,7 +272,7 @@ public class MainWindow extends javax.swing.JFrame {
         );
         panelLocLayout.setVerticalGroup(
             panelLocLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 149, Short.MAX_VALUE)
+            .addGap(0, 151, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -293,7 +313,7 @@ public class MainWindow extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(panelManual, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                     .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(10, 10, 10)
                 .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -302,6 +322,73 @@ public class MainWindow extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Actualiza las listas de cámaras y niños a partir de los publicadores
+     * descubiertos.
+     * 
+     * @param data Datos del publicador descubierto.
+     * @param status Estado del publicador descubierto.
+     */
+    private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
+        String userData = new String(data.getUserData().toArrayByte(null));
+        
+        if (data.getTopicName().equals(VIDEO_TOPIC_NAME)) {
+            // Busca si ya está en la lista
+            DatosCamara info = DatosCamara.FromStringSummary(userData);
+            int idx = -1;
+            for (int i = 0; i < this.camData.size() && idx == -1; i++)
+                if (this.camData.get(i).getCamId().equals(info.getCamId()))
+                    idx = i;
+            
+            // Actualiza la lista
+            if (idx != -1 && status == DiscoveryChangeStatus.ELIMINADO) {
+                // TODO: Enviar notificación
+                this.comboIdCam.removeItemAt(idx);
+                this.camData.remove(idx);
+            } else if (idx == -1 && status == DiscoveryChangeStatus.ANADIDO) {
+                this.comboIdCam.addItem(info.getSala() + " | " + info.getCamId());
+                this.camData.add(info);
+            }
+        } else if (data.getTopicName().equals(CHILD_TOPIC_NAME)) {
+            System.out.println("HOLA");
+            // Busca si está en la lista
+            DatosNino info = DatosNino.FromSummary(userData);
+            int idx = -1;
+            boolean filled = false;
+            for (int i = 0; i < this.childData.size() && idx == -1; i++) {
+                if (this.childData.get(i).getId().equals(info.getId())) {
+                    idx = i;
+                    filled = this.childData.get(i).getNombre() != null;
+                }
+            }
+
+            // ¡No es nuestro niño!
+            if (idx == -1)
+                return;
+            
+            // Actualiza la lista
+            if (status == DiscoveryChangeStatus.ELIMINADO) {
+                if (filled) {
+                    // TODO: Enviar notificación
+                    if (this.comboNino.getSelectedIndex() == idx)
+                        this.btnCam.setSelected(false);
+                    this.comboNino.removeItemAt(idx);
+                }
+                
+                // Lo establecemos a vacío para que la próxima vez
+                // filled esté a false.
+                this.childData.get(idx).setNombre(null);
+            } else if (status == DiscoveryChangeStatus.ANADIDO) {
+                if (!filled) {
+                    // TODO: Enviar notificación
+                    this.childData.set(idx, info);
+                    this.comboNino.addItem(info.getApodo());
+                } else
+                    System.err.println("Uh?");
+            }
+        }
+    }
+    
     private void onNinoDataReceived(DatosNino data) {
         this.lblPlace.setText(data.getSala());
     }
@@ -331,7 +418,8 @@ public class MainWindow extends javax.swing.JFrame {
             return;
 
         // Cambia la clave en el lector de niños
-        this.lectorNino.cambiarNinoId(this.ninoId[this.comboNino.getSelectedIndex()]);
+        this.lectorNino.cambiarNinoId(
+                this.childData.get(this.comboNino.getSelectedIndex()).getId());
     }//GEN-LAST:event_comboNinoSelected
 
     private void checkManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkManualActionPerformed
@@ -347,13 +435,16 @@ public class MainWindow extends javax.swing.JFrame {
             this.btnCamClick(evt);
         }
         
-        if (this.camIds.size() > 0) {
+        if (this.camData.size() > 0) {
             this.comboIdCam.setSelectedIndex(0);
             this.updateManualView(evt);
         }
     }//GEN-LAST:event_checkManualActionPerformed
 
     private void updateManualView(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateManualView
+        if (!this.checkManual.isSelected())
+            return;
+        
         // Elimina la vista antigua
         this.panelVideo.removeAll();
         
