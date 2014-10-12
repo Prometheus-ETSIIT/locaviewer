@@ -65,17 +65,10 @@ public abstract class LectorBase {
         // Crea el tópico con filtro de datos.
         this.topico = this.control.createCFT(UUID.randomUUID().toString(), expresion, params);
         
-        // Prepara el QOS con los metadatos del lector (primer parámetro)
-        DataReaderQos qos = new DataReaderQos();
-        this.control.getParticipante().get_default_datareader_qos(qos);
-        if (params.length > 0) {
-            String userData = params[0];
-            qos.user_data.value.clear();
-            qos.user_data.value.addAllByte(userData.getBytes());
-        }
-        
         // Crea el lector sobre ese filtro, de esta forma sólo se reciben
         // los datos necesarios y se reduce ancho de banda.
+        DataReaderQos qos = new DataReaderQos();
+        this.control.getParticipante().get_default_datareader_qos(qos);
         this.reader = this.creaLector(qos);
         
         // Craeamos una nueva hebra para recibir los datos de forma síncrona.
@@ -115,24 +108,6 @@ public abstract class LectorBase {
     public final void cambioParametros(final String[] params) {
         // Cambia los parámetros del tópico
         this.topico.set_expression_parameters(new StringSeq(Arrays.asList(params)));
-        
-        // Creo el nuevo reader
-        DataReaderQos qos = new DataReaderQos();
-        this.control.getParticipante().get_default_datareader_qos(qos);
-        if (params.length > 0) {
-            String userData = params[0];
-            qos.user_data.value.clear();
-            qos.user_data.value.addAllByte(userData.getBytes());
-        }
-        DynamicDataReader newReader = this.creaLector(qos);
-        
-        // Lo intercambia en el listener
-        this.callback.cambiaReader(newReader);
-        
-        // Eliminamos el antiguo y ponemos el nuevo
-        this.reader.delete_contained_entities();
-        this.control.eliminaLector(this.reader);
-        this.reader = newReader;
     }
     
     /**

@@ -21,6 +21,7 @@ package es.prometheus.dds;
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
 import com.rti.dds.domain.DomainParticipantFactoryQos;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
@@ -83,7 +84,7 @@ public class Participante {
             DomainParticipantFactory.get_instance().get_qos(qos);
             qos.entity_factory.autoenable_created_entities = false;
             DomainParticipantFactory.get_instance().set_qos(qos);
-
+            
             // Creamos el participante
             this.participante = DomainParticipantFactory.get_instance()
                         .create_participant_from_config(name);
@@ -93,6 +94,14 @@ public class Participante {
                 System.err.println("[DDStheus::Participante] No se pudo crear.");
                 System.exit(1);
             }
+            
+            // Aumentamos el tamaño para USER_DATA
+            DomainParticipantQos partQos = new DomainParticipantQos();
+            this.participante.get_qos(partQos);
+            partQos.resource_limits.participant_user_data_max_length = 256;
+            partQos.resource_limits.reader_user_data_max_length = 256;
+            partQos.resource_limits.writer_user_data_max_length = 256;
+            this.participante.set_qos(partQos);
 
             // Volvemos a habilitarlo para dejarlo en su valor por defecto.
             qos.entity_factory.autoenable_created_entities = true;
@@ -156,6 +165,8 @@ public class Participante {
             
             this.discovReader.delete_contained_entities();
             this.discovWriter.delete_contained_entities();
+            this.participante.get_builtin_subscriber().delete_datareader(discovReader);
+            this.participante.get_builtin_subscriber().delete_datareader(discovWriter);
             this.participante.get_builtin_subscriber().delete_contained_entities();
             this.participante.delete_contained_entities();
             DomainParticipantFactory.get_instance().delete_participant(this.participante);
@@ -290,7 +301,7 @@ public class Participante {
          * 
          * @param l Listener de cambio en descubrimiento.
          */
-        public void addListener(DiscoveryListener l) {
+        public void addListener(DiscoveryListener l) {            
             if (!this.listeners.contains(l))
                 this.listeners.add(l);
         }
@@ -339,6 +350,9 @@ public class Participante {
                     toRemove = dd;
             }
             
+            if (toRemove == null)
+                return;
+            
             this.data.remove(toRemove);
             this.changes.add(new DiscoveryChange(toRemove, DiscoveryChangeStatus.ELIMINADO));
         }
@@ -373,6 +387,7 @@ public class Participante {
            return new DiscoveryData(
                    datum.topic_name,
                    datum.user_data.value,
+                   datum.content_filter_property.expression_parameters,
                    info.instance_handle);
         }
         
@@ -436,6 +451,7 @@ public class Participante {
            return new DiscoveryData(
                    datum.topic_name,
                    datum.user_data.value,
+                   null,
                    info.instance_handle);
         }
         

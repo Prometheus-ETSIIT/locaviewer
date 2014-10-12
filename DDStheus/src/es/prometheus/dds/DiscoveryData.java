@@ -20,6 +20,7 @@ package es.prometheus.dds;
 
 import com.rti.dds.infrastructure.ByteSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
+import com.rti.dds.infrastructure.StringSeq;
 
 /**
  * Datos de las entidades descubiertas.
@@ -27,6 +28,7 @@ import com.rti.dds.infrastructure.InstanceHandle_t;
 public class DiscoveryData {
     private final String topicName;
     private final ByteSeq userData;
+    private final StringSeq filterParams;
     private final InstanceHandle_t handle;
 
     /**
@@ -34,11 +36,14 @@ public class DiscoveryData {
      * 
      * @param topicName Nombre del tópico en el que está.
      * @param userData Metadatos compartidos.
+     * @param filterParams Parámetros del filtro.
      * @param handle Handler para encontrarlo cuando se elimine.
      */
-    public DiscoveryData(String topicName, ByteSeq userData, InstanceHandle_t handle) {
+    public DiscoveryData(String topicName, ByteSeq userData,
+            StringSeq filterParams, InstanceHandle_t handle) {
         this.topicName = topicName;
         this.userData = userData;
+        this.filterParams = filterParams;
         this.handle = handle;
     }
 
@@ -58,6 +63,15 @@ public class DiscoveryData {
      */
     public ByteSeq getUserData() {
         return userData;
+    }
+    
+    /**
+     * Obtiene los parámetros del CFT.
+     * 
+     * @return Parámetros del filtro.
+     */
+    public StringSeq getFilterParams() {
+        return filterParams;
     }
 
     /**
