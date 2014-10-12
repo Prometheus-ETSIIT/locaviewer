@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package triangulacion;
+package comunicador;
 
 import comunicador.CamaraPos;
 import comunicador.Dato;
@@ -46,7 +46,6 @@ public class TriangulacionOctave {
     private double[] lastPosition;
     private int lastCamIdx;
     
-    private final TestFrame testFrame;
     
     /**
      * Crea una nueva instancia inicializando el engine.
@@ -71,40 +70,7 @@ public class TriangulacionOctave {
         this.length    = length;
         this.cams      = cams;
         this.alive     = this.initialize(scriptPath, width, length);
-        this.testFrame = mostrarVentana ? new TestFrame(this) : null;
         
-        if (mostrarVentana) {
-            /* Set the Nimbus look and feel */
-            //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-            /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-             * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-             */
-            try {
-                for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                    if ("Nimbus".equals(info.getName())) {
-                        javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                        break;
-                    }
-                }
-            } catch (ClassNotFoundException ex) {
-                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-            } catch (InstantiationException ex) {
-                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-            } catch (IllegalAccessException ex) {
-                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-            } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-                java.util.logging.Logger.getLogger(TestFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-            }
-            //</editor-fold>
-
-            /* Create and display the form */
-            java.awt.EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    testFrame.setVisible(true);
-                }
-            });
-        }
     }
     
     /**
@@ -246,7 +212,7 @@ public class TriangulacionOctave {
         // Llama a la función que tiene en memoria
         try {
             String funcCall = String.format(
-                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo)",
+                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo);",
                     this.funcName
             );
             this.octave.eval(funcCall);
@@ -261,8 +227,6 @@ public class TriangulacionOctave {
         // Obtiene el resultado
         OctaveDouble idxCam = octave.get(OctaveDouble.class, "idxCam");
         if (idxCam != null && idxCam.size(1) == 1 && idxCam.get(1) != -1) {
-            if (this.testFrame != null)
-                this.testFrame.getRT().setNewSensors(datos);
             this.lastCamIdx = (int)idxCam.get(1) - 1;
             this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
             return this.cams.get(this.lastCamIdx).getID();    

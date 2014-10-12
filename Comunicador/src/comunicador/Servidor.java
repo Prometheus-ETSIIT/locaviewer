@@ -10,30 +10,63 @@ import java.util.Map.Entry;
 
 import com.rti.dds.domain.DomainParticipant;
 import com.rti.dds.domain.DomainParticipantFactory;
+import com.rti.dds.dynamicdata.DynamicDataSeq;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
+import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.publication.Publisher;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
+import com.rti.dds.subscription.SampleInfoSeq;
+import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
+import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.type.builtin.StringDataReader;
 import com.rti.dds.type.builtin.StringDataWriter;
 import com.rti.dds.type.builtin.StringTypeSupport;
 
 public class Servidor extends DataReaderAdapter{
-	
+		static Map<String,ArrayList<Dato>> datosNinos = new HashMap<String,ArrayList<Dato>>(); 
+		static ArrayList<CamaraPos> posiciones  = new ArrayList<CamaraPos>();
+		static TriangulacionOctave triangulacion;
+		static StringDataWriter dataWriter;
 
-    	static Map<String,Topic>topicosNinos = new HashMap<String,Topic>();; 
 
-		static Map<String,ArrayList<Dato>> datosNinos = new HashMap<String, ArrayList<Dato>>(); 
 
+		
+		
         public static final void main(String[] args) {
     		Parseador pars = new Parseador("posicionesCamaras.xml");
-    		ArrayList<CamaraPos> posiciones = pars.parse();
+    		
+    		//posiciones = pars.parse();
+    		CamaraPos hola = new CamaraPos(3,0,"Camara 1");
+
+    		posiciones.add(hola);
+    		 hola = new CamaraPos(3,6,"Camara 2");
+     		posiciones.add(hola);
+    		 hola = new CamaraPos(0,3,"Camara 3");
+     		posiciones.add(hola);
+    		 hola = new CamaraPos(6,3,"Camara 4");
+     		posiciones.add(hola);
+
+    	
+		  triangulacion = new TriangulacionOctave(
+		             "detectarcamara.m",
+		             "detectarcamara",
+		             posiciones,
+		             6,
+		             6,
+		             false
+		        );
+     		
+    		System.out.println(posiciones.get(0).getPosX()+" "+posiciones.get(0).getPosY());
+    		
     		
             DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                     0, 
@@ -45,17 +78,23 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
 
-           
+            
             Topic topic = participant.create_topic(
             		"1", 
                     StringTypeSupport.get_type_name(), 
                     DomainParticipant.TOPIC_QOS_DEFAULT, 
                     null, // listener
                     StatusKind.STATUS_MASK_NONE);
+            
             if (topic == null) {
                 System.err.println("Unable to create topic.");
                 return;
             }
+            try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
             
             
             Topic clasificadorPadres = participant.create_topic(
@@ -70,7 +109,8 @@ public class Servidor extends DataReaderAdapter{
             }
             
             //Escritor
-            StringDataWriter dataWriter =
+            
+           dataWriter =
                 (StringDataWriter) participant.create_datawriter(
                     topic, 
                     Publisher.DATAWRITER_QOS_DEFAULT,
@@ -80,6 +120,7 @@ public class Servidor extends DataReaderAdapter{
                 System.err.println("Unable to create data writer\n");
                 return;
             }
+
 
             //Lector
             StringDataReader dataReader =
@@ -93,89 +134,70 @@ public class Servidor extends DataReaderAdapter{
                 return;
             }
             
-        	Iterator<Entry<String, ArrayList<Dato>>>it;
-    		ArrayList<Dato> datosActual;//Datos del niño actual
-    		long min,actual, max;
-    		Topic topicoNino;
+
+
     		
-    		TriangulacionOctave triangulacion = new TriangulacionOctave(
-                    "detectarcamara.m",
-                    "detectarcamara",
-                    posiciones,
-                    6,
-                    6,
-                    true
-            );
-            while(true){
-            	it = datosNinos.entrySet().iterator();//Iterar en el mapa
-				
-            	while(it.hasNext()){//Se recorren las claves del mapa
+    		
+            while(true){//Para que el programa no finalice
+            	try {
+					Thread.sleep(1000);
 					
-					Map.Entry entrada = (Map.Entry)it.next();
-					datosActual=(ArrayList<Dato>) entrada.getValue();
-					
-					
-					min=99999999;
-					max=0;
-					
-					for(int i=0;i<datosActual.size();i++){
-						if(datosActual.get(i).getCreacion()<min){//Tomamos de la última medición
-							min=datosActual.get(i).getCreacion();
-						}
-						else if(datosActual.get(i).getCreacion()>max){//Tomamos medición más nueva
-							max=datosActual.get(i).getCreacion();
-						}
-					}
-					
-					actual = new Date().getTime(); 
-					
-					if((actual-min)/1000>10 || (max-min)/1000>10){//Si han pasado más de 10 segundos o hay demasiada diferencia entre los datos
-						datosNinos.remove(entrada.getKey());//Desechamos los datos de ese niño
-						it = datosNinos.entrySet().iterator();//Hay que regenerar el iterador
-					}
-					else if(datosActual.size()>3){//Si hay más de 3 datos
-						ArrayList<Dato> datosNino =  (ArrayList<Dato>) entrada.getValue();
-						String camId = triangulacion.triangular(datosNino);
-						String toWrite = entrada.getKey() + " " + camId;
-						dataWriter.write(toWrite, InstanceHandle_t.HANDLE_NIL);
-						
-						//Se obtiene el tópico del niño
-						topicosNinos.get(entrada.getKey());
-						
-					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
             }
         }
+        
 
         public void on_data_available(DataReader reader) {
+
+        	
             StringDataReader stringReader = (StringDataReader) reader;
             SampleInfo info = new SampleInfo();
-            for (;;) {
-                try {
-                    String sample = stringReader.take_next_sample(info);
-                    if (info.valid_data) {
-                    	System.out.println(sample);
-                    	Dato datoNuevo = new Dato(sample);
-                    	ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
-                    	if(datos==null){//No hay datos del niño
-                    		datos = new ArrayList<Dato>();
-                    		datos.add(datoNuevo);
-                    	}
-                    	else{
-                    		for(int i=0;i<datos.size();i++){
-                    			if(datos.get(i).getID()==datoNuevo.getID()){
-                    				datos.remove(i);
-                    				datos.add(datoNuevo);
-                    				break;
-                    			}
-                    		}
-                    	}
-                    }
-                } catch (RETCODE_NO_DATA noData) {
-                    break;
-                } catch (RETCODE_ERROR e) {
-                    e.printStackTrace();
-                }
+            
+            StringSeq dataSeq = new StringSeq();
+            SampleInfoSeq infoSeq = new SampleInfoSeq();
+            
+            stringReader.take(dataSeq, infoSeq, ResourceLimitsQosPolicy.LENGTH_UNLIMITED,SampleStateKind.ANY_SAMPLE_STATE,ViewStateKind.ANY_VIEW_STATE,InstanceStateKind.ANY_INSTANCE_STATE );
+            for(int i =0; i<dataSeq.size();i++){
+            	String sample = (String) dataSeq.get(i);
+            	Dato datoNuevo = new Dato(sample);
+            	
+            	if(datosNinos.containsKey(datoNuevo.getIDNino())){
+            		System.out.println("Niño repetido "+ datoNuevo.getIDNino());
+            		ArrayList<Dato> datos = datosNinos.get(datoNuevo.getIDNino());
+            		
+            		for(int k=0;k<datos.size();k++){
+            			if(datos.get(k).getID().equals(datoNuevo.getID())){
+            				datos.remove(k);
+            			}
+            		}
+            		
+            		datos.add(datoNuevo);
+            		
+        			long date = new Date().getTime();
+        			
+        			for(int j=0;j<datos.size();j++){
+        				if(date-datos.get(j).getCreacion()>20000){//Si tiene más de 20 segundos, se borra
+        					datos.remove(j);
+        					j--;
+        				}
+        			}
+            		
+            		if(datos.size()>3){//Ya se puede triangular           			
+            			String camId = triangulacion.triangular(datos);
+            			System.out.println(datos.size()+" "+camId+" "+datoNuevo.getIDNino());
+            			datos.clear();
+            			dataWriter.write(datos.size()+" "+camId+" "+datoNuevo.getIDNino(), InstanceHandle_t.HANDLE_NIL );
+            		}
+            	}
+            	else{
+            		ArrayList<Dato> nuevo = new ArrayList<Dato>();
+            		nuevo.add(datoNuevo);
+            		datosNinos.put(datoNuevo.getIDNino(), nuevo);
+            		System.out.print("Niño NUEVO "+ datoNuevo.getIDNino()+" ");
+            		System.out.println("Tenemos ahora a "+ datosNinos.size());
+            	}
             }
         }
 }

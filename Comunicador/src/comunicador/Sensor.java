@@ -1,5 +1,8 @@
 package comunicador;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -88,30 +91,61 @@ public class Sensor extends DataReaderAdapter{
 		    e.printStackTrace();
 		  }
 		
-		//Niño a
-		Dato prueba = new Dato(MAC,10,10,"75572325",10);
-		Dato prueba2 = new Dato(MAC,10,10,"75572325",15);
-		Dato prueba3 = new Dato(MAC,10,10,"75572325",20);
+
 		
-		//Niño b
-		Dato prueba4 = new Dato(MAC,10,10,"24298911",10);
-		Dato prueba5 = new Dato(MAC,10,10,"24298911",15);
-		Dato prueba6 = new Dato(MAC,10,10,"24298911",20);
-        int numero=0;
+		//Lectura
+		try {
+			Runtime.getRuntime().exec("sudo python sensor.py 0 4554");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	
+		DatagramSocket socketServidor;
+
+		 try {
+			 socketServidor = new DatagramSocket(4554);
      	while(true){
-	        dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
-	        if(numero<5){
-		        dataWriter.write(prueba4.toString(), InstanceHandle_t.HANDLE_NIL);
-		        Thread.sleep(100);
-		        dataWriter.write(prueba2.toString(), InstanceHandle_t.HANDLE_NIL);
-		        dataWriter.write(prueba5.toString(), InstanceHandle_t.HANDLE_NIL);
-		        Thread.sleep(1000);
-		        dataWriter.write(prueba3.toString(), InstanceHandle_t.HANDLE_NIL);
-		        dataWriter.write(prueba6.toString(), InstanceHandle_t.HANDLE_NIL);
-		        Thread.sleep(100);
-		        numero++;
-	        }
-     	}
+     		//SENSOR 1
+     			 byte [] bufer = new byte [256];
+ 				 DatagramPacket paquete = new DatagramPacket(bufer,bufer.length);
+ 				 socketServidor.receive(paquete);
+ 				 String peticion = new String (paquete.getData());
+ 				 
+ 				 String [] recibido = peticion.split("\\s+");
+ 				 int rssi = Integer.parseInt(recibido[1].substring(0, 3));
+ 				Dato prueba = new Dato (MAC,0,0,recibido[0],rssi);
+ 				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+ 				
+ 			//SENSOR 2
+    			  bufer = new byte [256];
+				  paquete = new DatagramPacket(bufer,bufer.length);
+				 socketServidor.receive(paquete);
+				  peticion = new String (paquete.getData());
+				 
+				 recibido = peticion.split("\\s+");
+				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
+				 prueba = new Dato (MAC,8,0,recibido[0],rssi);
+				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+	 		
+				
+				//SENSOR 3
+  			  bufer = new byte [256];
+				  paquete = new DatagramPacket(bufer,bufer.length);
+				 socketServidor.receive(paquete);
+				  peticion = new String (paquete.getData());
+				 
+				 recibido = peticion.split("\\s+");
+				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
+				 prueba = new Dato (MAC,0,7,recibido[0],rssi);
+				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
+     		}
+     		} catch (SocketException e1) {
+     			e1.printStackTrace();
+     		} catch (IOException e) {
+     			e.printStackTrace();
+     		}
+     	
     }
     
     

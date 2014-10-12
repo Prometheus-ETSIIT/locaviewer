@@ -52,14 +52,13 @@ public class Parseador {
                     String ID = getValue("ID", element);
                     String posicionX =  getValue("posicionX", element);
                     String posicionY = getValue("posicionY", element);
-                    
+                    System.out.println("oasdad");
                     x=Integer.parseInt(posicionX);
                     y=Integer.parseInt(posicionY);
                     
                     posicion = new CamaraPos(x,y,ID);
                     
                     posiciones.add(posicion);
-
                 }
             }
         } catch (IOException | ParserConfigurationException | SAXException ex) {
