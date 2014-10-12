@@ -31,6 +31,7 @@ public class EscritorNino extends Thread {
     private static final int SLEEP_TIME = 5000; // Tiempo entre iteración
     
     private boolean parar;
+    private DatosNino[] valoresNino;
     
     private TopicoControl topico;
     private Escritor escritor;
@@ -45,22 +46,11 @@ public class EscritorNino extends Thread {
     
     @Override
     public void run() {
+        // Crea los datos a enviar.
+        this.creaDatos();
+        
         // Iniciamos DDS
         this.iniciaDds();
-        
-        // Crea los datos estándar de un niño
-        DatosNino nino = new DatosNino();
-        nino.setCalidad(82.3);
-        nino.setId("86159283");
-        nino.setSala("Clase 1.A");
-        nino.setNombre("Benito Palacios");
-        nino.setApodo("Benii");
-        
-        // Versiones alteradas de los datos
-        DatosNino[] valoresNino = new DatosNino[3];
-        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0);
-        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3);        
-        valoresNino[2] = MueveNino(nino, "test1", 2.0, 5.1);
         
         // Alterna entre los datos y los envía
         for (int i = 0; i < MAX_ITER && !parar; i++) {          
@@ -89,14 +79,33 @@ public class EscritorNino extends Thread {
     }
     
     /**
+     * Crea los datos a enviar.
+     */
+    private void creaDatos() {
+        // Crea los datos estándar de un niño
+        DatosNino nino = new DatosNino();
+        nino.setCalidad(82.3);
+        nino.setId("86159283");
+        nino.setSala("Clase 1.A");
+        nino.setNombre("Benito Palacios");
+        nino.setApodo("Benii");
+        
+        // Versiones alteradas de los datos
+        this.valoresNino = new DatosNino[3];
+        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0);
+        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3);        
+        valoresNino[2] = MueveNino(nino, "test1", 2.0, 5.1);
+    }
+    
+    /**
      * Inicializa DDS y crea las entidades.
      */
     private void iniciaDds() {
         // Crea un escritor para el dominio
         this.topico = TopicoControlFactoria.crearControlDinamico(
                 "ParticipantesPC::ParticipanteNino",
-                "ChildDataTopic");
-        this.escritor = new Escritor(topico);
+                "ChildDataTopic");      
+        this.escritor = new Escritor(topico, valoresNino[0].getSummary().getBytes());
         this.datos = escritor.creaDatos();
     }
     

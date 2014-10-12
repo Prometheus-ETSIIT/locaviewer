@@ -82,6 +82,21 @@ public class DatosNino implements Cloneable {
         datos.apodo   = sample.get_string("apodo",   DynamicData.MEMBER_ID_UNSPECIFIED);
         return datos;
     }
+    
+    /**
+     * Crea una instancia de la estructura a partir de un resumen.
+     * 
+     * @param summary Resumen de datos.
+     * @return Nueva instancia.
+     */
+    public static DatosNino FromSummary(final String summary) {
+        DatosNino datos = new DatosNino();
+        String[] fields = summary.split(",");
+        datos.id     = fields[0];
+        datos.nombre = fields[1];
+        datos.apodo  = fields[2];
+        return datos;
+    }
 
     /**
      * Obtiene la calidad de los datos recibidos.
@@ -225,6 +240,17 @@ public class DatosNino implements Cloneable {
      */
     public void setApodo(String apodo) {
         this.apodo = apodo;
+    }
+    
+    /**
+     * Obtiene un resumen de los datos del niño a partir de aquellos datos
+     * que no cambian.
+     * Usado para los metadatos del publicador.
+     * 
+     * @return Resumen de datos del niño.
+     */
+    public String getSummary() {
+        return this.id + "," + this.nombre + "," + this.apodo;
     }
     
     /**
