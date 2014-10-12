@@ -80,7 +80,7 @@ public abstract class TopicoControl {
      * 
      * @return Participante del dominio.
      */
-    protected DomainParticipant getParticipante() {
+    public DomainParticipant getParticipante() {
         return this.participante.getParticipante();
     }
     

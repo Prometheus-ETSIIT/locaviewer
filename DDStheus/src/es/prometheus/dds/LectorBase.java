@@ -34,7 +34,6 @@ import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
-import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
 import com.rti.dds.topic.ContentFilteredTopic;
 import java.awt.event.ActionListener;
@@ -67,7 +66,8 @@ public abstract class LectorBase {
         this.topico = this.control.createCFT(UUID.randomUUID().toString(), expresion, params);
         
         // Prepara el QOS con los metadatos del lector (primer parámetro)
-        DataReaderQos qos = Subscriber.DATAREADER_QOS_DEFAULT;
+        DataReaderQos qos = new DataReaderQos();
+        this.control.getParticipante().get_default_datareader_qos(qos);
         if (params.length > 0) {
             String userData = params[0];
             qos.user_data.value.clear();
@@ -117,7 +117,8 @@ public abstract class LectorBase {
         this.topico.set_expression_parameters(new StringSeq(Arrays.asList(params)));
         
         // Creo el nuevo reader
-        DataReaderQos qos = Subscriber.DATAREADER_QOS_DEFAULT;
+        DataReaderQos qos = new DataReaderQos();
+        this.control.getParticipante().get_default_datareader_qos(qos);
         if (params.length > 0) {
             String userData = params[0];
             qos.user_data.value.clear();
@@ -188,13 +189,7 @@ public abstract class LectorBase {
      * @param qos QOS a usar.
      * @return Nuevo lector.
      */
-    private DynamicDataReader creaLector(final DataReaderQos qos) {
-        // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
-        DataReaderQos partQos = new DataReaderQos();
-        this.control.getParticipante().get_default_datareader_qos(partQos);
-        partQos.user_data.copy_from(qos.user_data);
-        this.control.getParticipante().set_default_datareader_qos(partQos);
-        
+    private DynamicDataReader creaLector(final DataReaderQos qos) {        
         // Crea el lector
         return (DynamicDataReader)this.control.getParticipante().create_datareader(
                 this.topico,

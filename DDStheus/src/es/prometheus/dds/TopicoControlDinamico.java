@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Crea y elimina lectores y escritores sobre un tópico definido en el XML.
  */
-public class TopicoControlDinamico extends TopicoControl {
+public class TopicoControlDinamico extends TopicoControl {    
     private final Topic topico;
     private final List<DynamicDataReader> readers = new ArrayList<>();
     private final List<DynamicDataWriter> writers = new ArrayList<>();
@@ -54,21 +54,25 @@ public class TopicoControlDinamico extends TopicoControl {
     }
 
     @Override
+    public void dispose() {
+        while (this.readers.size() > 0)
+            this.eliminaLector(this.readers.get(0));
+        
+        while (this.writers.size() > 0)
+            this.eliminaEscritor(this.writers.get(0));
+        
+        super.dispose();
+    }
+    
+    @Override
     public Topic getTopicDescription() {
         return this.topico;
     }
     
     @Override
     public DynamicDataReader creaLector(DataReaderQos qos) {
-        if (qos == null) {
+        if (qos == null)
             qos = Subscriber.DATAREADER_QOS_DEFAULT;
-        } else {
-            // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
-            DataReaderQos partQos = new DataReaderQos();
-            this.getParticipante().get_default_datareader_qos(partQos);
-            partQos.user_data.copy_from(qos.user_data);
-            this.getParticipante().set_default_datareader_qos(partQos);
-        }
         
         DynamicDataReader reader = (DynamicDataReader)this.getParticipante()
                 .create_datareader(
@@ -92,6 +96,7 @@ public class TopicoControlDinamico extends TopicoControl {
         
         // Lo eliminamos el tópico.
         reader.get_subscriber().delete_datareader(reader);
+        this.getParticipante().delete_datareader(reader);
         
         // Lo eliminamos de la lista
         this.readers.remove(reader);
@@ -99,16 +104,9 @@ public class TopicoControlDinamico extends TopicoControl {
 
     @Override
     public DynamicDataWriter creaEscritor(DataWriterQos qos) {
-        if (qos == null) {
+        if (qos == null)
             qos = Publisher.DATAWRITER_QOS_DEFAULT;
-        } else {
-            // Copia el USER_DATA del qos pasado, al de la factoria porque se coge de ahí.
-            DataWriterQos partQos = new DataWriterQos();
-            this.getParticipante().get_default_datawriter_qos(partQos);
-            partQos.user_data.copy_from(qos.user_data);
-            this.getParticipante().set_default_datawriter_qos(partQos);
-        }
-            
+        
         DynamicDataWriter writer = (DynamicDataWriter)this.getParticipante()
                 .create_datawriter(
                     topico,
