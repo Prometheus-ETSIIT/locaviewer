@@ -46,8 +46,10 @@ public class MainWindow extends javax.swing.JFrame {
     private LectorNino lectorNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
+    
     private final List<DatosCamara> camData = new ArrayList<>();
     private DatosNino[] childData;
+    private RealTimePanel rtpanel;
 
     /**
      * Crea una nueva ventana sin funcionalidad.
@@ -90,6 +92,11 @@ public class MainWindow extends javax.swing.JFrame {
         this.lectorNino = new LectorNino(controlNino, children[0].getId(), controlCamaras);
         this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
+        this.rtpanel = new RealTimePanel();
+        this.rtpanel.setShowCams(true);
+        this.rtpanel.setSize(this.panelLoc.getWidth() - 10, this.panelLoc.getHeight() - 10);
+        this.panelLoc.add(this.rtpanel);
+        
         // Actualizamos las listas por cada publicador ya existente
         for (DiscoveryData d : this.controlNino.getParticipanteControl().getDiscoveryWriterData())
             onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
@@ -108,6 +115,14 @@ public class MainWindow extends javax.swing.JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 onNinoDataReceived(lectorNino.getUltimoDato());
+            }
+        });
+        
+        // Listener para cuando se reciba un dato nuevo de la cámara
+        this.lectorNino.getSuscriptorCamara().setExtraListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                onCamDataReceived(lectorNino.getSuscriptorCamara().getUltimoDato());
             }
         });
         
@@ -199,7 +214,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addComponent(btnCam)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblViewing)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
                 .addComponent(lblPlace))
         );
 
@@ -265,6 +280,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         panelLoc.setBackground(new java.awt.Color(255, 255, 255));
         panelLoc.setBorder(javax.swing.BorderFactory.createTitledBorder("Localización"));
+        panelLoc.setMinimumSize(new java.awt.Dimension(320, 167));
+        panelLoc.setPreferredSize(new java.awt.Dimension(320, 167));
 
         javax.swing.GroupLayout panelLocLayout = new javax.swing.GroupLayout(panelLoc);
         panelLoc.setLayout(panelLocLayout);
@@ -274,7 +291,7 @@ public class MainWindow extends javax.swing.JFrame {
         );
         panelLocLayout.setVerticalGroup(
             panelLocLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 149, Short.MAX_VALUE)
+            .addGap(0, 146, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -298,8 +315,8 @@ public class MainWindow extends javax.swing.JFrame {
             .addComponent(toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(panelManual, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -316,7 +333,7 @@ public class MainWindow extends javax.swing.JFrame {
                         .addComponent(panelManual, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                     .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
-                .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(panelLoc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -364,6 +381,16 @@ public class MainWindow extends javax.swing.JFrame {
      */
     private void onNinoDataReceived(DatosNino data) {
         this.lblPlace.setText(data.getSala());
+        this.rtpanel.setChild(data);
+    }
+    
+    /**
+     * Se llama cuando se recibe un dato nuevo de la cámara.
+     * 
+     * @param data Último de la cámara.
+     */
+    private void onCamDataReceived(DatosCamara data) {
+        this.rtpanel.setCamera(data);
     }
     
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick

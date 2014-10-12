@@ -284,6 +284,8 @@
             <member name="id"      type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
             <member name="camId"   type="string" stringMaxLength="MAX_ID_SIZE" />
             <member name="sala"    type="string" />
+            <member name="salaW"   type="double" />
+            <member name="salaL"   type="double" />
             <member name="posX"    type="double" />
             <member name="posY"    type="double" />              
             <member name="nombre"  type="string" stringMaxLength="MAX_STRING_SIZE" />
