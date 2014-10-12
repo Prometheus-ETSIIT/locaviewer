@@ -7,7 +7,7 @@
         <posX>4.0</posX>
         <posY>2.3</posY>
         <angle>90.0</angle>
-        <codecInfo>VP8</codecInfo> <!-- La alternativa es JPEG -->
+        <codecInfo>JPEG</codecInfo> <!-- JPEG | VP8 -->
         <width>320</width>
         <height>240</height>
     </camara>
@@ -15,10 +15,10 @@
         <device>/dev/video1</device>
         <camId>test1</camId>
         <sala>Torreón B</sala>
-        <posX>7.9</posX>
+        <posX>6.0</posX>
         <posY>1.3</posY>
         <angle>90.0</angle>
-        <codecInfo>VP8</codecInfo> <!-- La alternativa es JPEG -->
+        <codecInfo>JPEG</codecInfo>
         <width>320</width>
         <height>240</height>
     </camara>
