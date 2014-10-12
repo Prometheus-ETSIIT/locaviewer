@@ -46,8 +46,8 @@ import org.gstreamer.elements.AppSink;
 public class EscritorVideo extends Thread implements DiscoveryListener {
     private final String device;
     private final DatosCamara info;
+    private final List<DiscoveryData> dataSubs = new ArrayList<>();
     
-    private int numSubs;
     private boolean pausar;
     private boolean parar;
     
@@ -71,7 +71,6 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         this.info    = info;
         this.parar   = false;
         this.pausar  = false;
-        this.numSubs = 0;
     }
 
     @Override
@@ -115,7 +114,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         this.topico.getParticipanteControl().addDiscoveryReaderListener(this);
         
         // Si no tenemos ningún suscriptor paramos de coger vídeo.
-        if (this.numSubs == 0)
+        if (this.dataSubs.isEmpty())
             this.pausar();
         
         // Crea el escritor con QOS.
@@ -301,7 +300,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         for (DiscoveryChange change : changes)
             this.updateNumSubs(change.getData(), change.getStatus());
         
-        if (this.numSubs > 0)
+        if (!this.dataSubs.isEmpty())
             this.reanudar();
         else
             this.pausar();
@@ -315,6 +314,11 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
      * @param status Estado de descubrimiento.
      */
     private void updateNumSubs(final DiscoveryData data, final DiscoveryChangeStatus status) {
+        //System.out.println("[" + info.getCamId() + "]: " + data.getTopicName() +
+        //        "|" + this.topicName);
+        //for (DiscoveryData d : this.dataSubs)
+        //    System.out.print(d.getHandle());
+
         // Compara si coincide el tópico.
         if (!this.topicName.equals(data.getTopicName()))
             return;
@@ -324,14 +328,27 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         String camId = (String)data.getFilterParams().get(0);
         camId = camId.replaceAll("'", "");
         
-        // Compara si coinciden el camId.
-        if (!this.info.getCamId().equals(camId))
-            return;
-
-        if (status == DiscoveryChangeStatus.ANADIDO)
-            this.numSubs++;
-        else if (status == DiscoveryChangeStatus.ELIMINADO)
-            this.numSubs--;
-        System.out.println("[" + camId + "]: " + this.numSubs);
+        //System.out.println("[" + info.getCamId() + "]: " + camId + "|" +
+        //        this.info.getCamId());
+        
+        // Comprueba que coincida el filtro.
+        if (!this.info.getCamId().equals(camId)) {
+            // Si no coinciden pero estaba en la lista, es porque se ha cambiado
+            // el filtro, elimina
+            for (int i = 0; i < this.dataSubs.size(); i++) {
+                if (this.dataSubs.get(i).getHandle().equals(data.getHandle())) {
+                    //System.out.println(this.dataSubs.get(i).getHandle() + "==" + data.getHandle());
+                    this.dataSubs.remove(i);
+                    break;
+                }
+            }
+        } else if (status == DiscoveryChangeStatus.ANADIDO) {
+            this.dataSubs.add(data);
+        } else if (status == DiscoveryChangeStatus.ELIMINADO) {
+            this.dataSubs.remove(data);
+        }
+        
+        //System.out.println(data.getHandle());
+        //System.out.println("[" + info.getCamId() + "]: " + this.dataSubs.size());
     }
 }
