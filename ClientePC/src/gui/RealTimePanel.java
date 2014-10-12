@@ -23,25 +23,36 @@ import control.DatosNino;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Timer;
 
 /**
- *
+ * Componente para ver los datos de triangulación en tiempo real.
  */
 public class RealTimePanel extends javax.swing.JComponent {
     private final static int MeterPixelRate = 22;
     private final static int OffsetX = 22;
     private final static int OffsetY = 22;
     
-    private DatosCamara camData;
+    private final List<DatosCamara> camData;
+    private String currCamId;
     private DatosNino childData;
     
     private boolean showCams;
     private boolean showChild;
     
-    public RealTimePanel() {
+    /**
+     * Inicializa una nueva instancia a partir de la lista que contendrá
+     * las cámaras.
+     * 
+     * @param camaras Cámaras.
+     */
+    public RealTimePanel(final List<DatosCamara> camaras) {
         initComponents();
+        this.camData = camaras;
+        
+        // Timer de refresco
         Timer childTimer = new Timer(500, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -52,27 +63,38 @@ public class RealTimePanel extends javax.swing.JComponent {
         childTimer.start();
     }
     
+    /**
+     * Establece si se muestran o no las cámaras.
+     * 
+     * @param value Si se muestran o no las cámaras.
+     */
     public void setShowCams(final boolean value) {
         this.showCams = value;
-        this.repaint();
     }
     
+    /**
+     * Establece el nuevo valor de localización del niño.
+     * 
+     * @param childData Valor de localización del niño.
+     */
     public void setChild(final DatosNino childData) {
         this.childData = childData;
-        
-        // Si el niño se mueve, puede que la cámara no tenga sentido.
-        if (this.camData != null && 
-                !this.childData.getCamId().equals(this.camData.getCamId()))
-            this.camData = null;
     }
     
-    public void setCamera(final DatosCamara camData) {
-        this.camData = camData;
+    /**
+     * Establece el ID de la cámara que enfoca al niño.
+     * 
+     * @param currCamId ID de la cámara que enfoca al niño.
+     */
+    public void setCurrentCamaraId(final String currCamId) {
+        this.currCamId = currCamId;
     }
     
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        // Si no hay datos de niño no se conoce ni las dimensiones de la sala.
         if (this.childData == null)
             return;
         
@@ -91,17 +113,22 @@ public class RealTimePanel extends javax.swing.JComponent {
         g.setColor(Color.blue);
         g.drawRect(0, 0, widPx, lenPx);
         
-        // Pinta la cámara
-        if (this.showCams && this.camData != null) {
+        // Pinta las cámara
+        if (this.showCams) {
             // Pinta el ángulo de la cámara
-            g.setColor(new Color(255, 0, 0, 128));
-            drawVision(g, meter2Px(this.camData.getPosX()),
-                    lenPx - meter2Px(this.camData.getPosY()));
+            for (DatosCamara cam : this.camData) {
+                // Según si es la cámara actual o no se pinta más oscuro.
+                if (currCamId != null && cam.getCamId().equals(currCamId))
+                    g.setColor(new Color(255, 0, 0, 128));
+                else
+                    g.setColor(new Color(128, 128, 128, 128));
             
-            // Pinta el punto de la cámara
-            g.setColor(Color.blue);
-            fillCircle(g, meter2Px(this.camData.getPosX()),
-                    lenPx - meter2Px(this.camData.getPosY()));
+                drawVision(g, meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()));
+            
+                // Pinta el punto de la cámara
+                g.setColor(Color.blue);
+                fillCircle(g, meter2Px(cam.getPosX()), lenPx - meter2Px(cam.getPosY()));
+            }
         }
         
         // Pinta el punto con el niño

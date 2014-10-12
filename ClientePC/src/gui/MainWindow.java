@@ -92,7 +92,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.lectorNino = new LectorNino(controlNino, children[0].getId(), controlCamaras);
         this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
-        this.rtpanel = new RealTimePanel();
+        this.rtpanel = new RealTimePanel(this.camData);
         this.rtpanel.setShowCams(true);
         this.rtpanel.setSize(this.panelLoc.getWidth() - 10, this.panelLoc.getHeight() - 10);
         this.panelLoc.add(this.rtpanel);
@@ -390,7 +390,7 @@ public class MainWindow extends javax.swing.JFrame {
      * @param data Último de la cámara.
      */
     private void onCamDataReceived(DatosCamara data) {
-        this.rtpanel.setCamera(data);
+        this.rtpanel.setCurrentCamaraId(data.getCamId());
     }
     
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
