@@ -92,6 +92,7 @@ public class MainWindow extends javax.swing.JFrame {
         
         // Crea el lector de vídeo.
         this.lectorNino = new LectorNino(controlNino, childrenId[0], controlCamaras);
+        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualizamos las listas por cada publicador ya existente
         for (DiscoveryData d : this.controlNino.getParticipanteControl().getDiscoveryWriterData())
@@ -175,7 +176,7 @@ public class MainWindow extends javax.swing.JFrame {
         lblViewing.setText("Viendo:");
 
         lblPlace.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        lblPlace.setText("null");
+        lblPlace.setText(" ");
 
         javax.swing.GroupLayout panelAutoLayout = new javax.swing.GroupLayout(panelAuto);
         panelAuto.setLayout(panelAutoLayout);
@@ -272,7 +273,7 @@ public class MainWindow extends javax.swing.JFrame {
         );
         panelLocLayout.setVerticalGroup(
             panelLocLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 151, Short.MAX_VALUE)
+            .addGap(0, 150, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -350,7 +351,6 @@ public class MainWindow extends javax.swing.JFrame {
                 this.camData.add(info);
             }
         } else if (data.getTopicName().equals(CHILD_TOPIC_NAME)) {
-            System.out.println("HOLA");
             // Busca si está en la lista
             DatosNino info = DatosNino.FromSummary(userData);
             int idx = -1;
@@ -383,9 +383,10 @@ public class MainWindow extends javax.swing.JFrame {
                     // TODO: Enviar notificación
                     this.childData.set(idx, info);
                     this.comboNino.addItem(info.getApodo());
-                } else
-                    System.err.println("Uh?");
+                }
             }
+            
+            this.btnCam.setEnabled(this.comboNino.getItemCount() > 0);
         }
     }
     
@@ -394,20 +395,16 @@ public class MainWindow extends javax.swing.JFrame {
     }
     
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
-        // Elimina la vista antigua
-        this.panelVideo.removeAll();
-        
         // Si el botón está desactivado, borrar la pantalla.
         if (!this.btnCam.isSelected()) {
             this.lectorNino.suspender();
-            this.panelVideo.revalidate();
-            this.panelVideo.repaint();
+            this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(false);
             return;
         }
         
         // Cambia a la nueva
         this.lectorNino.reanudar();
-        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
+        this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(true);
         
         // Actualiza
         this.panelVideo.revalidate();
@@ -417,14 +414,16 @@ public class MainWindow extends javax.swing.JFrame {
         if (this.stop)
             return;
 
+        if (!this.btnCam.isSelected())
+            return;
+            
         // Cambia la clave en el lector de niños
-        this.lectorNino.cambiarNinoId(
-                this.childData.get(this.comboNino.getSelectedIndex()).getId());
+        int idx = this.comboNino.getSelectedIndex();
+        this.lectorNino.cambiarNinoId(this.childData.get(idx).getId());
     }//GEN-LAST:event_comboNinoSelected
 
     private void checkManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkManualActionPerformed
         this.comboIdCam.setEnabled(this.checkManual.isSelected());
-        
         this.comboNino.setEnabled(!this.checkManual.isSelected());
         this.btnCam.setEnabled(!this.checkManual.isSelected());
         
@@ -435,23 +434,19 @@ public class MainWindow extends javax.swing.JFrame {
             this.btnCamClick(evt);
         }
         
-        if (this.camData.size() > 0) {
+        if (this.camData.size() > 0)
             this.comboIdCam.setSelectedIndex(0);
-            this.updateManualView(evt);
-        }
     }//GEN-LAST:event_checkManualActionPerformed
 
     private void updateManualView(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateManualView
         if (!this.checkManual.isSelected())
             return;
         
-        // Elimina la vista antigua
-        this.panelVideo.removeAll();
-        
         // Cambia a la nueva
-        String newKey = "'" + this.comboIdCam.getSelectedItem() + "'";
+        int idx = this.comboIdCam.getSelectedIndex();
+        String newKey = "'" + this.camData.get(idx).getCamId() + "'";
         this.lectorNino.getSuscriptorCamara().cambioParametros(new String[] { newKey });
-        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
+        this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(true);
         
         // Actualiza
         this.panelVideo.revalidate();
