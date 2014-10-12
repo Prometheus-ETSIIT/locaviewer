@@ -26,5 +26,8 @@ public enum DiscoveryChangeStatus {
     ANADIDO,
     
     /** Se acaba de eliminar del dominio. */
-    ELIMINADO;
+    ELIMINADO,
+    
+    /** Alguno de sus datos ha cambiado. */
+    CAMBIADO;
 }

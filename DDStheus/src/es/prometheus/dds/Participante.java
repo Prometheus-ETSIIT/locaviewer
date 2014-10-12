@@ -53,7 +53,7 @@ import java.util.Map;
  */
 public class Participante {
     private final static Map<String, Participante> Instancias = new HashMap<>();
-    private final static Map<DomainParticipant, Integer> CountInstancias = new HashMap<>();
+    private final static Map<Participante, Integer> CountInstancias = new HashMap<>();
     
     private DomainParticipant participante;
     private final DataReader discovReader;
@@ -123,10 +123,6 @@ public class Participante {
         
         // Finalmente ya lo podemos habilitar
         this.participante.enable();
-        
-        // Añade la instancia a la cuenta
-        int num = CountInstancias.containsKey(participante) ? CountInstancias.get(participante) : 0;
-        CountInstancias.put(participante, num + 1);
     }
     
     /**
@@ -138,16 +134,23 @@ public class Participante {
     public static Participante GetInstance(final String name) {
         if (!Instancias.containsKey(name))
             Instancias.put(name, new Participante(name));
+          
+        // Obtiene la instancia
+        Participante p = Instancias.get(name);
         
-        return Instancias.get(name);
+        // Añade un uso
+        int num = CountInstancias.containsKey(p) ? CountInstancias.get(p) : 0;
+        CountInstancias.put(p, num + 1);
+        
+        return p;
     }
     
     /**
      * Libera recursos del sistema.
      */
     public void dispose() {
-        int num = CountInstancias.get(participante);
-        CountInstancias.put(participante, --num);
+        int num = CountInstancias.get(this);
+        CountInstancias.put(this, --num);
         
         // Si ya nadie lo está usando, lo eliminamos
         // TODO: Esto está fallando
@@ -337,8 +340,20 @@ public class Participante {
             if (dd.getTopicName().startsWith("rti/"))   // Fuera estadísticas de RTI
                 return;
             
-            this.data.add(dd);
-            this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.ANADIDO));
+            // Comprueba si ya existe
+            int idx = -1;
+            for (int i = 0; i < this.data.size() && idx == -1; i++)
+                if (data.get(i).getHandle().equals(dd.getHandle()))
+                    idx = i;
+            
+            // Si existe lo 
+            if (idx != -1) {
+                this.data.set(idx, dd);
+                this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.CAMBIADO));
+            } else {            
+                this.data.add(dd);
+                this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.ANADIDO));
+            }
         }
         
         /**
