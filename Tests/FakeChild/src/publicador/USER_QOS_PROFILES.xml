@@ -15,7 +15,7 @@
                 <property>
                     <value>
                         <element>
-                            <name>"dds.transport.load_plugins</name>
+                            <name>dds.transport.load_plugins</name>
                             <value>dds.transport.wan_plugin.wan</value>
                         </element>
                         <element>
@@ -28,7 +28,11 @@
                         </element>
                         <element>
                             <name>dds.transport.wan_plugin.wan.server</name>
-                            <value>192.168.3.50</value>
+                            <value>90.170.149.132</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.wan_plugin.wan.server_port</name>
+                            <value>5554</value>
                         </element>
                         <element>
                             <name>dds.transport.wan_plugin.wan.transport_instance_id</name>
