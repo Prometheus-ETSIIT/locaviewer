@@ -301,7 +301,7 @@ public class Participante {
          * 
          * @param l Listener de cambio en descubrimiento.
          */
-        public void addListener(DiscoveryListener l) {            
+        public synchronized void addListener(DiscoveryListener l) {            
             if (!this.listeners.contains(l))
                 this.listeners.add(l);
         }
@@ -311,7 +311,7 @@ public class Participante {
          * 
          * @param l Listener de cambio en descubrimiento.
          */
-        public void removeListener(DiscoveryListener l) {
+        public synchronized void removeListener(DiscoveryListener l) {
             if (this.listeners.contains(l))
                 this.listeners.remove(l);
         }
@@ -332,8 +332,11 @@ public class Participante {
          * @param datum Datos de la entidad.
          * @param info Información de la muestra de la entidad.
          */
-        protected void addElement(T datum, SampleInfo info) {
+        protected void addElement(T datum, SampleInfo info) {            
             DiscoveryData dd = this.convertData(datum, info);
+            if (dd.getTopicName().startsWith("rti/"))   // Fuera estadísticas de RTI
+                return;
+            
             this.data.add(dd);
             this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.ANADIDO));
         }

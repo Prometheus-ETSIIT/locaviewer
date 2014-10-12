@@ -41,10 +41,11 @@ public class DiscoveryData {
      */
     public DiscoveryData(String topicName, ByteSeq userData,
             StringSeq filterParams, InstanceHandle_t handle) {
-        this.topicName = topicName;
-        this.userData = userData;
-        this.filterParams = filterParams;
-        this.handle = handle;
+        this.topicName = topicName.toString();
+        this.userData = new ByteSeq(userData.toArrayByte(null));
+        this.handle = new InstanceHandle_t(handle);
+        this.filterParams = (filterParams != null) ?
+                (StringSeq)filterParams.clone() : null;
     }
 
     /**
