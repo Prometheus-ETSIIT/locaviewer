@@ -21,14 +21,19 @@ package control;
 import com.rti.dds.dynamicdata.DynamicData;
 import es.prometheus.dds.LectorBase;
 import es.prometheus.dds.TopicoControl;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.gstreamer.Buffer;
+import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
 import org.gstreamer.Element;
 import org.gstreamer.ElementFactory;
 import org.gstreamer.Format;
 import org.gstreamer.Pipeline;
-import org.gstreamer.State;
+import org.gstreamer.StateChangeReturn;
 import org.gstreamer.elements.AppSrc;
+import org.gstreamer.elements.Queue;
 import org.gstreamer.swing.VideoComponent;
 
 /**
@@ -36,6 +41,7 @@ import org.gstreamer.swing.VideoComponent;
  * Recibe datos de DDS y va actualizando el componente de vídeo de GStreamer.
  */
 public class LectorCamara extends LectorBase {
+    private static final String EXPRESION = "camId = %0";
     private final VideoComponent videocomp;
     private DatosCamara ultDatos;
     
@@ -51,56 +57,103 @@ public class LectorCamara extends LectorBase {
      */
     public LectorCamara(final TopicoControl control, final String key,
             final VideoComponent videocomp) {
-        super(control, "camId = %0", new String[] { "'" + key + "'" });
+        super(control, EXPRESION, new String[] { "'" + key + "'" });
         this.videocomp = videocomp;
+    }
+    
+    /**
+     * Crea la tubería de GStreamer.
+     */
+    private void iniciaGStreamer() {
+        // Crea los elementos de la tubería
+        List<Element> elements = new ArrayList<>();
         
-        this.creaTuberia();
+        // 1º Origen de vídeo, simulado porque se inyectan datos.
+        this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
+        this.appsrc.setLive(true);
+        this.appsrc.setLatency(0, 100000000);
+        this.appsrc.setTimestamp(true);
+        this.appsrc.setFormat(Format.TIME);
+        this.appsrc.setStreamType(AppSrc.Type.STREAM);
+        elements.add(this.appsrc);
+    
+        Queue queue = (Queue)ElementFactory.make("queue", null);
+        queue.set("leaky", 2);  // Drops old buffer
+        queue.set("max-size-time", 50*1000*1000);   // 50 ms
+        elements.add(queue);
+        
+        // 2º Códec
+        Element[] codecs = null;
+        switch (this.ultDatos.getCodecInfo()) {
+            case "JPEG": codecs = this.getDecJpeg(); break;
+            case "VP8":  codecs = this.getDecVp8();  break;
+        }
+        elements.addAll(Arrays.asList(codecs));
+        
+        // 3º Salida de vídeo
+        Element videosink = this.videocomp.getElement();
+        elements.add(videosink);
+        
+        // Crea la tubería
+        this.pipe = new Pipeline();
+        this.pipe.addMany(elements.toArray(new Element[0]));
+        Element.linkMany(elements.toArray(new Element[0]));
+        //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor"); // DEBG
         
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
         this.pipe.play();
-        State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
-        if (retState == State.NULL) {
+        org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
+        if (retState == org.gstreamer.State.NULL) {
             System.err.println("Error al cambio de estado.");
             System.exit(1);
         }
     }
+
+    /**
+     * Obtiene los elementos de la tubería para la decodiciación en formato JPEG.
+     * 
+     * @return Decodificadores JPEG.
+     */
+    private Element[] getDecJpeg() {
+        // Codec JPEG
+        Element codec = ElementFactory.make("jpegdec", null);
+        
+        return new Element[] { codec };
+    }
     
     /**
-     * Crea la tubería (pipe) de GStreamer.
+     * Obtiene los elementos de la tubería para la decodiciación en formato VP8.
+     * 
+     * @return Decodificadores VP8.
      */
-    private void creaTuberia() {
-        // Crea los elementos de la tubería
-        // 1º Origen de vídeo, simulado porque se inyectan datos.
-        this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
+    private Element[] getDecVp8() {
+        // Codec VP8
+        String caps = "video/x-vp8, width=(int)320, height=(int)240, framerate=15/1";
+        Element capsSrc = ElementFactory.make("capsfilter", null);
+        capsSrc.setCaps(Caps.fromString(caps));
         
-        // 2º Decodificación
-        Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
-        Element codec = ElementFactory.make("jpegdec", null);
-       
-        // 3º Salida de vídeo
-        Element videosink = this.videocomp.getElement();
+        Element queue = ElementFactory.make("queue2", null);
         
-        // Crea la tubería
-        this.pipe = new Pipeline();
-        this.pipe.addMany(this.appsrc, codec, videoconvert, videosink);
-        Element.linkMany(this.appsrc, codec, videoconvert, videosink);
+        Element codec = ElementFactory.make("vp8dec", null);
         
-        // Configura el APPSRC
-        appsrc.setLive(true);
-        appsrc.setLatency(0, 100);
-        appsrc.setTimestamp(true);
-        appsrc.setFormat(Format.TIME);
-        appsrc.setStreamType(AppSrc.Type.STREAM);
+        Element convert = ElementFactory.make("ffmpegcolorspace", null);
+        
+        return new Element[] { capsSrc, queue, codec, convert };
     }
     
     @Override
     public void dispose() {
         super.dispose();
         
-        // Para la tuberia
-        this.pipe.stop();
-        this.pipe.dispose();
+        if (this.pipe != null) {
+            StateChangeReturn retState = this.pipe.stop();
+            if (retState == StateChangeReturn.FAILURE)
+                System.err.println("Error al parar.");
+
+            this.pipe.dispose();
+            this.appsrc.dispose();
+        }
     }
     
     /**
@@ -124,11 +177,14 @@ public class LectorCamara extends LectorBase {
     @Override
     protected void getDatos(DynamicData sample) {
         this.ultDatos = DatosCamara.FromDds(sample);
+        if (this.pipe == null)
+            this.iniciaGStreamer();
         
         Buffer buffer = new Buffer(this.ultDatos.getBuffer().length);
         buffer.getByteBuffer().put(this.ultDatos.getBuffer());
 
         // Lo mete en la tubería
-        this.appsrc.pushBuffer(buffer);
+        if (this.appsrc != null)
+            this.appsrc.pushBuffer(buffer);
     }
 }

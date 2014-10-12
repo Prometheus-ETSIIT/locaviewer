@@ -21,8 +21,6 @@ package control;
 import com.rti.dds.dynamicdata.DynamicData;
 import es.prometheus.dds.LectorBase;
 import es.prometheus.dds.TopicoControl;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import org.gstreamer.swing.VideoComponent;
 
 /**
@@ -79,9 +77,15 @@ public class LectorNino extends LectorBase {
     }
     
     @Override
-    public void parar() {
-        super.parar();
-        this.lectorCam.parar();
+    public void iniciar() {
+        super.iniciar();
+        this.lectorCam.iniciar();
+    }
+    
+    @Override
+    public void suspender() {
+        super.suspender();
+        this.lectorCam.suspender();
     }
     
     @Override

@@ -125,17 +125,23 @@ public class InicioSesion extends javax.swing.JFrame {
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
-        
-        // TODO: Obtener key de los niños que puede recibir datos
-        String[] keys = new String[] { "86159283", "23958309" };
-        
+        this.onSuccessLogin(new String[] { "86159283" });
+    }//GEN-LAST:event_btnConnectActionPerformed
+    
+    /**
+     * Se llama por la subventana de inicio de sesión cuando se realiza con
+     * éxito el login.
+     * 
+     * @param childrenId ID de los niños a los que conectarse.
+     */
+    public void onSuccessLogin(final String[] childrenId) {
         // Turno de la ventana principal
-        new MainWindow(keys).setVisible(true);
+        new MainWindow(childrenId).setVisible(true);
         
         // Cerramos esta ventana
         this.setVisible(false);
         this.dispose();
-    }//GEN-LAST:event_btnConnectActionPerformed
+    }
     
     /**
      * @param args Sin argumentos.

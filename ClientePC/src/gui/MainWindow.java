@@ -22,8 +22,7 @@ import control.DatosCamara;
 import control.DatosNino;
 import control.LectorNino;
 import es.prometheus.dds.TopicoControl;
-import es.prometheus.dds.TopicoControlDinamico;
-import es.prometheus.dds.TopicoControlFijo;
+import es.prometheus.dds.TopicoControlFactoria;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.util.List;
@@ -37,8 +36,9 @@ import java.util.ArrayList;
  */
 public class MainWindow extends javax.swing.JFrame {
     private boolean stop;
-    private String[] ninoKeys;
-    private LectorNino susNino;
+    
+    private String[] ninoId;
+    private LectorNino lectorNino;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
     private List<String> camIds;
@@ -62,40 +62,37 @@ public class MainWindow extends javax.swing.JFrame {
     /**
      * Crea una nueva ventana que participa en un dominio.
      * 
-     * @param ninoKeys Claves para discernir los datos en el tópico de los niños.
+     * @param childrenId ID de los niños a seguir.
      */
-    public MainWindow(final String[] ninoKeys) {
+    public MainWindow(final String[] childrenId) {
         this();
+        this.ninoId = childrenId;
         
-        this.controlNino = new TopicoControlDinamico("ParticipantesPC::ParticipanteVideo",
+        this.controlNino = TopicoControlFactoria.crearControlDinamico(
+                "MisParticipantes::ParticipantePC",
                 "ChildDataTopic");
-        this.controlCamaras = new TopicoControlFijo("ParticipantesPC::ParticipanteVideo",
-                "SuscriptorVideo", null);
+        this.controlCamaras = TopicoControlFactoria.crearControlDinamico(
+                "MisParticipantes::ParticipantePC",
+                "VideoDataTopic");
         
-        this.susNino = new LectorNino(controlNino, ninoKeys[0], controlCamaras);
-        this.susNino.setExtraListener(new ActionListener() {
+        this.lectorNino = new LectorNino(controlNino, childrenId[0], controlCamaras);
+        this.lectorNino.setExtraListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                onNinoDataReceived(susNino.getUltimoDato());
+                onNinoDataReceived(lectorNino.getUltimoDato());
             }
         });
+        this.lectorNino.suspender();
+        this.lectorNino.iniciar();
         
-        this.camIds   = new ArrayList<>();
+        this.camIds = new ArrayList<>();
         this.comboIdCam.removeAllItems();
-        this.susNino.getSuscriptorCamara().setExtraListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                onCamDataReceived(susNino.getSuscriptorCamara().getUltimoDato());
-            }
-        });
         
         // Establece las posibles claves
         // TODO: Que aperazca el apodo en lugar del ID
-        // Por ejemplo, no activando filtros momentáneamente y poniendo el listener extra
-        this.ninoKeys = ninoKeys;
         this.stop = true;
         this.comboNino.removeAllItems();
-        for (String k : ninoKeys)
+        for (String k : childrenId)
             this.comboNino.addItem(k);
         this.stop = false;
     }
@@ -123,14 +120,15 @@ public class MainWindow extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("locaviewer Beta ~ by Prometheus");
-        setMinimumSize(new java.awt.Dimension(800, 583));
-        setPreferredSize(new java.awt.Dimension(800, 583));
+        setMinimumSize(new java.awt.Dimension(540, 500));
+        setPreferredSize(new java.awt.Dimension(540, 500));
+        setResizable(false);
 
         toolbar.setBackground(new java.awt.Color(176, 206, 230));
         toolbar.setFloatable(false);
 
         lblStatus.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        lblStatus.setText("Transmitiendo vídeo. . .");
+        lblStatus.setText("Iniciando...");
         toolbar.add(lblStatus);
 
         panelAuto.setBackground(new java.awt.Color(255, 255, 255));
@@ -184,18 +182,18 @@ public class MainWindow extends javax.swing.JFrame {
 
         panelVideo.setBackground(new java.awt.Color(0, 0, 0));
         panelVideo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        panelVideo.setMinimumSize(new java.awt.Dimension(640, 480));
-        panelVideo.setPreferredSize(new java.awt.Dimension(640, 480));
+        panelVideo.setMinimumSize(new java.awt.Dimension(320, 240));
+        panelVideo.setPreferredSize(new java.awt.Dimension(320, 240));
 
         javax.swing.GroupLayout panelVideoLayout = new javax.swing.GroupLayout(panelVideo);
         panelVideo.setLayout(panelVideoLayout);
         panelVideoLayout.setHorizontalGroup(
             panelVideoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 638, Short.MAX_VALUE)
+            .addGap(0, 318, Short.MAX_VALUE)
         );
         panelVideoLayout.setVerticalGroup(
             panelVideoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 496, Short.MAX_VALUE)
+            .addGap(0, 238, Short.MAX_VALUE)
         );
 
         panelManual.setBackground(new java.awt.Color(255, 255, 255));
@@ -229,7 +227,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGroup(panelManualLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(checkManual)
                     .addComponent(lblIdCam))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 112, Short.MAX_VALUE))
             .addComponent(comboIdCam, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         panelManualLayout.setVerticalGroup(
@@ -254,7 +252,7 @@ public class MainWindow extends javax.swing.JFrame {
         );
         panelLocLayout.setVerticalGroup(
             panelLocLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 149, Short.MAX_VALUE)
         );
 
         menubar.setBackground(new java.awt.Color(176, 206, 230));
@@ -275,27 +273,29 @@ public class MainWindow extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(panelAuto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelManual, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-            .addComponent(toolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelAuto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(panelAuto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panelManual, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(panelVideo, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE))
-                .addGap(0, 0, 0)
+                        .addComponent(panelManual, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(panelVideo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(panelLoc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(toolbar, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -306,31 +306,21 @@ public class MainWindow extends javax.swing.JFrame {
         this.lblPlace.setText(data.getSala());
     }
     
-    private void onCamDataReceived(DatosCamara data) {
-        // Problema, que sólo apareceran las cámaras que ya previamente se
-        // han visto. Esto puede ser visto como una feature de seguridad :D
-        if (this.camIds.contains(data.getCamId()))
-            return;
-                    
-        this.camIds.add(data.getCamId());
-        this.comboIdCam.addItem(data.getCamId());
-    }
-    
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
         // Elimina la vista antigua
         this.panelVideo.removeAll();
         
         // Si el botón está desactivado, borrar la pantalla.
         if (!this.btnCam.isSelected()) {
-            this.susNino.parar();
+            this.lectorNino.suspender();
             this.panelVideo.revalidate();
             this.panelVideo.repaint();
             return;
         }
         
         // Cambia a la nueva
-        this.susNino.reanudar();
-        this.panelVideo.add(this.susNino.getSuscriptorCamara().getVideoComponent());
+        this.lectorNino.reanudar();
+        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualiza
         this.panelVideo.revalidate();
@@ -341,7 +331,7 @@ public class MainWindow extends javax.swing.JFrame {
             return;
 
         // Cambia la clave en el lector de niños
-        this.susNino.cambiarNinoId(this.ninoKeys[this.comboNino.getSelectedIndex()]);
+        this.lectorNino.cambiarNinoId(this.ninoId[this.comboNino.getSelectedIndex()]);
     }//GEN-LAST:event_comboNinoSelected
 
     private void checkManualActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkManualActionPerformed
@@ -351,8 +341,8 @@ public class MainWindow extends javax.swing.JFrame {
         this.btnCam.setEnabled(!this.checkManual.isSelected());
         
         if (this.checkManual.isSelected()) {
-            this.susNino.parar();
-            this.susNino.getSuscriptorCamara().reanudar();
+            this.lectorNino.suspender();
+            this.lectorNino.getSuscriptorCamara().reanudar();
         } else {
             this.btnCamClick(evt);
         }
@@ -369,8 +359,8 @@ public class MainWindow extends javax.swing.JFrame {
         
         // Cambia a la nueva
         String newKey = "'" + this.comboIdCam.getSelectedItem() + "'";
-        this.susNino.getSuscriptorCamara().cambioParametros(new String[] { newKey });
-        this.panelVideo.add(this.susNino.getSuscriptorCamara().getVideoComponent());
+        this.lectorNino.getSuscriptorCamara().cambioParametros(new String[] { newKey });
+        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
         
         // Actualiza
         this.panelVideo.revalidate();

@@ -20,6 +20,8 @@ package control;
 
 import com.rti.dds.dynamicdata.DynamicData;
 import com.rti.dds.infrastructure.ByteSeq;
+import es.prometheus.dds.Escritor;
+import org.w3c.dom.Element;
 
 /**
  * Representa los datos que se reciben sobre una cámara.
@@ -91,6 +93,59 @@ public class DatosCamara {
         datos.buffer = bufferSeq.toArrayByte(null);
         
         return datos;
+    }
+    
+    /**
+     * Crea una nueva instancia a partir de los datos que contiene una entrada
+     * de XML.
+     * 
+     * @param el Entrada de XML con los datos.
+     * @return Instancia de esta clase.
+     */
+    public static DatosCamara FromXml(final Element el) {
+        DatosCamara datos = new DatosCamara();
+        
+        datos.camId = GetXmlEntryValue(el, "camId");
+        datos.sala  = GetXmlEntryValue(el, "sala");
+        datos.posX  = Double.parseDouble(GetXmlEntryValue(el, "posX"));
+        datos.posY  = Double.parseDouble(GetXmlEntryValue(el, "posY"));
+        datos.angle = Double.parseDouble(GetXmlEntryValue(el, "angle"));
+        
+        datos.codecInfo = GetXmlEntryValue(el, "codecInfo");
+        datos.width  = Integer.parseInt(GetXmlEntryValue(el, "width"));
+        datos.height = Integer.parseInt(GetXmlEntryValue(el, "height"));
+        
+        return datos;
+    }
+    
+    /**
+     * Crea una nueva instancia a partir de un resumen en cadena de caracteres.
+     * 
+     * @param summary Resumen de los datos de la cámara.
+     * @return Instancia de esta clase.
+     */
+    public static DatosCamara FromStringSummary(final String summary) {
+        DatosCamara datos = new DatosCamara();
+        String[] fields = summary.split(",");
+        
+        datos.camId = fields[0];
+        datos.sala  = fields[1];
+        datos.posX  = Double.parseDouble(fields[2]);
+        datos.posY  = Double.parseDouble(fields[3]);
+        datos.angle = Double.parseDouble(fields[4]);
+        
+        return datos;
+    }
+    
+    /**
+     * Shortcut to get the text in a XML entry.
+     * 
+     * @param el XML entry element.
+     * @param name Tag name.
+     * @return Value of the entry.
+     */
+    private static String GetXmlEntryValue(final Element el, final String name) {
+        return el.getElementsByTagName(name).item(0).getTextContent();
     }
 
     /**
@@ -253,5 +308,61 @@ public class DatosCamara {
      */
     public void setBuffer(byte[] buffer) {
         this.buffer = buffer;
+    }
+    
+    /**
+     * Crea un resumen de datos de la cámara.
+     * Se usa como metadatos en el escritor.
+     * 
+     * @return Resumen de datos de cámara.
+     */
+    public String getSummary() {
+        return this.camId + "," + this.sala + "," + this.posX + "," + 
+                this.posY + "," + this.angle;
+    }
+    
+    /**
+     * Escribe los datos en una instancia reutilizable.
+     * 
+     * @param datos Instancia en la que escribir los datos.
+     */
+    public void escribeDds(DynamicData datos) {
+        datos.clear_all_members();
+        
+        datos.set_string("camId", DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
+        datos.set_string("sala",  DynamicData.MEMBER_ID_UNSPECIFIED, this.sala);
+        datos.set_double("posX",  DynamicData.MEMBER_ID_UNSPECIFIED, this.posX);
+        datos.set_double("posY",  DynamicData.MEMBER_ID_UNSPECIFIED, this.posY);
+        datos.set_double("angle", DynamicData.MEMBER_ID_UNSPECIFIED, this.angle);
+
+        datos.set_string("codecInfo", DynamicData.MEMBER_ID_UNSPECIFIED, this.codecInfo);
+        datos.set_int("width",        DynamicData.MEMBER_ID_UNSPECIFIED, this.width);
+        datos.set_int("height",       DynamicData.MEMBER_ID_UNSPECIFIED, this.height);
+        datos.set_byte_seq("buffer",  DynamicData.MEMBER_ID_UNSPECIFIED, new ByteSeq(this.buffer));
+    }
+    
+    /**
+     * Escribe los datos de esta estructura en una instancia de un sólo uso.
+     * 
+     * @param escritor Escritor del que generar la instancia y enviar.
+     */
+    public void escribeDds(Escritor escritor) {
+        DynamicData datos = escritor.creaDatos();
+        this.escribeDds(datos);
+        escritor.escribeDatos(datos);
+        escritor.eliminaDatos(datos);
+    }
+    
+    @Override
+    public DatosCamara clone() {
+        DatosCamara clon = null;
+        
+        // JAVA: MIRA ME CAGO EN TO LA MIERDA DE OBLIGAR A CAPTURAR LAS EXCEPCIONES.
+        try {
+            clon = (DatosCamara)super.clone();
+        } catch (CloneNotSupportedException ex) {
+        }
+        
+        return clon;
     }
 }
