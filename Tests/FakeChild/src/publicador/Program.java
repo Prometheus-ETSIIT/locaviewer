@@ -18,90 +18,29 @@
 
 package publicador;
 
-import com.rti.dds.dynamicdata.DynamicData;
-import es.prometheus.dds.Escritor;
-import es.prometheus.dds.TopicoControl;
-import es.prometheus.dds.TopicoControlFactoria;
-
 /**
  * Programa que simula estar localizando a un niño.
  */
-public class Program {
-    private static final int MAX_ITER = 200;    // Máximas iteraciones
-    private static final int SLEEP_TIME = 5000; // Tiempo entre iteración
-    
+public class Program {    
     /**
      * Inicia el programa.
      * 
      * @param args No acepta ningún argumento.
      */
-    public static void main(String[] args) {
-        // Crea un escritor para el dominio
-        final TopicoControl topico = TopicoControlFactoria.crearControlDinamico(
-                "ParticipantesPC::ParticipanteNino",
-                "ChildDataTopic");
-        final Escritor escritor = new Escritor(topico);
-        final DynamicData datos = escritor.creaDatos();
+    public static void main(String[] args) { 
+        // Crea el escritor y lo inicia
+        final EscritorNino escritor = new EscritorNino();
+        escritor.start();
         
         // Listener por si se sale con Control + C
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-                escritor.eliminaDatos(datos);
-                escritor.dispose();
-                topico.dispose();
+                System.out.println("Parando. . .");
+                escritor.parar();
+                try { escritor.join(10000); }
+                catch (InterruptedException e) { System.err.println("TimeOver!"); }
             }
         }));
-        
-        // Crea los datos estándar de un niño
-        DatosNino nino = new DatosNino();
-        nino.setCalidad(82.3);
-        nino.setId("86159283");
-        nino.setSala("Clase 1.A");
-        nino.setNombre("Benito Palacios");
-        nino.setApodo("Benii");
-        
-        // Versiones alteradas de los datos
-        DatosNino[] valoresNino = new DatosNino[3];
-        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0);
-        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3);        
-        valoresNino[2] = MueveNino(nino, "test1", 2.0, 5.1);
-
-        // Alterna entre los datos y los envía
-        for (int i = 0; i < MAX_ITER; i++) {          
-            // Alterna los datos
-            DatosNino ninoActual = valoresNino[i % valoresNino.length];
-            
-            // Escribe los datos
-            ninoActual.escribeDds(datos);
-            escritor.escribeDatos(datos);
-            
-            // Esperamos 3 segundos antes de mandar la siguiente posición
-            try { Thread.sleep(SLEEP_TIME); }
-            catch (InterruptedException e) { break; }
-        }
-        
-        // Libera recursos
-        escritor.eliminaDatos(datos);
-        escritor.dispose();
-        topico.dispose();
-    }
-    
-    /**
-     * Crea un nuevo dato alterando uno ya existente.
-     * 
-     * @param nino Dato base.
-     * @param camId Nuevo ID de cámara que le está enfocando.
-     * @param x Nueva coordenada X de la posición del niño.
-     * @param y Nueva coordenada Y de la posición del niño.
-     * @return 
-     */
-    private static DatosNino MueveNino(DatosNino nino, String camId, double x,
-            double y) {
-        DatosNino nuevo = nino.clone();
-        nuevo.setCamId(camId);
-        nuevo.setPosX(x);
-        nuevo.setPosY(y);
-        return nuevo;
     }
 }
