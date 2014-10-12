@@ -97,6 +97,8 @@ public class EscritorNino extends Thread {
         DatosNino nino = new DatosNino();
         nino.setCalidad(82.3);
         nino.setSala("Clase 1.A");
+        nino.setSalaL(6.0);
+        nino.setSalaW(6.0);
         nino.setNombre("Benito Palacios");
         nino.setApodo("Benii");
         

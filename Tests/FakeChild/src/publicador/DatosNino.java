@@ -29,6 +29,8 @@ public class DatosNino implements Cloneable {
     private String id;
     private String camId;
     private String sala;
+    private double salaW;
+    private double salaL;
     private double posX;
     private double posY;
     private String nombre;
@@ -47,17 +49,22 @@ public class DatosNino implements Cloneable {
      * @param id ID del niño.
      * @param camId ID de la mejor cámara que apunta al niño.
      * @param sala Habitación en la que se encuentra el niño.
+     * @param salaW Ancho de la habitación.
+     * @param salaL Largo de la habitación.
      * @param posX Coordenada X de la posición del niño.
      * @param posY Coordenada Y de la posición del niño.
      * @param nombre Nombre del niño.
      * @param apodo Apodo del niño.
      */
     public DatosNino(double calidad, String id, String camId, String sala,
-            double posX, double posY, String nombre, String apodo) {
+            double salaW, double salaL, double posX, double posY,
+            String nombre, String apodo) {
         this.calidad = calidad;
         this.id = id;
         this.camId = camId;
         this.sala = sala;
+        this.salaW = salaW;
+        this.salaL = salaL;
         this.posX = posX;
         this.posY = posY;
         this.nombre = nombre;
@@ -76,6 +83,8 @@ public class DatosNino implements Cloneable {
         datos.id      = sample.get_string("id",      DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.camId   = sample.get_string("camId",   DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.sala    = sample.get_string("sala",    DynamicData.MEMBER_ID_UNSPECIFIED);
+        datos.salaW   = sample.get_double("salaW",   DynamicData.MEMBER_ID_UNSPECIFIED);
+        datos.salaL   = sample.get_double("salaL",   DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.posX    = sample.get_double("posX",    DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.posY    = sample.get_double("posY",    DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.nombre  = sample.get_string("nombre",  DynamicData.MEMBER_ID_UNSPECIFIED);
@@ -171,6 +180,42 @@ public class DatosNino implements Cloneable {
     }
 
     /**
+     * Obtiene el ancho de la sala.
+     * 
+     * @return Ancho de la sala.
+     */
+    public double getSalaW() {
+        return this.salaW;
+    }
+    
+    /**
+     * Establece el ancho de la sala.
+     * 
+     * @param width Ancho de la sala.
+     */
+    public void setSalaW(double width) {
+        this.salaW = width;
+    }
+    
+    /**
+     * Obtiene la longitud de la sala.
+     * 
+     * @return Longitud de la sala.
+     */
+    public double getSalaL() {
+        return this.salaL;
+    }
+    
+    /**
+     * Establece la longitud de la sala.
+     * 
+     * @param length Longitud de la sala.
+     */
+    public void setSalaL(double length) {
+        this.salaL = length;
+    }
+    
+    /**
      * Obtiene la coordenada X de la posición del niño.
      * 
      * @return Coordenada X.
@@ -264,6 +309,8 @@ public class DatosNino implements Cloneable {
         datos.set_string("id",      DynamicData.MEMBER_ID_UNSPECIFIED, this.id);
         datos.set_string("camId",   DynamicData.MEMBER_ID_UNSPECIFIED, this.camId);
         datos.set_string("sala",    DynamicData.MEMBER_ID_UNSPECIFIED, this.sala);
+        datos.set_double("salaW",   DynamicData.MEMBER_ID_UNSPECIFIED, this.salaW);
+        datos.set_double("salaL",   DynamicData.MEMBER_ID_UNSPECIFIED, this.salaL);
         datos.set_double("posX",    DynamicData.MEMBER_ID_UNSPECIFIED, this.posX);
         datos.set_double("posY",    DynamicData.MEMBER_ID_UNSPECIFIED, this.posY);
         datos.set_string("nombre",  DynamicData.MEMBER_ID_UNSPECIFIED, this.nombre);
