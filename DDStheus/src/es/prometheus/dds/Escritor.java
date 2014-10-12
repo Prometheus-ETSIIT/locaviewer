@@ -61,6 +61,29 @@ public class Escritor {
     }
     
     /**
+     * Crea una nueva instancia del escritor sobre el tópico especificado.
+     * 
+     * @param control Tópico con el que se creará el escritor.
+     * @param user_data USER_DATA a introducir en el QOS del escritor.
+     */
+    public Escritor(final TopicoControl control, final byte[] user_data) {
+        this.control = control;
+        
+        // Crea el QOS con USER_DATA.
+        DataWriterQos qos = new DataWriterQos();
+        control.getParticipante().get_default_datawriter_qos(qos);
+        qos.user_data.value.clear();
+        qos.user_data.value.addAllByte(user_data);
+        
+        // Crea el escritor.
+        this.writer = control.creaEscritor(qos);
+        if (this.writer == null) {
+            System.err.println("No se pudo crear el escritor");
+            System.exit(1);
+        }
+    }
+    
+    /**
      * Libera recursos de este escritor.
      */
     public void dispose() {
