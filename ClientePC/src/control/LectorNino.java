@@ -31,6 +31,7 @@ public class LectorNino extends LectorBase {
     
     private final LectorCamara lectorCam;
     private DatosNino ultDato;
+    private boolean auto;
         
     /**
      * Crea una nueva instancia creando un lector sobre el tópico y un lector
@@ -44,6 +45,7 @@ public class LectorNino extends LectorBase {
             final TopicoControl controlCam) {
         super(controlNino, EXPRESION, new String[] { "'" + ninoId + "'" });
         this.lectorCam = new LectorCamara(controlCam, "'-1'", new VideoComponent());
+        this.auto = true;
     }
 
     /**
@@ -101,6 +103,20 @@ public class LectorNino extends LectorBase {
         this.lectorCam.dispose();
     }
     
+    /**
+     * Establece si se cambia de cámara automáticamente.
+     * 
+     * @param auto Cambio automático de cámara.
+     */
+    public void setAuto(final boolean auto) {
+        this.auto = auto;
+        
+        if (this.auto && this.ultDato != null) {
+            String[] params = new String[] { "'" + ultDato.getCamId() + "'" };
+            this.lectorCam.cambioParametros(params);
+        }
+    }
+    
     @Override
     protected void getDatos(DynamicData sample) {
         // Obtengo el dato recibido
@@ -109,7 +125,8 @@ public class LectorNino extends LectorBase {
                 " [" + datoActual.getPosX() + ", " + datoActual.getPosY() + "]");
         
         // Cambio la cámara si ha cambiado el ID
-        if (this.ultDato == null || !this.ultDato.getCamId().equals(datoActual.getCamId())) {
+        if (this.auto && (this.ultDato == null || 
+                !this.ultDato.getCamId().equals(datoActual.getCamId()))) {
             String[] params = new String[] { "'" + datoActual.getCamId() + "'" };
             this.lectorCam.cambioParametros(params);
         }

@@ -20,6 +20,7 @@ package gui;
 
 import control.DatosCamara;
 import control.DatosNino;
+import control.LectorCamara;
 import control.LectorNino;
 import es.prometheus.dds.DiscoveryChange;
 import es.prometheus.dds.DiscoveryChangeStatus;
@@ -44,6 +45,7 @@ public class MainWindow extends javax.swing.JFrame {
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipantePC";
     
     private LectorNino lectorNino;
+    private LectorCamara lectorCam;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
     
@@ -90,7 +92,8 @@ public class MainWindow extends javax.swing.JFrame {
         
         // Crea el lector de vídeo.
         this.lectorNino = new LectorNino(controlNino, children[0].getId(), controlCamaras);
-        this.panelVideo.add(this.lectorNino.getSuscriptorCamara().getVideoComponent());
+        this.lectorCam  = this.lectorNino.getSuscriptorCamara();
+        this.panelVideo.add(this.lectorCam.getVideoComponent());
         
         this.rtpanel = new RealTimePanel(this.camData);
         this.rtpanel.setShowCams(true);
@@ -119,15 +122,15 @@ public class MainWindow extends javax.swing.JFrame {
         });
         
         // Listener para cuando se reciba un dato nuevo de la cámara
-        this.lectorNino.getSuscriptorCamara().setExtraListener(new ActionListener() {
+        this.lectorCam.setExtraListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                onCamDataReceived(lectorNino.getSuscriptorCamara().getUltimoDato());
+                onCamDataReceived(lectorCam.getUltimoDato());
             }
         });
         
-        // Le decimos que no procese las muestras y lo iniciamos.
-        this.lectorNino.suspender();
+        // Le decimos que no procese las muestras de cámara y lo iniciamos.
+        this.lectorNino.setAuto(false);
         this.lectorNino.iniciar();
     }
     
@@ -390,20 +393,23 @@ public class MainWindow extends javax.swing.JFrame {
      * @param data Último de la cámara.
      */
     private void onCamDataReceived(DatosCamara data) {
-        this.rtpanel.setCurrentCamaraId(data.getCamId());
+        if (this.checkManual.isSelected() || this.btnCam.isSelected())
+            this.rtpanel.setCurrentCamaraId(data.getCamId());
     }
     
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
         // Si el botón está desactivado, borrar la pantalla.
         if (!this.btnCam.isSelected()) {
-            this.lectorNino.suspender();
-            this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(false);
+            this.lectorCam.getVideoComponent().setVisible(false);
+            this.rtpanel.setCurrentCamaraId(null);
+            this.lectorNino.setAuto(false);
+            this.lectorCam.cambioParametros(new String[] { "'-1'" });
             return;
         }
         
         // Reanudamos la toma de datos.
-        this.lectorNino.reanudar();
-        this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(true);
+        this.lectorNino.setAuto(true);
+        this.lectorCam.getVideoComponent().setVisible(true);
         
         // Actualiza
         this.panelVideo.revalidate();
@@ -423,15 +429,14 @@ public class MainWindow extends javax.swing.JFrame {
         this.comboNino.setEnabled(!this.checkManual.isSelected());
         this.btnCam.setEnabled(!this.checkManual.isSelected());
         
-        if (this.checkManual.isSelected()) {
-            this.lectorNino.suspender();
-            this.lectorNino.getSuscriptorCamara().reanudar();
-        } else {
+        // Volvemos al modo automático, comprobar si el botón está pulsado
+        if (!this.checkManual.isSelected()) {
             this.btnCamClick(evt);
+        } else {
+            this.lectorNino.setAuto(false);
+            if (this.camData.size() > 0)
+                this.comboIdCam.setSelectedIndex(0);
         }
-        
-        if (this.camData.size() > 0)
-            this.comboIdCam.setSelectedIndex(0);
     }//GEN-LAST:event_checkManualActionPerformed
 
     private void updateManualView(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateManualView
@@ -441,8 +446,8 @@ public class MainWindow extends javax.swing.JFrame {
         // Cambia a la nueva clave
         int idx = this.comboIdCam.getSelectedIndex();
         String newKey = "'" + this.camData.get(idx).getCamId() + "'";
-        this.lectorNino.getSuscriptorCamara().cambioParametros(new String[] { newKey });
-        this.lectorNino.getSuscriptorCamara().getVideoComponent().setVisible(true);
+        this.lectorCam.cambioParametros(new String[] { newKey });
+        this.lectorCam.getVideoComponent().setVisible(true);
         
         // Actualiza
         this.panelVideo.revalidate();
