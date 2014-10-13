@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infoSensores>
+    <sensor>
+        <id>00:11:22:33:44:55</id>
+        <posX>3.1</posX>
+        <posY>4.4</posY>
+    </sensor>
+</infoSensores>

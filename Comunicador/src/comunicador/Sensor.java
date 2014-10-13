@@ -1,152 +1,199 @@
+/*
+ * Copyright (C) 2014 Prometheus
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
 package comunicador;
 
+import com.rti.dds.dynamicdata.DynamicData;
+import es.prometheus.dds.Escritor;
+import es.prometheus.dds.TopicoControl;
+import es.prometheus.dds.TopicoControlFactoria;
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Enumeration;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
-import com.rti.dds.domain.DomainParticipant;
-import com.rti.dds.domain.DomainParticipantFactory;
-import com.rti.dds.infrastructure.InstanceHandle_t;
-import com.rti.dds.infrastructure.StatusKind;
-import com.rti.dds.publication.Publisher;
-import com.rti.dds.subscription.DataReaderAdapter;
-import com.rti.dds.topic.Topic;
-import com.rti.dds.type.builtin.StringDataWriter;
-import com.rti.dds.type.builtin.StringTypeSupport;
-
-public class Sensor extends DataReaderAdapter{
-	
-
-	
-	
-    public static final void main(String[] args) throws InterruptedException {
-    	
-    	
-    	/*Escritor en el Dominio 0, tópico 1*/
-     	
-        //Creación del participante en el dominio 0
-        DomainParticipant participante = DomainParticipantFactory.get_instance().create_participant(
-                0,
-                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
-                null,
-                StatusKind.STATUS_MASK_NONE);
-        
-        if (participante == null) {//Si falló la creación
-            System.err.println("No se pudo crear un participante en el dominio");
-            return;
-        }
-        
-        //Creación del tópico 1 (escribir potencias)
-        Topic topic = participante.create_topic(
-                "1", 
-                StringTypeSupport.get_type_name(), 
-                DomainParticipant.TOPIC_QOS_DEFAULT, 
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
-        
-        if (topic == null) {//Si falló la creación
-            System.err.println("No se pudo crear el topico");
-            return;
-        }
-
-        
-        //Creación del escritor
-        StringDataWriter dataWriter =
-            (StringDataWriter) participante.create_datawriter(
-                topic, 
-                Publisher.DATAWRITER_QOS_DEFAULT,
-                null, // listener
-                StatusKind.STATUS_MASK_NONE);
-        
-        if (dataWriter == null) {//Si algo falló
-            System.err.println("No se puedo crear el escritor");
-            return;
-        }
-
-        
-        /*GENERANDO UN PAQUETE PARA ENVIAR*/
-        
-    	
-    	//Obteniendo la MAC
-    	byte[] direccionmac;
-    	String MAC = null;
-		try {
-		    Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
-		    while(networks.hasMoreElements()) {
-		      NetworkInterface network = networks.nextElement();
-		      direccionmac = network.getHardwareAddress();
-
-		      if(direccionmac != null) {
-		        StringBuilder sb = new StringBuilder();
-		        for (int i = 0; i < direccionmac.length; i++) {
-		          sb.append(String.format("%02X%s", direccionmac[i], (i < direccionmac.length - 1) ? "-" : ""));
-		        }
-		        MAC=sb.toString();
-		      }
-		    }
-		  } catch (SocketException e){
-		    e.printStackTrace();
-		  }
-		
-
-		
-		//Lectura
-		try {
-			Runtime.getRuntime().exec("sudo python sensor.py 0 4554");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	
-		DatagramSocket socketServidor;
-
-		 try {
-			 socketServidor = new DatagramSocket(4554);
-     	while(true){
-     		//SENSOR 1
-     			 byte [] bufer = new byte [256];
- 				 DatagramPacket paquete = new DatagramPacket(bufer,bufer.length);
- 				 socketServidor.receive(paquete);
- 				 String peticion = new String (paquete.getData());
- 				 
- 				 String [] recibido = peticion.split("\\s+");
- 				 int rssi = Integer.parseInt(recibido[1].substring(0, 3));
- 				Dato prueba = new Dato (MAC,0,0,recibido[0],rssi);
- 				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
- 				
- 			//SENSOR 2
-    			  bufer = new byte [256];
-				  paquete = new DatagramPacket(bufer,bufer.length);
-				 socketServidor.receive(paquete);
-				  peticion = new String (paquete.getData());
-				 
-				 recibido = peticion.split("\\s+");
-				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
-				 prueba = new Dato (MAC,8,0,recibido[0],rssi);
-				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
-	 		
-				
-				//SENSOR 3
-  			  bufer = new byte [256];
-				  paquete = new DatagramPacket(bufer,bufer.length);
-				 socketServidor.receive(paquete);
-				  peticion = new String (paquete.getData());
-				 
-				 recibido = peticion.split("\\s+");
-				  rssi = Integer.parseInt(recibido[1].substring(0, 3));
-				 prueba = new Dato (MAC,0,7,recibido[0],rssi);
-				dataWriter.write(prueba.toString(), InstanceHandle_t.HANDLE_NIL);
-     		}
-     		} catch (SocketException e1) {
-     			e1.printStackTrace();
-     		} catch (IOException e) {
-     			e.printStackTrace();
-     		}
-     	
+/**
+ * Obtiene datos del script de Python y lo envía por DDS.
+ */
+public class Sensor extends Thread {
+    private static final int PORT = 4554;
+    
+    private TopicoControl control;
+    private Escritor escritor;
+    private DynamicData data;
+    private DatagramSocket socket;
+    private DatosSensor[] baseSensor;
+    
+    private boolean debeParar;
+    
+    /**
+     * Crea una nueva instancia de la clase.
+     */
+    public Sensor() {
+        this.debeParar = false;
     }
     
+    /**
+     * Inicia el programa.
+     * 
+     * @param args Ninguno.
+     */
+    public static void main(String[] args) {
+        // Creamos el comunicador de sensor
+        Sensor sensor = new Sensor();
+        sensor.start();
+        
+        // Creamos una hebra para salidas forzosas (Control+C).
+    	Runtime.getRuntime().addShutdownHook(new ShutdownThread(sensor));     	
+    }
     
+    @Override
+    public void run() {
+        // Iniciamos DDS
+        this.iniciaDds();
+        
+        // Obtiene información sobre los sensores conectados
+        this.procesaXml();
+        
+        // Creamos el socket
+        try { socket = new DatagramSocket(PORT); }
+        catch (SocketException ex) { System.exit(-1); }
+        
+        while (!this.debeParar) {
+            // Recibe un dato y lo envía
+            DatosSensor datos = this.recibeDato();
+            if (datos == null)
+                continue;
+            
+            datos.escribeDds(this.data);
+        }
+        
+        // Liberamos los recursos
+        socket.close();
+        this.control.dispose();
+    }
+    
+    /**
+     * Pide parar la ejecución.
+     */
+    public void parar() {
+        this.debeParar = true;
+    }
+    
+    /**
+     * Inicia las entidades de DDS.
+     */
+    private void iniciaDds() {
+        this.control = TopicoControlFactoria.crearControlDinamico(
+                "MisParticipantes::ParticipanteSensor",
+                "SensorDataTopic");
+        this.escritor = new Escritor(control);
+        this.data = this.escritor.creaDatos();
+    }
+    
+    /**
+     * Procesa el XML con la información sobre los sensores conectados.
+     */
+    private void procesaXml() {
+        try {        
+            // Abrimos y procesamos el XML
+            File fXmlFile = new File("InfoSensores.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(fXmlFile);
+            doc.getDocumentElement().normalize();
+
+            // Por cada entrada de información
+            NodeList nList  = doc.getElementsByTagName("sensor"); 
+            this.baseSensor = new DatosSensor[nList.getLength()];
+            for (int i = 0; i < nList.getLength(); i++) {
+                Element element = (Element)nList.item(i);
+                this.baseSensor[i] = DatosSensor.FromXml(element);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+    }
+    
+    /**
+     * Recibe un dato del script en Python que se conecta a los sensores.
+     * 
+     * @return Dato recibido de un sensor.
+     */
+    private DatosSensor recibeDato() {
+        // Recibe un paquete de datos.
+        byte[] buffer = new byte[256];
+        DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
+        try { socket.receive(paquete); }
+        catch (IOException ex) { return null; }
+        
+        // Analizo los datos
+        String peticion = new String(paquete.getData());
+        String[] campos = peticion.split("\\s+");   
+        String sensorId = campos[0];
+        String ninoId   = campos[1];
+        int rssi = Integer.parseInt(campos[2].substring(0, 3));
+        
+        // Buscamos en el sensores del XML para obtener la posición.
+        DatosSensor base = this.buscaBase(sensorId);
+        if (base == null)
+            return null;
+        
+        // Creamos el dato
+        return new DatosSensor(base, ninoId, rssi);
+    }
+    
+    /**
+     * Busca la información sobre el sensor con misma MAC.
+     * 
+     * @param sensorId MAC del sensor a buscar.
+     * @return Información del sensor o null si no se ha encontrado.
+     */
+    private DatosSensor buscaBase(String sensorId) {
+        for (DatosSensor d : this.baseSensor)
+            if (d.getID().equals(sensorId))
+                return d;
+        
+        return null;
+    }
+    
+    /**
+     * Listener llamado cuando se finaliza la aplicación.
+     */
+    private static class ShutdownThread extends Thread {
+        private final Sensor sensor;
+        
+        public ShutdownThread(final Sensor sensor) {
+            this.sensor = sensor;
+        }
+        
+        @Override
+        public void run() {
+            System.out.println("Parando. . .");
+            this.sensor.parar();
+            try { this.sensor.join(5000); }
+            catch (InterruptedException e) { }
+        }
+    }
 }
