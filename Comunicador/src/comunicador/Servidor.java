@@ -123,8 +123,15 @@ public class Servidor extends Thread {
         String[] params = new String[] { "'" + this.sala + "'" };
         this.lectorSensor = new LectorBase(controlSensor, "sala =  %0", params) {
             @Override
-            protected void getDatos(DynamicData sample) {
-                onSensorDataReceived(sample);
+            protected void getDatos(final DynamicData sample) {
+                // Ejecuto todo en una nueva hebra para que no se bloque DDS
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        onSensorDataReceived(sample);
+                    }
+                });
+                t.start();
             }
         };
         
