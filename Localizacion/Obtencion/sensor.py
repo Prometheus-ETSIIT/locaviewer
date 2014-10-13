@@ -6,18 +6,33 @@
 
 import BluezInquiry
 import sys
+from subprocess import Popen, PIPE
 
 
+# Inquiry de forma infinita
 def inquiry(inquirier):
-    inquirier.inquiry()
-    while inquirier.is_inquiring():
-        inquirier.process_event()
+    while True:
+        inquirier.inquiry()
+        while inquirier.is_inquiring():
+            inquirier.process_event()
 
-    return
 
 # Obtenemos la ID y el puerto por el que se enviaran los datos
-ID_blue = int(sys.argv[1])
-Port = int(sys.argv[2])
+dev_id = int(sys.argv[1])
+port = int(sys.argv[2])
 
-inquirier = BluezInquiry(ID_blue, Port)
+# Obtenemos la MAC del dispositivo a partir del ID
+mac = None
+hci_out = Popen(['hcitool', 'dev'], stdout=PIPE).stdout.readlines()
+del hci_out[0]  # 'Devices:\n'
+
+# Por cada dispositivo
+for dev in hci_out:
+    opts = dev[1:-1].split('\t')  # Elimino el primer tabulador y \n y divido
+    if opts[0] == "hci" + str(dev_id):
+        mac = opts[1]
+
+
+# Comienza el inquiry
+inquirier = BluezInquiry(dev_id, mac, port)
 inquiry(inquirier)

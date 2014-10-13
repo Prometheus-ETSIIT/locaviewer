@@ -33,9 +33,10 @@ potencias = {}
 
 class BluezInquiry:
 
-    def __init__(self, dev_id, port):
+    def __init__(self, dev_id, mac, port):
         self.addr_nino = "18:E7"  # El prefijo de la MAC de la pulsera.
         self.dev_id = dev_id      # El número del bluetooth (si hay más de uno)
+        self.mac = mac
         self.inquiring = False
         self.socket = None
         self.port = port
@@ -128,8 +129,8 @@ class BluezInquiry:
                 rssi_bueno = self.optimizar(potencias[addr])
                 potencias[addr] = []  # Vaciado
                 print "Envio: " + str(rssi_bueno)
-                self.sendSocket.sendto(str(addr) + " " + str(rssi_bueno), _
-                                       (self.host, self.port))  # Envio
+                self.sendSocket.sendto(self.mac + " " + str(addr) + " " + _
+                                       str(rssi_bueno), (self.host, self.port))
         else:
             potencias[addr] = [rssi]
 
