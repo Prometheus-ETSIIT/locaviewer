@@ -18,8 +18,6 @@
 
 package comunicador;
 
-import comunicador.CamaraPos;
-import comunicador.Dato;
 import dk.ange.octave.OctaveEngine;
 import dk.ange.octave.OctaveEngineFactory;
 import dk.ange.octave.exception.OctaveEvalException;
@@ -30,7 +28,6 @@ import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,9 +36,10 @@ import java.util.List;
 public class TriangulacionOctave {
     private final OctaveEngine octave;
     private final String funcName;
-    private final List<CamaraPos> cams;
-    private final int width;
-    private final int length;
+    private List<DatosCamara> cams;
+    private final double width;
+    private final double length;
+    
     private boolean alive;
     private double[] lastPosition;
     private int lastCamIdx;
@@ -62,7 +60,7 @@ public class TriangulacionOctave {
      * @param mostrarVentana Si se debe mostrar o no una ventana de prueba.
      */
     public TriangulacionOctave(final String scriptPath, final String funcName,
-            final List<CamaraPos> cams, final int width, final int length,
+            final List<DatosCamara> cams, final double width, final double length,
             final boolean mostrarVentana) {
         this.octave    = new OctaveEngineFactory().getScriptEngine();
         this.funcName  = funcName;
@@ -96,7 +94,8 @@ public class TriangulacionOctave {
      * @param scriptPath Ruta al archivo con el script de triangulación.
      * @return Devuelve si la operación se llevó a cabo con éxito.
      */
-    private boolean initialize(final String scriptPath, final int width, final int length) {
+    private boolean initialize(final String scriptPath, final double width, 
+            final double length) {
         // Información sobre los métodos: http://goo.gl/1kbd4y
         
         // Lee las funciones
@@ -143,8 +142,24 @@ public class TriangulacionOctave {
      * 
      * @return Cámaras disponibles.
      */
-    public List<CamaraPos> getCamaras() {
+    public List<DatosCamara> getCamaras() {
         return this.cams;
+    }
+    
+    /**
+     * Establece la lista de cámaras disponibles.
+     * 
+     * @param nuevasCamaras Cámaras disponibles.
+     */
+    public void setCamaras(final List<DatosCamara> nuevasCamaras) {
+        this.cams = nuevasCamaras;
+        
+        // Obtiene un array con la posición de las cámaras
+        OctaveDouble camPos = new OctaveDouble(this.cams.size(), 2);
+        for (int i = 0; i < this.cams.size(); i++) {
+            camPos.set(this.cams.get(i).getPosX(), i + 1, 1);
+            camPos.set(this.cams.get(i).getPosY(), i + 1, 2);
+        }
     }
     
     /**
@@ -152,7 +167,7 @@ public class TriangulacionOctave {
      * 
      * @return Ancho de la habitación.
      */
-    public int getWidth() {
+    public double getWidth() {
         return this.width;
     }
     
@@ -161,7 +176,7 @@ public class TriangulacionOctave {
      * 
      * @return Largo de la habitación.
      */
-    public int getLength() {
+    public double getLength() {
         return this.length;
     }
     
@@ -190,7 +205,7 @@ public class TriangulacionOctave {
      * @param datos Conjunto de sensores con valores de RSSI.
      * @return Posición X e Y de la triangulación.
      */
-    public String triangular(final List<Dato> datos) {
+    public String triangular(final List<DatosSensor> datos) {
         if (!this.alive) {
             System.err.println("[JAVA] Error ¡el sistema está muerto!");
             return null;
@@ -229,46 +244,9 @@ public class TriangulacionOctave {
         if (idxCam != null && idxCam.size(1) == 1 && idxCam.get(1) != -1) {
             this.lastCamIdx = (int)idxCam.get(1) - 1;
             this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
-            return this.cams.get(this.lastCamIdx).getID();    
+            return this.cams.get(this.lastCamIdx).getCamId();    
         } else {
             return null;
         }
-    }
-
-    /**
-     * Prueba a ejecutar el script en Octave de triangulación
-     * 
-     * @param args Ninguno por el momento.
-     */
-    public static void main(String[] args) {
-        // Prueba la clase
-        String scriptPath = "../../Localizacion/detectarcamara.m";
-        String funcName   = "detectarcamara";
-        
-        int width  = 6;
-        int length = 6;
-        
-        List<CamaraPos> cams = new ArrayList<>();
-        cams.add(new CamaraPos(3, 0, "ID1"));
-        cams.add(new CamaraPos(3, 6, "ID2"));
-        cams.add(new CamaraPos(0, 3, "ID3"));
-        cams.add(new CamaraPos(6, 3, "ID4"));
-        
-        List<Dato> sensores = new ArrayList<>();
-        sensores.add(new Dato("S1", 0, 0, "Chavea", -38));
-        sensores.add(new Dato("S2", 6, 0, "Chavea", -38));
-        sensores.add(new Dato("S3", 0, 6, "Chavea", -38));
-        
-        boolean showWindows = (args.length == 1 && args[0].equals("true"));
-        
-        TriangulacionOctave octave = new TriangulacionOctave(
-                scriptPath, funcName, cams, width, length, showWindows);
-        if (octave.isAlive()) {
-            String idCamara = octave.triangular(sensores);
-            System.out.printf("[JAVA] ID camara: %s\n", idCamara);
-        } else {
-            System.out.println("[JAVA] Error");
-        }
-        octave.close();
     }
 }
