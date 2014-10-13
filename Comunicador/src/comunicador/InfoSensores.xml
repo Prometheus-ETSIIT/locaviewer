@@ -2,6 +2,7 @@
 <infoSensores>
     <sensor>
         <id>00:11:22:33:44:55</id>
+        <sala>Clase 1.A</sala>
         <posX>3.1</posX>
         <posY>4.4</posY>
     </sensor>

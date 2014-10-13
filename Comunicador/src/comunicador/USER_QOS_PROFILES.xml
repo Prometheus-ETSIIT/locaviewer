@@ -66,6 +66,7 @@
         <!-- Estructura con los datos recibidos de los sensores -->
         <struct name="SensorData">
             <member name="id"     type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"   type="string" key="true" stringMaxLength="MAX_STRING_SIZE" />
             <member name="posX"   type="double" />
             <member name="posY"   type="double" />
             <member name="ninoId" type="string" stringMaxLength="MAX_STRING_SIZE" />
@@ -88,6 +89,12 @@
             <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
             <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
             <topic name="ChildDataTopic" register_type_ref="ChildDataType" >
+                <topic_qos base_name="qosLibrary::MyProfile"/>
+            </topic>
+            
+            <!-- Registro el tipo de datos de sensores y creo un tópico para él. -->
+            <register_type name="SensorDataType" kind="dynamicData" type_ref="SensorData" />
+            <topic name="SensorDataTopic" register_type_ref="SensorDataType" >
                 <topic_qos base_name="qosLibrary::MyProfile"/>
             </topic>
             
