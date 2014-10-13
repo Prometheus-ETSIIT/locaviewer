@@ -2,7 +2,7 @@
 <infoCamaras>
     <camara>
         <device>/dev/video0</device>
-        <camId>test0</camId>
+        <camId>test1</camId>
         <sala>Torreón B</sala>
         <posX>4.0</posX>
         <posY>2.3</posY>
@@ -13,7 +13,7 @@
     </camara>
     <camara>
         <device>/dev/video1</device>
-        <camId>test1</camId>
+        <camId>test0</camId>
         <sala>Torreón B</sala>
         <posX>6.0</posX>
         <posY>1.3</posY>

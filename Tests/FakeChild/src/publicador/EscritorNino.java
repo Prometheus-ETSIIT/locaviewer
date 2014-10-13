@@ -106,7 +106,7 @@ public class EscritorNino extends Thread {
         this.valoresNino = new DatosNino[5];
         valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0, "86159283");
         valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3, "86159283");        
-        valoresNino[2] = MueveNino(nino, "test1", 2.0, 5.1, "86159283");
+        valoresNino[2] = MueveNino(nino, "test1", 4.0, 5.1, "86159283");
         valoresNino[3] = MueveNino(nino, "test1", 1.0, 5.1, "42049184");
         valoresNino[4] = MueveNino(nino, "test1", 1.4, 5.2, "42049184");
     }
