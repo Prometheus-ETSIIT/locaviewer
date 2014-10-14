@@ -4,7 +4,7 @@
 # Se le indica el ID del bluetooth y el puerto de envío.
 # Saca el RSSI y lo envia.
 
-import BluezInquiry
+from BluezInquiry import BluezInquiry
 import sys
 from subprocess import Popen, PIPE
 
@@ -31,7 +31,7 @@ for dev in hci_out:
     opts = dev[1:-1].split('\t')  # Elimino el primer tabulador y \n y divido
     if opts[0] == "hci" + str(dev_id):
         mac = opts[1]
-
+print(mac)
 
 # Comienza el inquiry
 inquirier = BluezInquiry(dev_id, mac, port)

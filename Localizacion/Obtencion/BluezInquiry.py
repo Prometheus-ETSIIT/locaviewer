@@ -34,7 +34,7 @@ potencias = {}
 class BluezInquiry:
 
     def __init__(self, dev_id, mac, port):
-        self.addr_nino = "18:E7"  # El prefijo de la MAC de la pulsera.
+        self.addr_nino = "20:14"  # El prefijo de la MAC de la pulsera.
         self.dev_id = dev_id      # El número del bluetooth (si hay más de uno)
         self.mac = mac
         self.inquiring = False
@@ -82,11 +82,8 @@ class BluezInquiry:
         # 0x9E8B33 -> General Inquiry Access Code
         # https://www.bluetooth.org/en-us/specification/assigned-numbers/baseband
         LAP = [0x33, 0x8B, 0x9E]
-        cmd_pkt = struct.pack("9B", max_period[0], max_period[1], _
-                              min_period[0], min_period[1], LAP[0], LAP[1], _
-                              LAP[2], duration, max_resp)
-        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, _
-                           bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
+        cmd_pkt = struct.pack("9B", max_period[0], max_period[1], min_period[0], min_period[1], LAP[0], LAP[1], LAP[2], duration, max_resp)
+        bluez.hci_send_cmd(self.socket, bluez.OGF_LINK_CTL, bluez.OCF_PERIODIC_INQUIRY, cmd_pkt)
 
         self.inquiring = True
 
@@ -97,7 +94,7 @@ class BluezInquiry:
         return indice
 
     def optimizar(self, rssi_vect):
-        for i in range(5):    # Nos quedamos con X valores
+        for i in range(2):    # Nos quedamos con X valores
             buffererror = []  # Vaciamos el vector de errores
 
             for n in range(len(rssi_vect)):
@@ -115,7 +112,7 @@ class BluezInquiry:
         return media
 
     def procesamiento(self, addr, rssi):
-        tam_vect = 15
+        tam_vect = 5
         global potencias
         # el diccionario tiene que ser global
 
@@ -129,8 +126,7 @@ class BluezInquiry:
                 rssi_bueno = self.optimizar(potencias[addr])
                 potencias[addr] = []  # Vaciado
                 print "Envio: " + str(rssi_bueno)
-                self.sendSocket.sendto(self.mac + " " + str(addr) + " " + _
-                                       str(rssi_bueno), (self.host, self.port))
+                self.sendSocket.sendto(self.mac + " " + str(addr) + " " + str(rssi_bueno), (self.host, self.port))
         else:
             potencias[addr] = [rssi]
 
@@ -195,14 +191,12 @@ class BluezInquiry:
     def write_inquiry_mode(self, mode):
         """returns 0 on success, -1 on failure"""
         # save current filter
-        old_filter = self.socket.getsockopt(bluez.SOL_HCI, _
-                                            bluez.HCI_FILTER, 14)
+        old_filter = self.socket.getsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, 14)
 
         # Setup socket filter to receive only events related to the
         # write_inquiry_mode command
         flt = bluez.hci_filter_new()
-        opcode = bluez.cmd_opcode_pack(bluez.OGF_HOST_CTL, _
-                                       bluez.OCF_WRITE_INQUIRY_MODE)
+        opcode = bluez.cmd_opcode_pack(bluez.OGF_HOST_CTL, bluez.OCF_WRITE_INQUIRY_MODE)
         bluez.hci_filter_set_ptype(flt, bluez.HCI_EVENT_PKT)
         bluez.hci_filter_set_event(flt, bluez.EVT_CMD_COMPLETE)
         bluez.hci_filter_set_opcode(flt, opcode)
@@ -210,8 +204,7 @@ class BluezInquiry:
 
         # send the command!
         cmd_pkt = struct.pack("B", mode)
-        bluez.hci_send_cmd(self.socket, bluez.OGF_HOST_CTL, _
-                           bluez.OCF_WRITE_INQUIRY_MODE, cmd_pkt)
+        bluez.hci_send_cmd(self.socket, bluez.OGF_HOST_CTL, bluez.OCF_WRITE_INQUIRY_MODE, cmd_pkt)
 
         pkt = self.socket.recv(255)
 
