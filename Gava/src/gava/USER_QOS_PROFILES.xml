@@ -234,7 +234,7 @@
     <!-- types. Definido en 3.4 -->
     <types>
          <const name="MAX_BUFFER_SIZE" type="long" value="1048576"/> <!-- 1 MB -->
-         <const name="MAX_ID_SIZE"     type="long" value="16" />
+         <const name="MAX_ID_SIZE"     type="long" value="32" />
          <const name="MAX_STRING_SIZE" type="long" value="32" />
          
          <struct name="VideoData">

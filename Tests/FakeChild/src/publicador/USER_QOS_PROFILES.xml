@@ -46,7 +46,7 @@
 
     <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->
     <types>
-        <const name="MAX_ID_SIZE"     type="long" value="16" />
+        <const name="MAX_ID_SIZE"     type="long" value="32" />
         <const name="MAX_STRING_SIZE" type="long" value="32" />
           
         <!-- Estructura con los datos de posición del niño -->
