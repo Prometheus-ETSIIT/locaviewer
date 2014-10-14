@@ -86,7 +86,9 @@ public class Sensor extends Thread {
             if (datos == null)
                 continue;
             
+            System.out.println("[" + datos.getID() + "]: " + datos.getIntensidad());
             datos.escribeDds(this.data);
+            this.escritor.escribeDatos(this.data);
         }
         
         // Liberamos los recursos
