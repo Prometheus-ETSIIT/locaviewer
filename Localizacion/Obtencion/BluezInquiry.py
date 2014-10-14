@@ -125,7 +125,7 @@ class BluezInquiry:
             if len(potencias[addr]) >= tam_vect:
                 rssi_bueno = self.optimizar(potencias[addr])
                 potencias[addr] = []  # Vaciado
-                print "Envio: " + str(rssi_bueno)
+                print str(addr) + " -> " + str(rssi_bueno)
                 self.sendSocket.sendto(self.mac + " " + str(addr) + " " + str(rssi_bueno), (self.host, self.port))
         else:
             potencias[addr] = [rssi]
@@ -147,7 +147,7 @@ class BluezInquiry:
 
                 # Obtiene el rssi
                 rssi = struct.unpack("b", pkt[1+13*nrsp+i])[0]
-                print addr, rssi
+                # print addr, rssi
                 # r = -0.00680102923817849*(int(rssi)**3) -
                 # 1.04905123190747*(int(rssi)**2) - 59.2087843354658*int(rssi)
                 # - 1106.35595941215

@@ -31,7 +31,7 @@ for dev in hci_out:
     opts = dev[1:-1].split('\t')  # Elimino el primer tabulador y \n y divido
     if opts[0] == "hci" + str(dev_id):
         mac = opts[1]
-print(mac)
+print("Soy " + mac)
 
 # Comienza el inquiry
 inquirier = BluezInquiry(dev_id, mac, port)
