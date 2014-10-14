@@ -104,9 +104,9 @@ public class EscritorNino extends Thread {
         
         // Versiones alteradas de los datos
         this.valoresNino = new DatosNino[5];
-        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0, "86159283");
-        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3, "86159283");        
-        valoresNino[2] = MueveNino(nino, "test1", 4.0, 5.1, "86159283");
+        valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0, "20:14:04:11:34:37");
+        valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3, "20:14:04:11:34:37");        
+        valoresNino[2] = MueveNino(nino, "test1", 4.0, 5.1, "20:14:04:11:34:37");
         valoresNino[3] = MueveNino(nino, "test1", 1.0, 5.1, "42049184");
         valoresNino[4] = MueveNino(nino, "test1", 1.4, 5.2, "42049184");
     }
@@ -145,6 +145,9 @@ public class EscritorNino extends Thread {
      */
     private boolean existeSuscriptor(final String id) {
         for (DiscoveryData d : this.dataSubs) {
+            if (d.getFilterParams().isEmpty())
+                continue;
+            
             String currId = (String)d.getFilterParams().get(0);
             currId = currId.replaceAll("'", "");
             if (currId.equals(id))
@@ -181,7 +184,8 @@ public class EscritorNino extends Thread {
         
         System.out.println("Suscriptores: " + this.dataSubs.size());
         for (DiscoveryData d : this.dataSubs)
-            System.out.println("\t" + d.getFilterParams().get(0));
+            if (!d.getFilterParams().isEmpty())
+                System.out.println("\t" + d.getFilterParams().get(0));
     }
     
     /**
