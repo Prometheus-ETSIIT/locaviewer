@@ -124,14 +124,7 @@ public class Servidor extends Thread {
         this.lectorSensor = new LectorBase(controlSensor, "sala =  %0", params) {
             @Override
             protected void getDatos(final DynamicData sample) {
-                // Ejecuto todo en una nueva hebra para que no se bloque DDS
-                Thread t = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onSensorDataReceived(sample);
-                    }
-                });
-                t.start();
+                onSensorDataReceived(sample);
             }
         };
         
@@ -253,12 +246,19 @@ public class Servidor extends Thread {
                 
                 double[] pos = this.triangulacion.getLastPosition();
                 
+                // Obtiene el valor de RSSI más alto (más cercano a 0) como
+                // parámetro de calidad
+                double calidad = Double.MIN_VALUE;
+                for (DatosSensor s : datosSensores)
+                    if (s.getIntensidad() > calidad)
+                        calidad = s.getIntensidad();
+                                
                 // Eliminamos los datos usados
                 datosSensores.clear();
                 
                 // Crea la estructura de localización y la envía
                 DatosNino nino = new DatosNino();
-                nino.setCalidad(0);
+                nino.setCalidad(calidad);
                 nino.setId(dato.getIDNino());
                 nino.setCamId(camId);
                 nino.setSala(this.sala);
@@ -266,7 +266,10 @@ public class Servidor extends Thread {
                 nino.setSalaL(this.largo);
                 nino.setPosX(pos[0]);
                 nino.setPosY(pos[1]);
+                nino.setNombre("");
+                nino.setApodo("");
                 nino.escribeDds(this.escritorData);
+                this.escritorNino.escribeDatos(this.escritorData);
             }
         // No teníamos datos de este niño
         } else {
