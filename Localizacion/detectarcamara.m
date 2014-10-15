@@ -1,4 +1,5 @@
 function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2,ancho_habitacion,alto_habitacion,angulo_pos)
+tini=tic;
 %Sugerencia: devolver en la funcion todas las camaras que tienen al ni?o en
 %el ángulo de vision
 
@@ -16,6 +17,13 @@ function [m ,posicion] = detectarcamara(rssi,posicion_bluetooth,posicion_camara2
 angulo_vision=42*pi/180;%en grados
 %%
 %Calculamos la distancia 
+rssi_min=-37.785166889;
+for i=1:length(rssi)
+    if rssi(i)>rssi_min
+        rssi(i)=rssi_min;
+    end
+end
+
 error=3; %error en la detccion de la distancia a los sensores
 r = -0.00680102923817849*rssi.^3 - 1.04905123190747*rssi.^2 - 59.2087843354658*rssi - 1106.35595941215; %Conversion rssi-distancia
 r=r./100; %para pasarlo a metros (la formula lo da en cm)
@@ -25,8 +33,12 @@ x=[posicion_bluetooth(:,1)'];
 y=[posicion_bluetooth(:,2)'];
 
 N=length(x); %Numero de sensores bluetooth
-hx=[0];
-hy=[0];
+tam_vect=N.*(N-1)./2;
+
+hx=zeros(1,tam_vect);
+hy=zeros(1,tam_vect);
+C=zeros(1,tam_vect);
+
 n=0;
 contador=0;
 for i=1:length(rssi)
@@ -34,6 +46,7 @@ for i=1:length(rssi)
         contador=contador+1;
     end
 end
+
 if contador==length(rssi)
     for j=1:N-1
         for i=1+j:N
@@ -47,21 +60,21 @@ if contador==length(rssi)
     C=C';
     H=[hx',hy'];
 
-    m=(inv(H'*H)*H')*C; %posicion x e y del objeto
+    m=((H'*H)\H')*C; %posicion x e y del objeto
 %%
   %Posible mejora para localizarlo:
     %Una vez que se ha hecho triangulacion se busca la posicion dentro del
     %circulo de potencia mas cercana a la posicion de triangulacion
-    %del bluetooth que tiene al niño mas cerca. Ya que el error aumenta con
-    %la distancia, será mas fiable si suponemos que el niño esta alrededor
-    %de circulo de potencia que tiene al niño mas cerca.
+    %del bluetooth que tiene al ni?o mas cerca. Ya que el error aumenta con
+    %la distancia, será mas fiable si suponemos que el ni?o esta alrededor
+    %de circulo de potencia que tiene al ni?o mas cerca.
     
-    d=min(r)%BUscamos la posicion del minimo en r
-    min_d=find(r==d,1) %De que bluetooth esta mas cerca el niño
-    vector_prin=[m(1)-posicion_bluetooth(min_d,1),m(2)-posicion_bluetooth(min_d,2)]%Del bluetooth a la posicion de la triangulacion
-    modulo_prin=norm(vector_prin,2)%modulo
-    m_prima=[(vector_prin(1)./modulo_prin).*d+posicion_bluetooth(min_d,1),(vector_prin(2)./modulo_prin).*d+posicion_bluetooth(min_d,2)]
-    m=m_prima
+    d=min(r);%BUscamos la posicion del minimo en r
+    min_d=find(r==d,1); %De que bluetooth esta mas cerca el ni?o
+    vector_prin=[m(1)-posicion_bluetooth(min_d,1),m(2)-posicion_bluetooth(min_d,2)];%Del bluetooth a la posicion de la triangulacion
+    modulo_prin=norm(vector_prin,2);%modulo
+    m_prima=[(vector_prin(1)./modulo_prin).*d+posicion_bluetooth(min_d,1),(vector_prin(2)./modulo_prin).*d+posicion_bluetooth(min_d,2)];
+    m=m_prima;
     
 %%
 
@@ -142,4 +155,15 @@ else
     posicion=-1;
 end
 
+tfin=toc(tini);
+disp('Tiempo de ejecución: ')
+disp(tfin)
+disp('RSSI: ')
+disp(rssi)
+disp('Posicion de los bluetooth:')
+disp('(x,y)')
+disp(posicion_bluetooth)
+disp('Posicion niño:')
+disp('(x,y)')
+disp(m)
 end
