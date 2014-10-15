@@ -86,10 +86,7 @@ public class Servidor extends Thread {
     }
 
     @Override
-    public void run() {
-        // Inicializa DDS
-        this.iniciaDds();
-        
+    public void run() {        
         // Inicializa la triangulación
         this.triangulacion = new TriangulacionOctave(
                 SCRIPT_PATH,
@@ -99,6 +96,9 @@ public class Servidor extends Thread {
                 this.largo,
                 false
         );
+        
+        // Inicializa DDS
+        this.iniciaDds();
     }
     
     /**
@@ -214,6 +214,7 @@ public class Servidor extends Thread {
      * @param sample Dato del sensor.
      */
     private void onSensorDataReceived(DynamicData sample) {
+        System.out.println("¡Dato de sensor!");
         DatosSensor dato = DatosSensor.FromDds(sample);
         
         // Si el dato es de algún niño que no tiene suscriptor interesado, paso
@@ -222,6 +223,7 @@ public class Servidor extends Thread {
         
         // Si ya tenemos datos del niño...
         if (this.datosNinos.containsKey(dato.getIDNino())) {
+            System.out.println("Añadiendo datos a un niño...");
             // Busco si ya tenemos un dato de este sensor, y lo elimino
             ArrayList<DatosSensor> datosSensores = this.datosNinos.get(dato.getIDNino());
             for (int k = 0; k < datosSensores.size(); k++)
@@ -243,7 +245,9 @@ public class Servidor extends Thread {
             // Con más de 3 datos se puede triangular
             if (datosSensores.size() > 3) {
                 // Triangula
+                System.out.println("Realizando triangulación...");
                 String camId = this.triangulacion.triangular(datosSensores);
+                System.out.println("Mejor cámara: " + camId);
                 if (camId == null)
                     return;
                 
@@ -266,6 +270,7 @@ public class Servidor extends Thread {
             }
         // No teníamos datos de este niño
         } else {
+            System.out.println("Añadiendo datos de un niño nuevo");
             ArrayList<DatosSensor> nuevo = new ArrayList<>();
             nuevo.add(dato);
             this.datosNinos.put(dato.getIDNino(), nuevo);
