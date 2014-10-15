@@ -1,7 +1,7 @@
 #!/bin/bash
 cd build/classes
 cp ../../src/comunicador/USER_QOS_PROFILES.xml ./
-cp ../../detectarcamara.m ./
+cp ../../../Localizacion/detectarcamara.m ./
 cp ../../../rti_license.dat ./
 
 if [ $IS_RASPBERRY_PI ]; then

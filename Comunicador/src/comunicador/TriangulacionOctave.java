@@ -122,15 +122,18 @@ public class TriangulacionOctave {
             return false;
         }
 
-        // Obtiene un array con la posición de las cámaras
-        OctaveDouble camPos = new OctaveDouble(this.cams.size(), 2);
+        // Obtiene un array con la posición de las cámaras y sus ángulos
+        OctaveDouble camPos  = new OctaveDouble(this.cams.size(), 2);
+        OctaveDouble angulos = new OctaveDouble(1, this.cams.size());
         for (int i = 0; i < this.cams.size(); i++) {
             camPos.set(this.cams.get(i).getPosX(), i + 1, 1);
             camPos.set(this.cams.get(i).getPosY(), i + 1, 2);
+            angulos.set(this.cams.get(i).getAngle(), 1, i + 1);
         }
-        
+
         // Lo carga en memoria
         this.octave.put("camaras", camPos);
+        this.octave.put("angulos", angulos);
         this.octave.put("ancho", Octave.scalar(width));
         this.octave.put("largo", Octave.scalar(length));
         
@@ -156,10 +159,15 @@ public class TriangulacionOctave {
         
         // Obtiene un array con la posición de las cámaras
         OctaveDouble camPos = new OctaveDouble(this.cams.size(), 2);
+        OctaveDouble angulos = new OctaveDouble(1, this.cams.size());
         for (int i = 0; i < this.cams.size(); i++) {
             camPos.set(this.cams.get(i).getPosX(), i + 1, 1);
             camPos.set(this.cams.get(i).getPosY(), i + 1, 2);
+            angulos.set(this.cams.get(i).getAngle(), 1, i + 1);
         }
+        
+        this.octave.put("camaras", camPos);
+        this.octave.put("angulos", angulos);
     }
     
     /**
@@ -227,7 +235,7 @@ public class TriangulacionOctave {
         // Llama a la función que tiene en memoria
         try {
             String funcCall = String.format(
-                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo);",
+                    "[ninoPos, idxCam] = %s(rssi, bluePos, camaras, ancho, largo, angulos);",
                     this.funcName
             );
             this.octave.eval(funcCall);
