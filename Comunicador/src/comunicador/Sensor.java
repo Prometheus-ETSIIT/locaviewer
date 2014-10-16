@@ -155,7 +155,7 @@ public class Sensor extends Thread {
         String[] campos = peticion.split("\\s+");   
         String sensorId = campos[0];
         String ninoId   = campos[1];
-        int rssi = Integer.parseInt(campos[2].substring(0, 3));
+        double rssi     = Double.parseDouble(campos[2]);
         
         // Buscamos en el sensores del XML para obtener la posición.
         DatosSensor base = this.buscaBase(sensorId);

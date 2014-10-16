@@ -70,7 +70,7 @@
             <member name="posX"   type="double" />
             <member name="posY"   type="double" />
             <member name="ninoId" type="string" stringMaxLength="MAX_STRING_SIZE" />
-            <member name="rssi"   type="long" />
+            <member name="rssi"   type="double" />
             <member name="fecha"  type="longLong" />
         </struct>
     </types>

@@ -40,7 +40,7 @@ class DatosSensor {
     private String ninoId;
 
     /** Intensidad de la señal (RSSI). */
-    private int intensidad;
+    private double intensidad;
 
     /** Fecha de creación del dato. */
     private long creacion;
@@ -62,7 +62,7 @@ class DatosSensor {
      * @param intensidad Intensidad de señal
      */
     public DatosSensor(String id, String sala, double posX, double posY,
-            String ninoId, int intensidad) {
+            String ninoId, double intensidad) {
         this.id         = id;
         this.sala       = sala;
         this.sensorPos  = new Par<>(posX, posY);
@@ -81,7 +81,7 @@ class DatosSensor {
      * @param intensidad Intensidad de la señal
      */
     public DatosSensor(String id, String sala, Par<Double, Double> sensorPos,
-            String ninoId, int intensidad) {
+            String ninoId, double intensidad) {
         this.id         = id;
         this.sala       = sala;
         this.sensorPos  = sensorPos;
@@ -103,7 +103,7 @@ class DatosSensor {
         double posY = Double.parseDouble(fields[3]);
         this.sensorPos  = new Par<>(posX, posY);
         this.ninoId     = fields[4];
-        this.intensidad = Integer.parseInt(fields[5]);
+        this.intensidad = Double.parseDouble(fields[5]);
         this.creacion   = Long.parseLong(fields[6]);
     }
     
@@ -112,7 +112,7 @@ class DatosSensor {
      * 
      * @param mensaje String con los datos de la clase.
      */
-    public DatosSensor(DatosSensor base, String ninoId, int intensidad) {
+    public DatosSensor(DatosSensor base, String ninoId, double intensidad) {
         this.id         = base.getID();
         this.sala       = base.getSala();
         this.sensorPos  = base.getPosicionSensor();
@@ -135,7 +135,7 @@ class DatosSensor {
         double posY = sample.get_double("posY", DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.sensorPos  = new Par<>(posX, posY);
         datos.ninoId     = sample.get_string("ninoId", DynamicData.MEMBER_ID_UNSPECIFIED);
-        datos.intensidad = sample.get_int("rssi",      DynamicData.MEMBER_ID_UNSPECIFIED);
+        datos.intensidad = sample.get_double("rssi",      DynamicData.MEMBER_ID_UNSPECIFIED);
         datos.creacion   = sample.get_long("fecha",    DynamicData.MEMBER_ID_UNSPECIFIED);
         return datos;
     }
@@ -200,7 +200,7 @@ class DatosSensor {
      * 
      * @return	Intensidad de señal.
      */
-    public Integer getIntensidad() {
+    public double getIntensidad() {
         return intensidad;
     }
 
@@ -247,7 +247,7 @@ class DatosSensor {
         datos.set_double("posX",   DynamicData.MEMBER_ID_UNSPECIFIED, this.sensorPos.getPrimero());
         datos.set_double("posY",   DynamicData.MEMBER_ID_UNSPECIFIED, this.sensorPos.getSegundo());
         datos.set_string("ninoId", DynamicData.MEMBER_ID_UNSPECIFIED, this.ninoId);
-        datos.set_int   ("rssi",   DynamicData.MEMBER_ID_UNSPECIFIED, this.intensidad);
+        datos.set_double("rssi",   DynamicData.MEMBER_ID_UNSPECIFIED, this.intensidad);
         datos.set_long  ("fecha",  DynamicData.MEMBER_ID_UNSPECIFIED, this.creacion);
     }
     
