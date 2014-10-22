@@ -149,6 +149,7 @@ public class Servidor {
            * registrar [id padre] [pass] [idnino] [key que se le pone al niño]
            * borrar [id padre] [idnino]
            * modificar  [id padre] [pass] [idnino] [key que se le pone al niño] [nuevo id nino]
+           * get  [clave]
            */
           public String commands(String[] command){
               if(isAdmin){   
@@ -159,6 +160,8 @@ public class Servidor {
                           return borrarPadre(command[1],Integer.parseInt(command[2]));
                       case "modificar":
                           return modificarPadre(command[1],command[2],Integer.parseInt(command[3]),command[4],Integer.parseInt(command[5]));
+                      case "get":
+                          return getNino(command[1]);
                   }
               }
               else{
@@ -173,6 +176,27 @@ public class Servidor {
               return null;
           }
 
+          
+        public String getNino(String clave){
+            try {
+                BaseDatos conexion = new BaseDatos();
+                
+                String query = "SELECT nino FROM padres where clave = ?";
+                PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
+                consulta.setString(1, clave);
+                
+                ResultSet res = consulta.executeQuery();
+                
+                if(res.next()){
+                    return res.getString("key");  
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            return "No encontrado";
+            
+        }
 
           public String autentificarPadre(String IDPadre, int nino, String password){
            

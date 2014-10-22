@@ -64,7 +64,7 @@ public class VentanaInicio extends javax.swing.JFrame {
         getContentPane().add(jPanel3, java.awt.BorderLayout.CENTER);
 
         jPanel1.setBackground(java.awt.Color.white);
-        jPanel1.setLayout(new java.awt.GridLayout());
+        jPanel1.setLayout(new java.awt.GridLayout(1, 0));
 
         jLabel1.setText("by Prometheus");
         jPanel1.add(jLabel1);
