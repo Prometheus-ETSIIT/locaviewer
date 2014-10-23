@@ -20,17 +20,20 @@ En cada programa existe un script de ejecución (*run.sh*) y otro de compilació
 ### Configuración previa
 Para el funcionamiento de los sensores *Bluetooth* se necesita el paquete *bluetooth*.
 En sistemas operativos basados en *Debian* usa el siguiente comando:
+
 ``` shell
-sudo apt-get install bluetooth
+sudo apt-get install bluetooth python-bluez
 ```
 
 Para compilar los programas se necesita *ant*. En sistemas basados en *Debian* usa:
+
 ``` shell
 sudo apt-get install ant
 ```
 
 Para ejecutar el publicador de vídeo (Gava) hace falta tener instalado GStreamer 0.10
 en sistemas operativos basados en *Debian* utiliza el siguiente comando.
+
 ``` shell
 sudo apt-get install libgstreamer0.10-0 gstreamer0.10-plugins-good gstreamer0.10-plugins-bad
 ```
@@ -38,12 +41,18 @@ sudo apt-get install libgstreamer0.10-0 gstreamer0.10-plugins-good gstreamer0.10
 Además, en el caso de *Debian* se necesita crear enlaces simbólicos ya que el nombre
 de los paquetes termina en *-0*. Utiliza los siguientes comandos (preparados para
 *Raspberry Pi*):
+
 ``` shell
 sudo ln -s /lib/arm-linux-gnueabihf/libglib-2.0.so.0 /lib/arm-linux-gnueabihf/libglib-2.0.so
+
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstreamer-0.10.so.0 /usr/lib/arm-linux-gnueabihf/libgstreamer-0.10.so
+
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgobject-2.0.so.0 /usr/lib/arm-linux-gnueabihf/libgobject-2.0.so
+
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstinterfaces-0.10.so.0 /usr/lib/arm-linux-gnueabihf/libgstinterfaces-0.10.so
+
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstbase-0.10.so.0 /usr/lib/arm-linux-gnueabihf/libgstbase-0.10.so
+
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstapp-0.10.so.0 /usr/lib/arm-linux-gnueabihf/libgstapp-0.10.so
 ```
 
