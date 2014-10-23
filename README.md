@@ -56,6 +56,20 @@ sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstbase-0.10.so.0 /usr/lib/arm-linux-
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libgstapp-0.10.so.0 /usr/lib/arm-linux-gnueabihf/libgstapp-0.10.so
 ```
 
+NOTA: Si se usa una antena Wi-Fi hay que instalar los drivers de ésta también. En nuestro caso se hizo
+con el siguiente comando:
+
+``` shell
+sudo apt-get install zd1211-firmware
+```
+
+Además, se ha tenido que cambiar la ruta por defecto (0.0.0.0) para que use la interfaz *wlan0*:
+
+``` shell
+sudo route add default gw 192.168.3.1 wlan0
+sudo route del default gw 192.168.3.1 eth0
+```
+
 ### Instrucciones para Net Beans
 Para aquellos programas que han sido desarrollados en *Net Beans* es necesario que antes de abrirlos configures el IDE de la siguiente forma:
 Ve al menú *Tools* -> *Ant Variables* y añade la una variable con el nombre *RTI_CONNEXT_PATH* y que apunte a la misma ruta que la variable de entorno previamente configurada.
