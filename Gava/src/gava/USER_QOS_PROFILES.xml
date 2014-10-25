@@ -103,7 +103,7 @@
             
             <!-- QoS used to configure the data writer -->                
             <datawriter_qos>
-              
+             
 		<!-- Streaming video data can be reliable or best-effort depending on 
 		     network characteristics --> 
                 <reliability>
@@ -188,7 +188,7 @@
                 <reliability>
                     <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
                 </reliability>
-
+	
                 <!-- Reliably deliver 50 last updates to video stream.  Do not  
                      block if reader has not received all updates. -->
                 <history>

@@ -175,12 +175,15 @@ public class LectorVideo extends LectorBase {
         // DEBUG: sample.print(null, 0); // Para mostrarlo formateado por la consola
         DatosCamara datos = DatosCamara.FromDds(sample);
 
+        if (datos.getBuffer().length == 0)
+            return;
+        
         // Inicializamos GStreamer si es la primera vez
         if (this.pipe == null) {
             this.codecName = datos.getCodecInfo();
             this.iniciaGStreamer();
         }
-        
+                
         Buffer buffer = new Buffer(datos.getBuffer().length);
         buffer.getByteBuffer().put(datos.getBuffer());
         
