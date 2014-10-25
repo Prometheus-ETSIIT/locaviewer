@@ -114,6 +114,7 @@ public class DatosCamara {
         datos.codecInfo = GetXmlEntryValue(el, "codecInfo");
         datos.width  = Integer.parseInt(GetXmlEntryValue(el, "width"));
         datos.height = Integer.parseInt(GetXmlEntryValue(el, "height"));
+        datos.buffer = new byte[0];
         
         return datos;
     }
@@ -133,6 +134,11 @@ public class DatosCamara {
         datos.posX  = Double.parseDouble(fields[2]);
         datos.posY  = Double.parseDouble(fields[3]);
         datos.angle = Double.parseDouble(fields[4]);
+        
+        datos.codecInfo = "";
+        datos.width  = 0;
+        datos.height = 0;
+        datos.buffer = new byte[0];
         
         return datos;
     }

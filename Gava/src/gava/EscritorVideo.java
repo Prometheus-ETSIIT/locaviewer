@@ -19,6 +19,7 @@
 package gava;
 
 import com.rti.dds.dynamicdata.DynamicData;
+import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.infrastructure.RETCODE_ERROR;
 import com.rti.dds.publication.DataWriterQos;
 import es.prometheus.dds.DiscoveryChange;
@@ -31,7 +32,6 @@ import es.prometheus.dds.TopicoControlFactoria;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.gstreamer.elements.Queue;
 import org.gstreamer.Buffer;
 import org.gstreamer.Caps;
 import org.gstreamer.ClockTime;
@@ -39,6 +39,7 @@ import org.gstreamer.Element;
 import org.gstreamer.ElementFactory;
 import org.gstreamer.Pipeline;
 import org.gstreamer.elements.AppSink;
+import org.gstreamer.elements.Queue;
 
 /**
  * Obtiene vídeo de la cámara y lo escribe en DDS.
@@ -54,7 +55,8 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     private TopicoControl topico;
     private String topicName;
     private Escritor writer;
-    private DynamicData instance;
+    private DynamicData dynData;
+    private InstanceHandle_t instance;
 
     private Pipeline pipe;
     private AppSink appsink;
@@ -125,7 +127,9 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         this.writer = new Escritor(this.topico, qos);
         
         // Crea una estructura de datos como la que hemos definido en el XML.
-        this.instance = this.writer.creaDatos();
+        this.dynData = this.writer.creaDatos();
+        this.info.escribeDds(this.dynData);
+        this.instance = this.writer.registraDatos(this.dynData);
     }
 
     /**
@@ -236,7 +240,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         // Crea la estructura de datos
         try {
             this.info.setBuffer(tmp);
-            this.info.escribeDds(this.instance);
+            this.info.escribeDds(this.dynData);
         } catch (com.rti.dds.infrastructure.RETCODE_OUT_OF_RESOURCES e) {
             // Se da cuando la estructura interna de datos no puede guardar
             // todos los bytes del buffer. Para arreglarlo hay que aumentar
@@ -245,10 +249,10 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             System.out.println("¡Aumentar recursos! -> " + tmp.length);
             return;
         }
-
+        
         // Publica la estructura de datos generada en DDS
         try {
-            this.writer.escribeDatos(this.instance);
+            this.writer.escribeDatos(this.dynData, this.instance);
         } catch (RETCODE_ERROR e) {
             System.out.println("Write error: " + e.getMessage());
         }
