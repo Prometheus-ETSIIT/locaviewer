@@ -23,6 +23,8 @@ import com.rti.dds.dynamicdata.DynamicDataWriter;
 import com.rti.dds.infrastructure.InstanceHandle_t;
 import com.rti.dds.publication.DataWriterAdapter;
 import com.rti.dds.publication.DataWriterQos;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Clase para escribir datos dinámicos en un tópico.
@@ -30,6 +32,7 @@ import com.rti.dds.publication.DataWriterQos;
 public class Escritor {
     private final TopicoControl control;
     private final DynamicDataWriter writer;
+    private final EscritorQueue cola;
     
     /**
      * Crea una nueva instancia del escritor sobre el tópico especificado.
@@ -43,6 +46,8 @@ public class Escritor {
             System.err.println("No se pudo crear el escritor");
             System.exit(1);
         }
+        
+        this.cola = new EscritorQueue(this.writer);
     }
     
     /**
@@ -58,6 +63,8 @@ public class Escritor {
             System.err.println("No se pudo crear el escritor");
             System.exit(1);
         }
+        
+        this.cola = new EscritorQueue(this.writer);
     }
     
     /**
@@ -81,12 +88,18 @@ public class Escritor {
             System.err.println("No se pudo crear el escritor");
             System.exit(1);
         }
+        
+        this.cola = new EscritorQueue(this.writer);
     }
     
     /**
      * Libera recursos de este escritor.
      */
     public void dispose() {
+        this.cola.para();
+        try { this.cola.join(5000); }
+        catch (InterruptedException ex) { }
+        
         this.control.eliminaEscritor(this.writer);
     }
     
@@ -153,7 +166,10 @@ public class Escritor {
      * InstanceHandle_t.HANDLE_NIL se buscará el manejador en DDS.
      */
     public void escribeDatos(final DynamicData data, final InstanceHandle_t inst) {
-        this.writer.write(data, inst);
+        if (!this.cola.isAlive())
+            this.cola.start();
+        
+        this.cola.anadeMuestra(data, inst);
     }
     
     /**
@@ -164,5 +180,60 @@ public class Escritor {
     public void eliminaDatos(final DynamicData data) {
         data.clear_all_members();
         this.writer.delete_data(data);
+    }
+    
+    private static class EscritorQueue extends Thread {
+        private final Queue<EscritorData> cola = new LinkedList<>();
+        private final DynamicDataWriter writer;
+        private boolean parar = false;
+        
+        public EscritorQueue(DynamicDataWriter writer) {
+            super();
+            this.writer = writer;
+        }
+        
+        public synchronized void para() {
+            this.parar = true;
+            this.notifyAll();
+        }
+        
+        @Override
+        public void run() {
+            while (!this.parar) {
+                // Escribe todas las muestras
+                while (!this.cola.isEmpty()) {
+                    if (this.cola.size() > 300)
+                        System.out.println("[DDStheus]: La cola es inestable");
+ 
+                    EscritorData data;
+                    synchronized(this.cola) { data = this.cola.remove(); }
+                    this.writer.write(data.data, data.instance);
+                 }
+                 
+                 // Espera a más muestras
+                 synchronized(this) {
+                    while (this.cola.isEmpty()) {
+                         try { this.wait(); }
+                         catch (InterruptedException ex) { }
+                    }
+                 }
+            }
+        }
+        
+        public synchronized void anadeMuestra(final DynamicData data, 
+                final InstanceHandle_t inst) {
+            this.cola.offer(new EscritorData(data, inst));
+            this.notifyAll();
+        }
+    }
+    
+    private static class EscritorData {
+        public final DynamicData data;
+        public final InstanceHandle_t instance;
+        
+        public EscritorData(final DynamicData data, final InstanceHandle_t inst) {
+            this.data = data;
+            this.instance = inst;
+        }
     }
 }
