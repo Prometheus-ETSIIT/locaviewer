@@ -115,13 +115,25 @@ public class Escritor {
         propiedades.buffer_max_size = 1048576;
         
         // Crea una estructura de datos como la que hemos definido en el XML.
-        DynamicData instance = this.writer.create_data(propiedades);
-        if (instance == null) {
+        DynamicData data = this.writer.create_data(propiedades);
+        if (data == null) {
             System.err.println("No se pudo crear la instancia de datos.");
             System.exit(1);
         }
         
-        return instance;
+        return data;
+    }
+    
+    /**
+     * Registra una esctructura de datos devolviendo su manejador.
+     * De esta forma se puede mejorar el rendimiento.
+     * De la estructura sólo se mira los parámetros "key".
+     * 
+     * @param data Estructura de datos.
+     * @return Manejador de la estructura.
+     */
+    public InstanceHandle_t registraDatos(DynamicData data) {
+        return this.writer.register_instance(data);
     }
     
     /**
@@ -130,7 +142,18 @@ public class Escritor {
      * @param data Datos a escribir.
      */
     public void escribeDatos(final DynamicData data) {
-        this.writer.write(data, InstanceHandle_t.HANDLE_NIL);
+        this.escribeDatos(data, InstanceHandle_t.HANDLE_NIL);
+    }
+    
+    /**
+     * Escribe en DDS una estructura de datos.
+     * 
+     * @param data Datos a escribir.
+     * @param inst Manejador asociado a la estructura. En caso de ser
+     * InstanceHandle_t.HANDLE_NIL se buscará el manejador en DDS.
+     */
+    public void escribeDatos(final DynamicData data, final InstanceHandle_t inst) {
+        this.writer.write(data, inst);
     }
     
     /**
