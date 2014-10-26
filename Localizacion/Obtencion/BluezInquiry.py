@@ -50,7 +50,7 @@ class BluezInquiry:
         try:
             self.socket = bluez.hci_open_dev(self.dev_id)
         except:
-            raise BluetoothError("Error al acceder al dispositivo")
+            raise BluetoothError.BluetoothError("Error al acceder al dispositivo")
             return
 
         # Establece el filtro para recibir todos los eventos
@@ -61,7 +61,7 @@ class BluezInquiry:
             # Establece opciones:       nivel      nombre opción   valor
             self.socket.setsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, flt)
         except:
-            raise BluetoothError("Problema al establecer filtro de eventos.")
+            raise BluetoothError.BluetoothError("Problema al establecer filtro de eventos.")
             return
 
     def inquiry(self):

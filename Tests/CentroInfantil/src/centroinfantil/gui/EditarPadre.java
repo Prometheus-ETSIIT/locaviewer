@@ -6,6 +6,18 @@
 
 package centroinfantil.gui;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.security.Security;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author iblancasa
@@ -32,21 +44,22 @@ public class EditarPadre extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        idpadre = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
+        idnino = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
-        jPasswordField1 = new javax.swing.JPasswordField();
+        password = new javax.swing.JPasswordField();
         jLabel5 = new javax.swing.JLabel();
-        jPasswordField2 = new javax.swing.JPasswordField();
+        password2 = new javax.swing.JPasswordField();
         jLabel6 = new javax.swing.JLabel();
-        jTextField3 = new javax.swing.JTextField();
+        idninonueva = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
-        jTextField4 = new javax.swing.JTextField();
+        key = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(300, 437));
 
         jPanel1.setLayout(new java.awt.BorderLayout());
 
@@ -60,36 +73,42 @@ public class EditarPadre extends javax.swing.JFrame {
 
         jLabel2.setText("ID padre");
         jPanel2.add(jLabel2);
-        jPanel2.add(jTextField1);
+        jPanel2.add(idpadre);
 
         jLabel3.setText("ID niño");
         jPanel2.add(jLabel3);
-        jPanel2.add(jTextField2);
+        jPanel2.add(idnino);
 
         jLabel4.setText("Nuevo pass");
         jPanel2.add(jLabel4);
-
-        jPasswordField1.setText("jPasswordField1");
-        jPanel2.add(jPasswordField1);
+        jPanel2.add(password);
 
         jLabel5.setText("Repetir pass");
         jPanel2.add(jLabel5);
-
-        jPasswordField2.setText("jPasswordField2");
-        jPanel2.add(jPasswordField2);
+        jPanel2.add(password2);
 
         jLabel6.setText("Nueva ID niño");
         jPanel2.add(jLabel6);
-        jPanel2.add(jTextField3);
+        jPanel2.add(idninonueva);
 
         jLabel7.setText("Clave niño");
         jPanel2.add(jLabel7);
-        jPanel2.add(jTextField4);
+        jPanel2.add(key);
 
         jButton1.setText("Modificar padre");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton1);
 
         jButton2.setText("Reset");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
         jPanel2.add(jButton2);
 
         getContentPane().add(jPanel2, java.awt.BorderLayout.CENTER);
@@ -97,42 +116,92 @@ public class EditarPadre extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+    
+    private static Socket creaSocketSeguro(final String host, final int puerto) {
+        SSLSocket socket = null;
+        
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(EditarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(EditarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(EditarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(EditarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            // Le indicamos de qué anillo obtener las claves públicas fiables
+            // de autoridades de certificación:
+            System.setProperty(
+                    "javax.net.ssl.trustStore",
+                    "./src/cert/cacerts.jks"
+            );
+            
+          
+            Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+            SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+            socket = (SSLSocket)factory.createSocket(host, puerto);
+
+            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+        } catch (IOException ex) {
+            System.out.println("ERROR: " + ex.getMessage());
         }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new EditarPadre().setVisible(true);
-            }
-        });
+        
+        return socket;
     }
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+       Socket socket = creaSocketSeguro("localhost", 6556);
+        InputStream inStream = null;
+        try {
+            String pw = new String(password.getPassword());
+            String pw2= new String(password2.getPassword());
+            
+            if(!pw.equals(pw2)){
+               JOptionPane.showMessageDialog(null,"Las contraseñas no coinciden");
+            }
+            else{
+                DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
+                inStream = socket.getInputStream();
+                DataInputStream reader = new DataInputStream(inStream);
 
+                writer.writeUTF("modificar "+idpadre.getText()+" "+idnino.getText()+" "+key.getText()+" "+idninonueva.getText());
+                String respuesta = reader.readUTF();
+
+                if(respuesta.equals("Hubo algún problema")){
+                    System.out.println("");
+                }
+
+                writer.writeUTF("borrar "+idpadre.getText()+" "+idnino.getText());
+
+                respuesta = reader.readUTF();
+
+                JOptionPane.showMessageDialog(null,respuesta);
+
+                if(!respuesta.equals("No se pudo modificar")){
+                    reset();
+                }    
+            }
+            
+        } catch (IOException ex) {
+            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            socket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        reset();
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    
+    public void reset(){
+        idnino.setText("");
+        idninonueva.setText("");
+        idpadre.setText("");
+        key.setText("");
+        password.setText("");
+        password2.setText("");
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField idnino;
+    private javax.swing.JTextField idninonueva;
+    private javax.swing.JTextField idpadre;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
@@ -144,11 +213,8 @@ public class EditarPadre extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPasswordField jPasswordField1;
-    private javax.swing.JPasswordField jPasswordField2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JTextField key;
+    private javax.swing.JPasswordField password;
+    private javax.swing.JPasswordField password2;
     // End of variables declaration//GEN-END:variables
 }
