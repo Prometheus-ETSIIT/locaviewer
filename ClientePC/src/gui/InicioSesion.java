@@ -127,8 +127,8 @@ public class InicioSesion extends javax.swing.JFrame {
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
         DatosNino[] datos = new DatosNino[2];
-        datos[0] = DatosNino.FromSummary("86159283,Benito Palacios Sánchez, Beni :3");
-        datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
+        datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios Sánchez, Beni");
+        //datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
         this.onSuccessLogin(datos);
     }//GEN-LAST:event_btnConnectActionPerformed
     
