@@ -94,7 +94,7 @@ class BluezInquiry:
         return indice
 
     def optimizar(self, rssi_vect):
-        for i in range(2):    # Nos quedamos con X valores
+        for i in range(10):    # Nos quedamos con X valores
             buffererror = []  # Vaciamos el vector de errores
 
             for n in range(len(rssi_vect)):
@@ -112,7 +112,7 @@ class BluezInquiry:
         return media
 
     def procesamiento(self, addr, rssi):
-        tam_vect = 5
+        tam_vect = 15
         global potencias
         # el diccionario tiene que ser global
 
