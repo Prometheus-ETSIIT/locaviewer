@@ -97,8 +97,8 @@ public class EscritorNino extends Thread {
         DatosNino nino = new DatosNino();
         nino.setCalidad(82.3);
         nino.setSala("Clase 1.A");
-        nino.setSalaL(6.0);
-        nino.setSalaW(6.0);
+        nino.setSalaL(4.0);
+        nino.setSalaW(4.0);
         nino.setNombre("Benito Palacios");
         nino.setApodo("Benii");
         
@@ -106,9 +106,9 @@ public class EscritorNino extends Thread {
         this.valoresNino = new DatosNino[5];
         valoresNino[0] = MueveNino(nino, "test0", 3.0, 1.0, "20:14:04:11:34:37");
         valoresNino[1] = MueveNino(nino, "test0", 2.5, 2.3, "20:14:04:11:34:37");        
-        valoresNino[2] = MueveNino(nino, "test1", 4.0, 5.1, "20:14:04:11:34:37");
-        valoresNino[3] = MueveNino(nino, "test1", 1.0, 5.1, "42049184");
-        valoresNino[4] = MueveNino(nino, "test1", 1.4, 5.2, "42049184");
+        valoresNino[2] = MueveNino(nino, "test1", 3.0, 2.1, "20:14:04:11:34:37");
+        valoresNino[3] = MueveNino(nino, "test1", 1.0, 3.1, "42049184");
+        valoresNino[4] = MueveNino(nino, "test1", 1.4, 3.2, "42049184");
     }
     
     /**
