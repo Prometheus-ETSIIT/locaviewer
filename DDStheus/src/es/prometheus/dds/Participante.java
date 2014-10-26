@@ -24,9 +24,11 @@ import com.rti.dds.domain.DomainParticipantFactoryQos;
 import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Duration_t;
+import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.TransportBuiltinKind;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicData;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataDataReader;
@@ -84,7 +86,7 @@ public class Participante {
             DomainParticipantFactory.get_instance().get_qos(qos);
             qos.entity_factory.autoenable_created_entities = false;
             DomainParticipantFactory.get_instance().set_qos(qos);
-            
+                        
             // Creamos el participante
             this.participante = DomainParticipantFactory.get_instance()
                         .create_participant_from_config(name);
@@ -94,15 +96,22 @@ public class Participante {
                 System.err.println("[DDStheus::Participante] No se pudo crear.");
                 System.exit(1);
             }
-            
-            // Aumentamos el tamaño para USER_DATA
+
+            // Modicamos el QoS por defecto para aumentar el tamaño de USER_DATA
+            // y configurar RTI WAN Server.
             DomainParticipantQos partQos = new DomainParticipantQos();
             this.participante.get_qos(partQos);
+            
+            // Aumentamos el tamaño para USER_DATA
             partQos.resource_limits.participant_user_data_max_length = 256;
             partQos.resource_limits.reader_user_data_max_length = 256;
             partQos.resource_limits.writer_user_data_max_length = 256;
+            
+            // Configura RTI WAN Server            
+            ConfiguraRtiWanServer(partQos);
+            
             this.participante.set_qos(partQos);
-
+            
             // Volvemos a habilitarlo para dejarlo en su valor por defecto.
             qos.entity_factory.autoenable_created_entities = true;
             DomainParticipantFactory.get_instance().set_qos(qos);
@@ -123,6 +132,46 @@ public class Participante {
         
         // Finalmente ya lo podemos habilitar
         this.participante.enable();
+    }
+    
+    /**
+     * Configura RTI WAN Server sobre el QoS de un participante.
+     * 
+     * @param qos QoS para configurar.
+     */
+    private static void ConfiguraRtiWanServer(DomainParticipantQos qos) {
+        String WAN_SERVER = "37.252.96.104";
+        String WAN_PORT = "5555";
+        String WAN_ID = "1";
+        String archName = System.getProperty("os.name").toLowerCase();
+        String WAN_LIB = archName.contains("win") ? 
+                "nddstransportwan.dll" : "libnddstransportwan.so";
+
+        /* Disable builtin transports */
+        qos.transport_builtin.mask = TransportBuiltinKind.MASK_NONE;
+
+        /* Set up property QoS to load plugin */
+        PropertyQosPolicyHelper.add_property(qos.property, 
+            "dds.transport.load_plugins", "dds.transport.wan_plugin.wan", false);
+
+        /* library */
+        PropertyQosPolicyHelper.add_property(qos.property, 
+            "dds.transport.wan_plugin.wan.library",
+            WAN_LIB, false);
+
+        /* create function */
+        PropertyQosPolicyHelper.add_property(qos.property, 
+            "dds.transport.wan_plugin.wan.create_function", "NDDS_Transport_WAN_create", false);
+
+        /* plugin properties */
+        PropertyQosPolicyHelper.add_property(qos.property, 
+            "dds.transport.wan_plugin.wan.server", WAN_SERVER, false);
+
+        PropertyQosPolicyHelper.add_property(qos.property,
+                "dds.transport.wan_plugin.wan.server_port", WAN_PORT, false);
+        
+        PropertyQosPolicyHelper.add_property(qos.property, 
+            "dds.transport.wan_plugin.wan.transport_instance_id", WAN_ID, false);
     }
     
     /**
