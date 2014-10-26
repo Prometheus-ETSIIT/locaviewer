@@ -41,7 +41,7 @@ public class Servidor extends Thread {
     private static final String FUNC_NAME = "detectarcamara";
     private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
     private static final String CHILD_TOPIC_NAME = "ChildDataTopic";
-    private static final int MAX_TIME = 20*1000;
+    private static final int MAX_TIME = 30*1000;
     
     private final Map<String, ArrayList<DatosSensor>> datosNinos = new HashMap<>();
     private final List<DiscoveryData> ninoSubs = new ArrayList<>();
@@ -58,10 +58,13 @@ public class Servidor extends Thread {
     private TopicoControl controlSensor;
     private LectorBase lectorSensor;
     
+    private boolean triangulando;
+    
     public Servidor(final String sala, double ancho, double largo) {
         this.sala  = sala;
         this.ancho = ancho;
         this.largo = largo;
+        this.triangulando = false;
     }
         
     /**
@@ -206,17 +209,26 @@ public class Servidor extends Thread {
      * 
      * @param sample Dato del sensor.
      */
-    private void onSensorDataReceived(DynamicData sample) {
+    private synchronized void onSensorDataReceived(DynamicData sample) {
+        while (this.triangulando) {
+            try { this.wait(); }
+            catch (InterruptedException ex) { return; }
+        }
+        
+        this.triangulando = true;
         System.out.println("¡Dato de sensor!");
         DatosSensor dato = DatosSensor.FromDds(sample);
         
         // Si el dato es de algún niño que no tiene suscriptor interesado, paso
-        if (!this.existeSuscriptor(dato.getIDNino()))
+        if (!this.existeSuscriptor(dato.getIDNino())) {
+            this.triangulando = false;
+            this.notifyAll();
             return;
+        }
         
         // Si ya tenemos datos del niño...
         if (this.datosNinos.containsKey(dato.getIDNino())) {
-            System.out.println("Añadiendo datos a un niño...");
+            System.out.println("\t" + dato.getID());
             // Busco si ya tenemos un dato de este sensor, y lo elimino
             ArrayList<DatosSensor> datosSensores = this.datosNinos.get(dato.getIDNino());
             for (int k = 0; k < datosSensores.size(); k++)
@@ -230,19 +242,24 @@ public class Servidor extends Thread {
             long date = new Date().getTime();
             for (int j = 0; j < datosSensores.size(); j++) {
                 if (date - datosSensores.get(j).getCreacion() > MAX_TIME) {
+                    System.out.println("\tExpirado: " + dato.getID());
                     datosSensores.remove(j);
                     j--;
                 }
             }
 
             // Con más de 3 datos se puede triangular
-            if (datosSensores.size() > 3) {
+            if (datosSensores.size() >= 4) {
                 // Triangula
-                System.out.println("Realizando triangulación...");
+                System.out.print("Triangulando: ");
                 String camId = this.triangulacion.triangular(datosSensores);
-                System.out.println("Mejor cámara: " + camId);
-                if (camId == null)
+                System.out.println(camId);
+                if (camId == null) {
+                    datosSensores.clear();
+                    this.triangulando = false;
+                    this.notifyAll();
                     return;
+                }
                 
                 double[] pos = this.triangulacion.getLastPosition();
                 
@@ -273,11 +290,14 @@ public class Servidor extends Thread {
             }
         // No teníamos datos de este niño
         } else {
-            System.out.println("Añadiendo datos de un niño nuevo");
+            System.out.println("Nuevos datos: " + dato.getIDNino());
             ArrayList<DatosSensor> nuevo = new ArrayList<>();
             nuevo.add(dato);
             this.datosNinos.put(dato.getIDNino(), nuevo);
         }
+        
+        this.triangulando = false;
+        this.notifyAll();
     }
     
     /**
