@@ -12,6 +12,10 @@
                     <buffer_size>65507</buffer_size>
                 </receiver_pool>
                 
+                <transport_builtin>
+                    <mask>MASK_NONE</mask>
+                </transport_builtin> 
+                
                 <property>
                     <value>
                         

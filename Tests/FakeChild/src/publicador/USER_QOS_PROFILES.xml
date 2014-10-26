@@ -5,7 +5,13 @@
     
     <!-- Qos Library -->
     <qos_library name="qosLibrary">
-        <qos_profile name="ChildProfile" />
+        <qos_profile name="ChildProfile">
+            <participant_qos>
+                <transport_builtin>
+                    <mask>MASK_NONE</mask>
+                </transport_builtin> 
+            </participant_qos>
+        </qos_profile>
     </qos_library>
 
     <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->

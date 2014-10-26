@@ -28,7 +28,6 @@ import com.rti.dds.infrastructure.PropertyQosPolicyHelper;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
-import com.rti.dds.infrastructure.TransportBuiltinKind;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicData;
 import com.rti.dds.publication.builtin.PublicationBuiltinTopicDataDataReader;
@@ -146,9 +145,6 @@ public class Participante {
         String archName = System.getProperty("os.name").toLowerCase();
         String WAN_LIB = archName.contains("win") ? 
                 "nddstransportwan.dll" : "libnddstransportwan.so";
-
-        /* Disable builtin transports */
-        qos.transport_builtin.mask = TransportBuiltinKind.MASK_NONE;
 
         /* Set up property QoS to load plugin */
         PropertyQosPolicyHelper.add_property(qos.property, 
