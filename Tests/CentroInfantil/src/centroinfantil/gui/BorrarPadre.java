@@ -6,6 +6,18 @@
 
 package centroinfantil.gui;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.security.Security;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author iblancasa
@@ -32,12 +44,13 @@ public class BorrarPadre extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        idpadre = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
+        idnino = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(300, 302));
 
         jPanel2.setLayout(new java.awt.BorderLayout());
 
@@ -51,13 +64,18 @@ public class BorrarPadre extends javax.swing.JFrame {
 
         jLabel2.setText("ID padre");
         jPanel1.add(jLabel2);
-        jPanel1.add(jTextField1);
+        jPanel1.add(idpadre);
 
         jLabel3.setText("ID del niño");
         jPanel1.add(jLabel3);
-        jPanel1.add(jTextField2);
+        jPanel1.add(idnino);
 
         jButton1.setText("Borrar padre");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton1);
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -65,49 +83,77 @@ public class BorrarPadre extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+    
+    private static Socket creaSocketSeguro(final String host, final int puerto) {
+        SSLSocket socket = null;
+        
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(BorrarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(BorrarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(BorrarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(BorrarPadre.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+            // Le indicamos de qué anillo obtener las claves públicas fiables
+            // de autoridades de certificación:
+            System.setProperty(
+                    "javax.net.ssl.trustStore",
+                    "./src/cert/cacerts.jks"
+            );
+            
+          
+            Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+            SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+            socket = (SSLSocket)factory.createSocket(host, puerto);
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new BorrarPadre().setVisible(true);
-            }
-        });
+            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+        } catch (IOException ex) {
+            System.out.println("ERROR: " + ex.getMessage());
+        }
+        
+        return socket;
     }
+    
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        Socket socket = creaSocketSeguro("localhost", 6556);
+        InputStream inStream = null;
+        try {
+            DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
+            inStream = socket.getInputStream();
+            DataInputStream reader = new DataInputStream(inStream);
+
+            writer.writeUTF("autentificar admin administrador prometheus");
+            String respuesta = reader.readUTF();
+
+            if(respuesta.equals("Hubo algún problema")){
+                System.out.println("");
+            }
+
+            writer.writeUTF("borrar "+idpadre.getText()+" "+idnino.getText());
+
+            respuesta = reader.readUTF();
+
+            JOptionPane.showMessageDialog(null,respuesta);
+
+            if(!respuesta.equals("No se pudo registrar")){
+                idpadre.setText("");
+                idnino.setText("");
+            }            
+            
+        } catch (IOException ex) {
+            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            socket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField idnino;
+    private javax.swing.JTextField idpadre;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
     // End of variables declaration//GEN-END:variables
 }
