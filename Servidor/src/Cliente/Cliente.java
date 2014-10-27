@@ -37,7 +37,7 @@ public class Cliente {
                 System.out.print("Siguiente comando ");
                 comando = buff.readLine();
                 writer.writeUTF(comando);
-                respuesta  =reader.readUTF();
+                respuesta  = reader.readUTF();
                 System.out.println(respuesta);
             }
             

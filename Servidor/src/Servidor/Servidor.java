@@ -107,8 +107,7 @@ public class Servidor {
                         else if(separado[0].equals("autentificar")){
                             switch(separado[1]){
                                 case "padre":
-                                    int id = Integer.parseInt(separado[3]);
-                                    respuesta = autentificarPadre(separado[2],id, separado[4]);
+                                    respuesta = autentificarPadre(separado[2], separado[3],writer);
                                     break;
                                 case "admin":
                                     respuesta =autentificarAdmin(separado[2],separado[3]);
@@ -146,20 +145,20 @@ public class Servidor {
 
             /**
            * Comandos disponibles:
-           * registrar [id padre] [pass] [idnino] [key que se le pone al niño]
+           * registrar [id padre] [pass] [idnino] [key que se le pone al niño] [apodo]
            * borrar [id padre] [idnino]
-           * modificar  [id padre] [pass] [idnino] [key que se le pone al niño] [nuevo id nino]
+           * modificar  [id padre] [pass] [idnino] [key que se le pone al niño] [nuevo id nino] [apodo]
            * get  [clave]
            */
           public String commands(String[] command){
               if(isAdmin){   
                   switch(command[0]){
                       case "registrar":
-                          return registrarPadre(command[1],command[2],Integer.parseInt(command[3]),command[4]);
+                          return registrarPadre(command[1],command[2],command[3],command[4],command[5]);
                       case "borrar":
-                          return borrarPadre(command[1],Integer.parseInt(command[2]));
+                          return borrarPadre(command[1],command[2]);
                       case "modificar":
-                          return modificarPadre(command[1],command[2],Integer.parseInt(command[3]),command[4],Integer.parseInt(command[5]));
+                          return modificarPadre(command[1],command[2],command[3],command[4],command[5],command[6]);
                       case "get":
                           return getNino(command[1]);
                   }
@@ -198,30 +197,38 @@ public class Servidor {
             
         }
 
-          public String autentificarPadre(String IDPadre, int nino, String password){
+          public String autentificarPadre(String IDPadre, String password,DataOutputStream writer ){
            
             try {
                 BaseDatos conexion = new BaseDatos();
                 
-                String query = "SELECT * FROM padres where padre = ? and nino= ? ";
+                String query = "SELECT * FROM padres where padre = ? ";
                 PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
                 consulta.setString(1, IDPadre);
-                consulta.setInt(2, nino);
+
                 ResultSet res = consulta.executeQuery();
+                System.out.println(query);
+                System.out.println(consulta.toString());
                 
-                if(res.next()){
-                    if(res.getString("pass").equals(password)){
+                String pw = cifrarPass(password);
+                
+                while(res.next()){
+                    if(res.getString("pass").equals(pw)){
                         isFather=true;
-                        return res.getString("key");
+                        String respuesta = res.getString("nino")+" "+res.getString("key");
+                        try {
+                            writer.writeUTF(respuesta);
+                        } catch (IOException ex) {
+                            Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
                 }
+                
                 
                 } catch (SQLException ex) {
                 Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
             }
-                
-                return "La autentificación fallo";
-            
+            return "fin";
             
           }
 
@@ -236,13 +243,14 @@ public class Servidor {
               return "No tiene privilegios";
           }
 
-          public String registrarPadre(String padre, String pass, int nino, String clave){
+          public String registrarPadre(String padre, String pass, String nino, String clave, String apodo){
               try {
 
                   BaseDatos conexion = new BaseDatos();
                   Statement estatuto = conexion.getConnection().createStatement();
                   String passwordCifrada = cifrarPass(pass);
-                  estatuto.executeUpdate("INSERT INTO padres VALUES ('"+nino+"', '"+padre+"', '"+clave+"', '"+passwordCifrada+"');");
+                  estatuto.executeUpdate("INSERT INTO padres VALUES ('"+nino+"', '"+padre+"', '"+clave+"', '"+passwordCifrada+"', '"+apodo+"');");
+                  System.out.println(estatuto.toString());
                   conexion.desconectar();
               } catch (SQLException ex) {
                   return "No se pudo registrar";
@@ -272,7 +280,7 @@ public class Servidor {
               return sb.toString();
           }
 
-          public String borrarPadre(String padre,int nino){
+          public String borrarPadre(String padre,String nino){
           
             try {
                 BaseDatos conexion = new BaseDatos();
@@ -280,7 +288,7 @@ public class Servidor {
                 
                 PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
                 consulta.setString(1, padre);
-                consulta.setInt(2, nino);
+                consulta.setString(2, nino);
                 System.out.println(consulta.toString());
                 consulta.executeUpdate();
                 
@@ -294,45 +302,49 @@ public class Servidor {
           }
 
 
-          public String modificarPadre(String padreID, String pass, int nino, String clave, int nuevoIDnino){
+          public String modificarPadre(String padreID, String pass, String nino, String clave, String nuevoIDnino,String apodo){
             try {
                 BaseDatos conexion = new BaseDatos();
                 String query;
                 PreparedStatement consulta = null;
                  
-                if(!pass.equals("null") && !clave.equals("null") && nuevoIDnino!=0){
-                   if(!clave.equals("null")){
+                if(!pass.equals("") || !clave.equals("") || !nuevoIDnino.equals("")){
+                   if(!clave.equals("")){
                           query= "UPDATE padres SET  `key` =  ? WHERE padre = ? AND nino= ? ";
                           consulta = conexion.getConnection().prepareStatement(query);
                           consulta.setString(1, clave);
                           consulta.setString(2,padreID);
-                          consulta.setInt(3,nino);
+                          consulta.setString(3,nino);
                           consulta.executeUpdate(); 
                    }
-                   if(nuevoIDnino!=0){
+                   if(!nuevoIDnino.equals("")){
                           query= "UPDATE padres SET  `nino` =  ? WHERE padre = ? AND nino= ? ";
                           consulta = conexion.getConnection().prepareStatement(query);
-                          consulta.setInt(1, nuevoIDnino);
+                          consulta.setString(1, nuevoIDnino);
                           consulta.setString(2,padreID);
-                          consulta.setInt(3,nino);
+                          consulta.setString(3,nino);
                           consulta.executeUpdate(); 
                    }
-                   if(!pass.equals("null")){
+                   if(!pass.equals("")){
                           query= "UPDATE padres SET  `pass` =  ? WHERE padre = ? AND nino= ? ";
                           consulta = conexion.getConnection().prepareStatement(query);
                           consulta.setString(1,clave);
                           consulta.setString(2,padreID);
-                          consulta.setInt(3,nino);
+                          consulta.setString(3,nino);
                           consulta.executeUpdate(); 
                    }
-                    
+                   if(!pass.equals("")){
+                          query= "UPDATE padres SET  `apodo` =  ? WHERE padre = ? AND nino= ? ";
+                          consulta = conexion.getConnection().prepareStatement(query);
+                          consulta.setString(1,clave);
+                          consulta.setString(2,padreID);
+                          consulta.setString(3,apodo);
+                          consulta.executeUpdate(); 
+                   } 
 
                 conexion.desconectar();
                 
                 return "Padre modificado";
-                
-                
-                
                 }
                 else{
                     return "No modificado";
