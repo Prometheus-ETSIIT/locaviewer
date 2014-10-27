@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Participante del dominio DDS.
@@ -106,8 +107,11 @@ public class Participante {
             partQos.resource_limits.reader_user_data_max_length = 256;
             partQos.resource_limits.writer_user_data_max_length = 256;
             
-            // Configura RTI WAN Server            
-            ConfiguraRtiWanServer(partQos);
+            // Configura RTI WAN Server   
+            String activate_wan = System.getenv("ACTIVATE_RTI_WAN_SERVER");
+            System.out.println("var: " + activate_wan);
+            if (activate_wan != null && activate_wan.equals("true"))
+                ConfiguraRtiWanServer(partQos);
             
             this.participante.set_qos(partQos);
             
@@ -141,7 +145,7 @@ public class Participante {
     private static void ConfiguraRtiWanServer(DomainParticipantQos qos) {
         String WAN_SERVER = "37.252.96.104";
         String WAN_PORT = "5555";
-        String WAN_ID = "1";
+        String WAN_ID = UUID.randomUUID().toString();
         String archName = System.getProperty("os.name").toLowerCase();
         String WAN_LIB = archName.contains("win") ? 
                 "nddstransportwan.dll" : "libnddstransportwan.so";
