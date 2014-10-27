@@ -109,9 +109,10 @@ public class Participante {
             
             // Configura RTI WAN Server   
             String activate_wan = System.getenv("ACTIVATE_RTI_WAN_SERVER");
-            System.out.println("var: " + activate_wan);
-            if (activate_wan != null && activate_wan.equals("true"))
+            if (activate_wan != null && activate_wan.equals("true")) {
+                System.out.println("Activando RTI WAN Server");
                 ConfiguraRtiWanServer(partQos);
+            }
             
             this.participante.set_qos(partQos);
             
