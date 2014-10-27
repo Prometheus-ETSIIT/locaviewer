@@ -13,7 +13,11 @@
 
 /Tests/FakeChild/nbproject/private/
 /Tests/FakeChild/build/
-/Tests/FakeChild/build/
+/Tests/FakeChild/dist/
+
+/Tests/CentroInfantil/nbproject/private/
+/Tests/CentroInfantil/build/
+/Tests/CentroInfantil/dist/
 
 /Gava/nbproject/private/
 /Gava/build/
@@ -42,3 +46,4 @@ rti_license.dat
 /Comunicador/nbproject/private/
 /Comunicador/build/
 /Comunicador/dist/
+/Tests/CentroInfantil/dist/
