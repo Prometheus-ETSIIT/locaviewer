@@ -18,6 +18,14 @@
 
 package centroinfantil.gui;
 
+import centroinfantil.DatosCamara;
+import centroinfantil.LectorCamara;
+import es.prometheus.dds.DiscoveryChange;
+import es.prometheus.dds.DiscoveryChangeStatus;
+import es.prometheus.dds.DiscoveryData;
+import es.prometheus.dds.DiscoveryListener;
+import es.prometheus.dds.TopicoControl;
+import es.prometheus.dds.TopicoControlFactoria;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -26,6 +34,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -39,9 +51,15 @@ import javax.swing.border.TitledBorder;
  * Diálogo para ver todas las cámaras del sistema clasificadas por habitación.
  */
 public class VerCamaras extends javax.swing.JFrame {
-
+    private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
+    private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipanteCI";
+    
+    private final Map<String, List<String>> cams = new HashMap<>();
+    private final List<LectorCamara[]> lectores = new ArrayList<>();
+    private final TopicoControl controlCamaras;
+    
     /**
-     * Creates new form VerCamaras
+     * Crea una nueva instancia.
      */
     public VerCamaras() {
         initComponents();
@@ -51,6 +69,65 @@ public class VerCamaras extends javax.swing.JFrame {
         this.setBackground(Color.white);
         this.getContentPane().setBackground(Color.white);
         this.addTab();
+        
+        // Inicia GStreamer
+        org.gstreamer.Gst.init();
+        
+        // Creo el control del tópico de las cámaras
+        this.controlCamaras = TopicoControlFactoria.crearControlDinamico(
+                PARTICIPANT_NAME,
+                VIDEO_TOPIC_NAME);
+        
+        // Actualizamos las listas por cada publicador ya existente
+        for (DiscoveryData d : this.controlCamaras.getParticipanteControl().getDiscoveryWriterData())
+            onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
+        
+        // Listener para cuando se descubra un publicador nuevo.
+        this.controlCamaras.getParticipanteControl().addDiscoveryWriterListener(new DiscoveryListener() {
+            @Override
+            public void onChange(DiscoveryChange[] changes) {
+                for (DiscoveryChange ch : changes)
+                    onWriterDiscovered(ch.getData(), ch.getStatus());
+            }
+        });
+    }
+    
+    /**
+     * Actualiza las listas de cámaras a partir de los publicadores
+     * descubiertos.
+     * 
+     * @param data Datos del publicador descubierto.
+     * @param status Estado del publicador descubierto.
+     */
+    private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
+        String userData = new String(data.getUserData().toArrayByte(null));
+        
+        // Solo nos centramos en las cámaras, los datos de los niños
+        // nos lo da el servidor
+        if (!data.getTopicName().equals(VIDEO_TOPIC_NAME))
+            return;
+            
+        // Busca si ya está en la lista
+        DatosCamara info = DatosCamara.FromStringSummary(userData);
+        int idx = -1;
+        if (this.cams.containsKey(info.getSala())) {
+            List<String> camIds = this.cams.get(info.getSala());
+            for (int i = 0; i < camIds.size() && idx == -1; i++)
+                if (camIds.get(i).equals(info.getCamId()))
+                    idx = i;
+        }
+
+        // Actualiza la lista
+        if (idx != -1 && status == DiscoveryChangeStatus.ELIMINADO) {
+            // TODO: Enviar notificación
+            this.cams.get(info.getSala()).remove(idx);
+            // TODO: Actualizar combox y pantalla
+        } else if (idx == -1 && status == DiscoveryChangeStatus.ANADIDO) {
+            // TODO: Actualizar combox
+            if (!this.cams.containsKey(info.getSala()))
+                this.cams.put(info.getSala(), new ArrayList<String>());
+            this.cams.get(info.getSala()).add(info.getCamId());
+        }
     }
 
     @SuppressWarnings("unchecked")

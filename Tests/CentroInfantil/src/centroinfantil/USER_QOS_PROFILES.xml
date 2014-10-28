@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="/home/benito/Programas/RTI/ndds.5.1.0/qos_profiles_5.1.0/resource/schema/rti_dds_profiles.xsd" 
+     version="5.1.0">
+    
+    <!-- Qos Library -->
+    <qos_library name="qosLibrary">
+        <qos_profile name="VideoProfile">
+            
+            <participant_qos>
+                <receiver_pool>
+                    <buffer_size>65507</buffer_size>
+                </receiver_pool>
+                
+                <transport_builtin>
+                    <mask>MASK_NONE</mask>
+                </transport_builtin> 
+                
+                <property>
+                    <value>
+                        
+                        <!--  Configure UDP transport for higher throughput: -->
+                        <element>
+                            <name>dds.transport.UDPv4.builtin.parent.message_size_max</name>
+                            <value>65507</value>
+                        </element>
+
+                        <!--
+                        The next setting is to setup the buffers for sending and recieving data 
+                        on the transport to be at least double what our expected message size will be.
+                        In this case our expected message size is 1MB, so therefore we are setting
+                        the buffer sizes to 2MB.
+                        -->
+                        <element>
+                            <name>dds.transport.UDPv4.builtin.send_socket_buffer_size</name>
+                            <value>2097152</value>
+                        </element>
+                        <element>
+                            <name>dds.transport.UDPv4.builtin.recv_socket_buffer_size</name>
+                            <value>2097152</value>
+                        </element>
+                        <!--
+                          Configure shared memory transport for higher throughput:
+                        -->
+                        <element>
+                            <!-- 
+                            Set the shared memory maximum message size to the
+                            same value that was set for UDP.
+                            -->
+                            <name>dds.transport.shmem.builtin.parent.message_size_max</name>
+                            <value>65507</value>
+                            <!-- 64 KB - header sizes -->
+                        </element>
+                        <element>
+                            <!--
+                            Set the size of the shared memory transport's
+                            receive buffer to some large value.
+                            -->
+                            <name>dds.transport.shmem.builtin.receive_buffer_size</name>
+                            <value>2097152</value>
+                            <!-- 2 MB -->
+                        </element>
+                        <element>
+                            <!--
+                            Set the maximum number of messages that the shared
+                            memory transport can cache while waiting for them
+                            to be read and deserialized.
+                            -->
+                            <name>dds.transport.shmem.builtin.received_message_count_max</name>
+                            <value>2048</value>
+                        </element>
+                        
+                    </value>
+                </property>
+            </participant_qos>
+            
+            <!-- QoS used to configure the data writer -->                
+            <datawriter_qos>
+              
+                <!-- Streaming video data can be reliable or best-effort depending on 
+                network characteristics --> 
+                <reliability>
+                    <kind>RELIABLE_RELIABILITY_QOS</kind>
+                </reliability>
+
+                <!-- Reliably deliver 50 last updates to video stream.  Do not  
+                block if reader has not received all updates. -->
+                <history>
+                    <!-- If you need strict reliability, this should be changed to 
+                    keep all history. -->
+                    <kind>KEEP_LAST_HISTORY_QOS</kind>
+                    <depth>50</depth>
+                </history>
+
+                <!-- Resource limits: to allow the application to specify
+                a different number of maximum frames that can be handled
+                at once. 
+                -->
+                <!--<resource_limits>
+                    <max_samples>128</max_samples>
+                    <max_instances>64</max_instances>
+                    <max_samples_per_instance>2</max_samples_per_instance>
+                </resource_limits>-->
+
+                <!-- This data may be larger than 64K (the maximum transport 
+                size for UDP) so this allows the middleware to fragment
+                data into chunks to send over the UDP transport -->
+                <publish_mode>
+                    <kind>ASYNCHRONOUS_PUBLISH_MODE_QOS</kind>
+                </publish_mode>
+
+                <!-- Tuning the reliability protocol for faster reliable 
+                data repairs (at the expense of bandwidth). -->
+                <protocol>
+                    
+                    <rtps_reliable_writer>
+
+                        <!-- Send reliability heartbeats every 50 ms if there 
+                        is a reader waiting for data.  Send reliability 
+                        heartbeats every 10 ms if the queue is starting to
+                        fill and there is a reader waiting for data. (Note
+                        that no heartbeats are sent if there are no 
+                        readers waiting for data).  These heartbeats 
+                        determine how quickly data is re-sent if it was 
+                        lost the first time. -->
+                        <heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>50000000</nanosec>
+                        </heartbeat_period>
+                        <fast_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>10000000</nanosec>
+                        </fast_heartbeat_period>
+                        <late_joiner_heartbeat_period>
+                            <sec>0</sec>
+                            <nanosec>50000000</nanosec>
+                        </late_joiner_heartbeat_period>
+                        
+                        <!-- Tells the DataWriter to not delay when it 
+                        receives a negative acknowledgement (NACK). -->
+                        <max_nack_response_delay>
+                            <sec>0</sec>
+                            <nanosec>0</nanosec>
+                        </max_nack_response_delay>
+                        
+                        <!-- Does not change behavior in a system with no 
+                        multicast.  However, if somebody does enable 
+                        multicast on a DataReader, this will prevent 
+                        potential delays. -->
+                        <enable_multicast_periodic_heartbeat>true</enable_multicast_periodic_heartbeat>
+                    </rtps_reliable_writer>
+                </protocol>
+
+            </datawriter_qos>
+
+            <!-- QoS used to configure the data reader -->                
+            <datareader_qos>
+
+                <!-- Streaming video data can be reliable or best-effort depending on 
+                network characteristics --> 
+                <reliability>
+                    <kind>BEST_EFFORT_RELIABILITY_QOS</kind>
+                </reliability>
+
+                <!-- Reliably deliver 50 last updates to video stream.  Do not  
+                block if reader has not received all updates. -->
+                <history>
+                    <!-- If you need strict reliability, this should be changed
+                    to keep all history. -->
+                    <kind>KEEP_LAST_HISTORY_QOS</kind>
+                    <depth>50</depth>
+                </history>
+
+                <!-- Resource limits: to allow the application to specify
+                a different number of maximum frames that can be handled
+                at once, the resource limits are being set in code. 
+                -->
+                <!--<resource_limits>
+                    <max_samples>128</max_samples>
+                    <max_instances>64</max_instances>
+                    <max_samples_per_instance>2</max_samples_per_instance>
+                </resource_limits>-->
+
+                <!-- Response delays in the DataReader are useful if there is a
+                large fanout of readers to writers - they prevent the 
+                readers from simultaneously resonding to heartbeats and 
+                flooding the writers.  With smaller numbers of readers the
+                delays can be set to zero.  -->
+                <protocol>
+                    <rtps_reliable_reader>
+                        <min_heartbeat_response_delay>
+                            <sec>0</sec>
+                            <nanosec>0</nanosec>
+                        </min_heartbeat_response_delay>
+                        <max_heartbeat_response_delay>
+                            <sec>0</sec>
+                            <nanosec>0</nanosec>
+                        </max_heartbeat_response_delay>
+                    </rtps_reliable_reader>
+                </protocol>
+
+            </datareader_qos>
+            
+        </qos_profile>
+        
+        <qos_profile name="ChildProfile">
+            <participant_qos>
+                <property>
+                        <value>
+                            <element>
+                                <name>dds.transport.load_plugins</name>
+                                <value>dds.transport.wan_plugin.wan</value>
+                            </element>
+                            <element>
+                                <name>dds.transport.wan_plugin.wan.library</name>
+                                <value>libnddstransportwan.so</value>
+                            </element>
+                            <element>
+                                <name>dds.transport.wan_plugin.wan.create_function</name>
+                                <value>NDDS_Transport_WAN_create</value>
+                            </element>
+                            <element>
+                                <name>dds.transport.wan_plugin.wan.server</name>
+                                <value>90.170.149.132</value>
+                            </element>
+                            <element>
+                                <name>dds.transport.wan_plugin.wan.server_port</name>
+                                <value>5554</value>
+                            </element>
+                            <element>
+                                <name>dds.transport.wan_plugin.wan.transport_instance_id</name>
+                                <value>1</value>
+                            </element>
+                        </value>
+                </property>
+            </participant_qos>
+        </qos_profile>
+        
+    </qos_library>
+
+    <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->
+    <types>
+        <const name="MAX_BUFFER_SIZE" type="long" value="1048576"/> <!-- 1 MB -->
+        <const name="MAX_ID_SIZE"     type="long" value="32" />
+        <const name="MAX_STRING_SIZE" type="long" value="32" />
+         
+        <!-- Estructura con los datos de transmisión de vídeo -->
+        <struct name="VideoData">
+            <member name="camId" type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"  type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="posX"  type="double" />
+            <member name="posY"  type="double" />
+            <member name="angle" type="double" />
+            <member name="codecInfo" type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="width"     type="long" />
+            <member name="height"    type="long" />
+            <member name="buffer"    type="octet" sequenceMaxLength="MAX_BUFFER_SIZE" /> <!-- -1 sin límite -->
+        </struct>
+          
+        <!-- Estructura con los datos de posición del niño -->
+        <struct name="ChildData">
+            <member name="calidad" type="double" key="true" />
+            <member name="id"      type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="camId"   type="string" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"    type="string" />
+            <member name="salaW"   type="double" />
+            <member name="salaL"   type="double" />
+            <member name="posX"    type="double" />
+            <member name="posY"    type="double" />              
+            <member name="nombre"  type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="apodo"   type="string" stringMaxLength="MAX_STRING_SIZE" />
+        </struct>
+    </types>
+
+    <!-- Biblioteca de dominios -->
+    <domain_library name="BibliotecaDominios" >
+        <domain name="DominioLocaviewer" domain_id="0" />
+    </domain_library>
+
+    <!-- Biblioteca de participantes en el dominio -->
+    <participant_library name="MisParticipantes">
+        <!-- Participante -->
+        <domain_participant name="ParticipanteCI" domain_ref="BibliotecaDominios::DominioLocaviewer"> 
+            <!-- Registro el tipo de datos de vídeo y creo un tópico para él. -->   
+            <register_type name="VideoDataType" kind="dynamicData" type_ref="VideoData" />
+            <topic name="VideoDataTopic" register_type_ref="VideoDataType">
+                <topic_qos name="VideoData_qos" base_name="qosLibrary::VideoProfile"/>
+            </topic>
+
+            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
+            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
+            <topic name="ChildDataTopic" register_type_ref="ChildDataType" >
+                <topic_qos name="ChildData_qos" base_name="qosLibrary::ChildProfile" />
+            </topic>
+    
+        </domain_participant>
+    </participant_library>
+
+</dds>
