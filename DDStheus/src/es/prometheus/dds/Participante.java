@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Participante del dominio DDS.
@@ -146,7 +145,7 @@ public class Participante {
     private static void ConfiguraRtiWanServer(DomainParticipantQos qos) {
         String WAN_SERVER = "37.252.96.104";
         String WAN_PORT = "5555";
-        String WAN_ID = UUID.randomUUID().toString();
+        String WAN_ID = String.valueOf((int)(Math.random() * 10000));
         String archName = System.getProperty("os.name").toLowerCase();
         String WAN_LIB = archName.contains("win") ? 
                 "nddstransportwan.dll" : "libnddstransportwan.so";
