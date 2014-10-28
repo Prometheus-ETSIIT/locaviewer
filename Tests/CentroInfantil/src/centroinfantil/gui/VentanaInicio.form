@@ -75,6 +75,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Ver c&#xe1;maras del centro"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="jButton2">
           <Properties>
