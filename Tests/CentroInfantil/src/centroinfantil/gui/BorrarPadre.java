@@ -109,39 +109,44 @@ public class BorrarPadre extends javax.swing.JFrame {
     }
     
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Socket socket = creaSocketSeguro("localhost", 6556);
-        InputStream inStream = null;
-        try {
-            DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
-            inStream = socket.getInputStream();
-            DataInputStream reader = new DataInputStream(inStream);
+        if(idpadre.getText().isEmpty() && idnino.getText().isEmpty()){
+            JOptionPane.showMessageDialog(null,"Rellene todos los campos");
+        }
+        else{
+            Socket socket = creaSocketSeguro("localhost", 6556);
+            InputStream inStream = null;
+            try {
+                DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
+                inStream = socket.getInputStream();
+                DataInputStream reader = new DataInputStream(inStream);
 
-            writer.writeUTF("autentificar admin administrador prometheus");
-            String respuesta = reader.readUTF();
+                writer.writeUTF("autentificar admin administrador prometheus");
+                String respuesta = reader.readUTF();
 
-            if(respuesta.equals("Hubo algún problema")){
-                System.out.println("");
+                if(respuesta.equals("Hubo algún problema")){
+                    System.out.println("");
+                }
+
+                writer.writeUTF("borrar "+idpadre.getText()+" "+idnino.getText());
+
+                respuesta = reader.readUTF();
+
+                JOptionPane.showMessageDialog(null,respuesta);
+
+                if(!respuesta.equals("No se pudo registrar")){
+                    idpadre.setText("");
+                    idnino.setText("");
+                }            
+
+            } catch (IOException ex) {
+                Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            writer.writeUTF("borrar "+idpadre.getText()+" "+idnino.getText());
-
-            respuesta = reader.readUTF();
-
-            JOptionPane.showMessageDialog(null,respuesta);
-
-            if(!respuesta.equals("No se pudo registrar")){
-                idpadre.setText("");
-                idnino.setText("");
-            }            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
-            socket.close();
-        } catch (IOException ex) {
-            Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+            try {
+                socket.close();
+            } catch (IOException ex) {
+                Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 

@@ -59,7 +59,7 @@
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridLayout">
         <Property name="columns" type="int" value="1"/>
-        <Property name="rows" type="int" value="15"/>
+        <Property name="rows" type="int" value="19"/>
       </Layout>
       <SubComponents>
         <Component class="javax.swing.JLabel" name="jLabel2">
@@ -89,6 +89,13 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JPasswordField" name="password2">
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel8">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Apodo"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="apodo">
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel6">
           <Properties>

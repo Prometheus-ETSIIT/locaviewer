@@ -51,6 +51,8 @@ public class EditarPadre extends javax.swing.JFrame {
         password = new javax.swing.JPasswordField();
         jLabel5 = new javax.swing.JLabel();
         password2 = new javax.swing.JPasswordField();
+        jLabel8 = new javax.swing.JLabel();
+        apodo = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
         idninonueva = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
@@ -69,7 +71,7 @@ public class EditarPadre extends javax.swing.JFrame {
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.NORTH);
 
-        jPanel2.setLayout(new java.awt.GridLayout(15, 1));
+        jPanel2.setLayout(new java.awt.GridLayout(19, 1));
 
         jLabel2.setText("ID padre");
         jPanel2.add(jLabel2);
@@ -86,6 +88,10 @@ public class EditarPadre extends javax.swing.JFrame {
         jLabel5.setText("Repetir pass");
         jPanel2.add(jLabel5);
         jPanel2.add(password2);
+
+        jLabel8.setText("Apodo");
+        jPanel2.add(jLabel8);
+        jPanel2.add(apodo);
 
         jLabel6.setText("Nueva ID niño");
         jPanel2.add(jLabel6);
@@ -154,22 +160,39 @@ public class EditarPadre extends javax.swing.JFrame {
                 DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
                 inStream = socket.getInputStream();
                 DataInputStream reader = new DataInputStream(inStream);
-
-                writer.writeUTF("modificar "+idpadre.getText()+" "+idnino.getText()+" "+key.getText()+" "+idninonueva.getText());
+                
+                String  idNinoNueva = null,keyText = null,apodoText = null;
+                
+                if(idNinoNueva.equals("")){
+                    idNinoNueva="null";
+                }
+                else{
+                    idNinoNueva=idninonueva.getText();
+                }
+                
+                if(keyText.equals("")){
+                    keyText=idninonueva.getText();
+                }
+                else{
+                    keyText=key.getText();
+                }
+                
+                if(apodoText.equals("")){
+                    apodoText="null";
+                }
+                else{
+                    apodoText=apodo.getText();
+                }
+                
+                
+                
+                writer.writeUTF("modificar "+idpadre.getText()+" "+idnino.getText()+" "+keyText+" "+idNinoNueva+" "+apodoText);
                 String respuesta = reader.readUTF();
 
-                if(respuesta.equals("Hubo algún problema")){
-                    System.out.println("");
-                }
-
-                writer.writeUTF("borrar "+idpadre.getText()+" "+idnino.getText());
-
-                respuesta = reader.readUTF();
-
-                JOptionPane.showMessageDialog(null,respuesta);
 
                 if(!respuesta.equals("No se pudo modificar")){
                     reset();
+                    JOptionPane.showMessageDialog(null,"No se pudo modificar");
                 }    
             }
             
@@ -199,6 +222,7 @@ public class EditarPadre extends javax.swing.JFrame {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField apodo;
     private javax.swing.JTextField idnino;
     private javax.swing.JTextField idninonueva;
     private javax.swing.JTextField idpadre;
@@ -211,6 +235,7 @@ public class EditarPadre extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JTextField key;
