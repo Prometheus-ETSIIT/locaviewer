@@ -32,6 +32,8 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -55,6 +57,8 @@ public class VerCamaras extends javax.swing.JFrame {
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipanteCI";
     
     private final Map<String, List<String>> cams = new HashMap<>();
+    private final List<TabComponents> tabComp = new ArrayList<>();
+    
     private final List<LectorCamara[]> lectores = new ArrayList<>();
     private final TopicoControl controlCamaras;
     
@@ -120,13 +124,43 @@ public class VerCamaras extends javax.swing.JFrame {
         // Actualiza la lista
         if (idx != -1 && status == DiscoveryChangeStatus.ELIMINADO) {
             // TODO: Enviar notificación
+            System.out.println("Fuera cámara: " + info.getCamId());
             this.cams.get(info.getSala()).remove(idx);
-            // TODO: Actualizar combox y pantalla
+            
+            boolean removeRoom = this.cams.get(info.getSala()).isEmpty();
+            if (removeRoom)
+                this.cams.remove(info.getSala());
+            
+            // Actualiza los combobox de todas las pestañas
+            for (TabComponents c : this.tabComp) {
+                boolean thisRoom = c.getComboRoom().getSelectedIndex() == idx + 1;
+                if (removeRoom)
+                    c.getComboRoom().removeItemAt(idx + 1);
+                
+                // Actualiza los controles de cámaras
+                for (int i = 0; i < c.getControlsNum() && thisRoom; i++) {
+                    if (c.getComboControl(i).getSelectedItem().equals(info.getCamId()))
+                        c.getCheckControl(i).setSelected(false);
+                    
+                    c.getComboControl(i).removeItem(info.getCamId());
+                }
+            }
         } else if (idx == -1 && status == DiscoveryChangeStatus.ANADIDO) {
-            // TODO: Actualizar combox
-            if (!this.cams.containsKey(info.getSala()))
+            // TODO: Enviar notificación
+            System.out.println("Dentro cámara: " + info.getCamId());
+            if (!this.cams.containsKey(info.getSala())) {
                 this.cams.put(info.getSala(), new ArrayList<String>());
+                for (TabComponents c : this.tabComp)
+                    c.getComboRoom().addItem(info.getSala());
+            }
+            
             this.cams.get(info.getSala()).add(info.getCamId());
+            for (TabComponents c : this.tabComp) {
+                boolean thisRoom = c.getComboRoom().getSelectedItem() == info.getSala();
+                for (int i = 0; i < c.getControlsNum() && thisRoom; i++) {
+                    c.getComboControl(i).addItem(info.getCamId());
+                }
+            }
         }
     }
 
@@ -180,7 +214,15 @@ public class VerCamaras extends javax.swing.JFrame {
         con.weighty = 0;
         panel.add(label, con);
         
-        JComboBox combo = new JComboBox(new String[] { "Desactivar" });
+        final JComboBox combo = new JComboBox(new String[] { "Desactivar" });
+        for (String room : this.cams.keySet())
+            combo.addItem(room);
+        combo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                onComboRoomChanged(combo);
+            }
+        });
         con.gridx = 1;
         con.gridy = 0;
         con.gridwidth  = 1;
@@ -237,6 +279,7 @@ public class VerCamaras extends javax.swing.JFrame {
         panel.add(btnEliminar, con);
         
         // Cámaras
+        TabComponents tabComp = new TabComponents(combo);
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
                 int idCam = x + y * 2;
@@ -300,19 +343,90 @@ public class VerCamaras extends javax.swing.JFrame {
                 comboControl.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                 panelControl.add(comboControl);
                 
+                PanelEnabled(panelControl, false);
                 panel.add(panelControl, con);
+                tabComp.addControl(panelControl, checkControl, comboControl);
             }
         }
         
         roomTabs.addTab("Desactivar", panel);
+        this.tabComp.add(tabComp);
+    }
+    
+    private static void PanelEnabled(JPanel panel, boolean enabled) {
+        panel.setEnabled(enabled);
+        for (Component c : panel.getComponents())
+            c.setEnabled(enabled);
     }
     
     private void removeTab() {
         int currTab = roomTabs.getSelectedIndex();
         roomTabs.removeTabAt(currTab);
+        this.tabComp.remove(currTab);
+    }
+    
+    private void onComboRoomChanged(JComboBox combo) {
+        boolean activate = combo.getSelectedIndex() > 0;
+        
+        // Busca los componentes correspondientes a esa pestaña
+        TabComponents currTab = null;
+        for (TabComponents c : this.tabComp)
+            if (c.getComboRoom() == combo)
+                currTab = c;
+        
+        if (currTab == null)
+            return;
+        
+        // Activa o deshabilita los paneles
+        for (int i = 0; i < currTab.getControlsNum(); i++)
+            PanelEnabled(currTab.getPanelControl(i), activate);
+        
+        // Actualiza los combobox
+        for (int i = 0; i < currTab.getControlsNum() && activate; i++) {
+            currTab.getComboControl(i).removeAllItems();
+            for (String camId : this.cams.get((String)combo.getSelectedItem()))
+                currTab.getComboControl(i).addItem(camId);
+        }
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane roomTabs;
     // End of variables declaration//GEN-END:variables
+
+    private static class TabComponents {
+        private final JComboBox comboRoom;
+        private final List<JPanel> panelsControl = new ArrayList<>();
+        private final List<JCheckBox> checksControl = new ArrayList<>();
+        private final List<JComboBox> combosControl = new ArrayList<>();
+        
+        public TabComponents(JComboBox comboRoom) {
+            this.comboRoom = comboRoom;
+        }
+        
+        public void addControl(JPanel panel, JCheckBox check, JComboBox combo) {
+            this.panelsControl.add(panel);
+            this.checksControl.add(check);
+            this.combosControl.add(combo);
+        }
+        
+        public JComboBox getComboRoom() {
+            return this.comboRoom;
+        }
+        
+        public int getControlsNum() {
+            return this.panelsControl.size();
+        }
+        
+        public JPanel getPanelControl(int i) {
+            return this.panelsControl.get(i);
+        }
+        
+        public JCheckBox getCheckControl(int i) {
+            return this.checksControl.get(i);
+        }
+        
+        public JComboBox getComboControl(int i) {
+            return this.combosControl.get(i);
+        }
+    }
 }
