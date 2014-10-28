@@ -138,9 +138,9 @@ public class VerCamaras extends javax.swing.JFrame {
             
             // Actualiza los combobox de todas las pestañas
             for (TabComponents c : this.tabComp) {
-                boolean thisRoom = c.getComboRoom().getSelectedIndex() == idx + 1;
+                boolean thisRoom = c.getComboRoom().getSelectedItem() == info.getSala();
                 if (removeRoom)
-                    c.getComboRoom().removeItemAt(idx + 1);
+                    c.getComboRoom().removeItem(info.getSala());
                 
                 // Actualiza los controles de cámaras
                 for (int i = 0; i < c.getControlsNum() && thisRoom; i++) {
@@ -302,8 +302,8 @@ public class VerCamaras extends javax.swing.JFrame {
         TabComponents comps = new TabComponents(combo);
         LectorCamara[] lectoresCam = new LectorCamara[4];
         this.lectores.add(lectoresCam);
-        for (int x = 0; x < 2; x++) {
-            for (int y = 0; y < 2; y++) {
+        for (int y = 0; y < 2; y++) {
+            for (int x = 0; x < 2; x++) {
                 final int idCam = x + y * 2;
                 
                 // Crea el panel de vídeo
@@ -380,7 +380,7 @@ public class VerCamaras extends javax.swing.JFrame {
                 comboControl.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent ae) {
-                        onComboControlChanged(combo, tabIdx, idCam);
+                        onComboControlChanged(comboControl, tabIdx, idCam);
                     }
                 });
                 panelControl.add(comboControl);
@@ -413,6 +413,7 @@ public class VerCamaras extends javax.swing.JFrame {
     
     private void onComboRoomChanged(JComboBox combo, int tabIdx) {
         boolean activate = combo.getSelectedIndex() > 0;
+        this.roomTabs.setTitleAt(tabIdx, (String)combo.getSelectedItem());
         
         // Busca los componentes correspondientes a esa pestaña
         TabComponents currTab = this.tabComp.get(tabIdx);
@@ -420,12 +421,18 @@ public class VerCamaras extends javax.swing.JFrame {
         // Activa o deshabilita los paneles
         for (int i = 0; i < currTab.getControlsNum(); i++)
             PanelEnabled(currTab.getPanelControl(i), activate);
-        
+                
         // Actualiza los combobox
-        for (int i = 0; i < currTab.getControlsNum() && activate; i++) {
+        for (int i = 0; i < currTab.getControlsNum(); i++) {
+            // Primero deshabilito todo
             currTab.getComboControl(i).removeAllItems();
-            for (String camId : this.cams.get((String)combo.getSelectedItem()))
-                currTab.getComboControl(i).addItem(camId);
+            currTab.getCheckControl(i).setSelected(false);
+            
+            // Añado los nuevos elementos si no es "Deshabilitar"
+            if (activate) {
+                for (String camId : this.cams.get((String)combo.getSelectedItem()))
+                    currTab.getComboControl(i).addItem(camId);
+            }
         }
     }
     
@@ -443,17 +450,19 @@ public class VerCamaras extends javax.swing.JFrame {
             lector.getVideoComponent().setVisible(true);
             lector.cambioParametros(new String[] { "'" + combo.getSelectedItem() + "'" });
             lector.reanudar();
-            this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         } else {
             lector.getVideoComponent().setVisible(false);
             lector.suspender();
-            this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         }
+        
+        this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
     }
     
     private void onComboControlChanged(JComboBox combo, int tabIdx, int ctlIdx) {
+        System.out.println(tabIdx + "|" + ctlIdx);
         if (!this.tabComp.get(tabIdx).getCheckControl(ctlIdx).isSelected())
             return;
+        System.out.println(tabIdx + "||" + ctlIdx);
         
         LectorCamara lector = this.lectores.get(tabIdx)[ctlIdx];
         lector.cambioParametros(new String[] { "'" + combo.getSelectedItem() + "'" });
