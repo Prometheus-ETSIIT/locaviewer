@@ -320,8 +320,10 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     private void updateNumSubs(final DiscoveryData data, final DiscoveryChangeStatus status) {
         //System.out.println("[" + info.getCamId() + "]: " + data.getTopicName() +
         //        "|" + this.topicName);
+        //System.out.print("[" + info.getCamId() + "]: ");
         //for (DiscoveryData d : this.dataSubs)
         //    System.out.print(d.getHandle());
+        //System.out.println();
 
         // Compara si coincide el tópico.
         if (!this.topicName.equals(data.getTopicName()))
@@ -332,28 +334,33 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         String camId = (String)data.getFilterParams().get(0);
         camId = camId.replaceAll("'", "");
         
-        //System.out.println("[" + info.getCamId() + "]: " + camId + "|" +
-        //        this.info.getCamId());
+        //System.out.println("[" + info.getCamId() + "]: " + camId);
+        //System.out.println("[" + info.getCamId() + "]: " + status.name());
+        
+        // Busca si ya está en la lista
+        int idx = -1;
+        for (int i = 0; i < this.dataSubs.size() && idx == -1; i++)
+            if (this.dataSubs.get(i).getHandle().equals(data.getHandle()))
+                idx = i;
         
         // Comprueba que coincida el filtro.
         if (!this.info.getCamId().equals(camId)) {
             // Si no coinciden pero estaba en la lista, es porque se ha cambiado
             // el filtro, elimina
-            for (int i = 0; i < this.dataSubs.size(); i++) {
-                if (this.dataSubs.get(i).getHandle().equals(data.getHandle())) {
-                    //System.out.println(this.dataSubs.get(i).getHandle() + "==" + data.getHandle());
-                    this.dataSubs.remove(i);
-                    break;
-                }
-            }
+            if (idx != -1)
+                this.dataSubs.remove(idx);
         } else if (status == DiscoveryChangeStatus.ANADIDO ||
                 status == DiscoveryChangeStatus.CAMBIADO) {
-            this.dataSubs.add(data);
+            // Añade sólo si no estaba en la lista ya
+            if (idx == -1)
+                this.dataSubs.add(data);
         } else if (status == DiscoveryChangeStatus.ELIMINADO) {
-            this.dataSubs.remove(data);
+            if (idx != -1)
+                this.dataSubs.remove(idx);
         }
         
         //System.out.println(data.getHandle());
         //System.out.println("[" + info.getCamId() + "]: " + this.dataSubs.size());
+        //System.out.println();
     }
 }
