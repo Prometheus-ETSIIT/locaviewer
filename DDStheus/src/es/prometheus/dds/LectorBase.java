@@ -218,6 +218,14 @@ public abstract class LectorBase {
         @Override
         public void run() {
             while (!this.terminar) {
+                // Si estamos paramos, omitimos los datos recibidos.
+                while (!this.procesar) {
+                    synchronized (this) {
+                        try { this.wait(); }
+                        catch (InterruptedException ex) { }
+                    }
+                }
+                
                 // Esperamos a obtener la siguiente muestra que cumpla la condición
                 ConditionSeq activadas = new ConditionSeq();
                 try { this.waitset.wait(activadas, duracion); }
@@ -225,10 +233,6 @@ public abstract class LectorBase {
                 
                 // Compruebo que se haya disparado por la condición que queremos
                 if ((this.reader.get_status_changes() & this.mask) == 0)
-                    continue;
-
-                // Si estamos paramos, omitimos los datos recibidos.
-                if (!this.procesar)
                     continue;
                 
                 // Procesamos los datos recibidos.
@@ -282,22 +286,26 @@ public abstract class LectorBase {
         /**
          * Deja de procesar los datos que recibe.
          */
-        public void suspender() {
+        public synchronized void suspender() {
             this.procesar = false;
+            this.notifyAll();
         }
         
         /**
          * Comienza a procesar los datos recibidos de nuevo.
          */
-        public void reanudar() {
+        public synchronized void reanudar() {
             this.procesar = true;
+            this.notifyAll();
         }
         
         /**
          * Termina la ejecución en la próxima iteración.
          */
-        public void terminar() {
+        public synchronized void terminar() {
             this.terminar = true;
+            this.procesar = true;
+            this.notifyAll();
         }
         
         /**
