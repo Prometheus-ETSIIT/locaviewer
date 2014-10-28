@@ -406,8 +406,10 @@ public class VerCamaras extends javax.swing.JFrame {
         roomTabs.removeTabAt(currTab);
         this.tabComp.remove(currTab);
         
-        for (LectorCamara lector : this.lectores.get(currTab))
+        for (LectorCamara lector : this.lectores.get(currTab)) {
+            lector.cambioParametros(new String[] { "'-1'" });
             lector.dispose();
+        }
         this.lectores.remove(currTab);
     }
     
@@ -452,23 +454,25 @@ public class VerCamaras extends javax.swing.JFrame {
             lector.reanudar();
         } else {
             lector.getVideoComponent().setVisible(false);
+            lector.cambioParametros(new String[] { "'-1'" });
             lector.suspender();
         }
         
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
+        this.roomTabs.revalidate();
     }
     
     private void onComboControlChanged(JComboBox combo, int tabIdx, int ctlIdx) {
-        System.out.println(tabIdx + "|" + ctlIdx);
         if (!this.tabComp.get(tabIdx).getCheckControl(ctlIdx).isSelected())
             return;
-        System.out.println(tabIdx + "||" + ctlIdx);
         
         LectorCamara lector = this.lectores.get(tabIdx)[ctlIdx];
         lector.cambioParametros(new String[] { "'" + combo.getSelectedItem() + "'" });
         lector.getVideoComponent().setVisible(true);
         lector.reanudar();
+        
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
+        this.roomTabs.revalidate();
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
