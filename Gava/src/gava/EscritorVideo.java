@@ -216,6 +216,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         // Codec VP8 (WebM)
         Element codec = ElementFactory.make("vp8enc", null);
 	codec.set("threads", 5);
+        codec.set("max-keyframe-distance", 30);
 
         // Caps del nuevo formato
         Element capsDst = ElementFactory.make("capsfilter", null);
