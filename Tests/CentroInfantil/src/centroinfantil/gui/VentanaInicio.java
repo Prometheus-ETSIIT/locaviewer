@@ -38,6 +38,7 @@ public class VentanaInicio extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Gestión Centro Infantil");
         setBackground(new java.awt.Color(254, 254, 254));
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));

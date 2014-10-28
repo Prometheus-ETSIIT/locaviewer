@@ -26,6 +26,7 @@ import es.prometheus.dds.DiscoveryData;
 import es.prometheus.dds.DiscoveryListener;
 import es.prometheus.dds.TopicoControl;
 import es.prometheus.dds.TopicoControlFactoria;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -327,7 +328,8 @@ public class VerCamaras extends javax.swing.JFrame {
                 // Crea el lector
                 VideoComponent videoComp = new VideoComponent();
                 videoComp.setVisible(false);
-                panelVideo.add(videoComp);
+                panelVideo.setLayout(new BorderLayout());
+                panelVideo.add(videoComp, BorderLayout.CENTER);
                 lectoresCam[idCam] = new LectorCamara(controlCamaras, "'-1'", videoComp);
                 lectoresCam[idCam].suspender();
                 lectoresCam[idCam].iniciar();
@@ -460,6 +462,7 @@ public class VerCamaras extends javax.swing.JFrame {
         
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         this.roomTabs.revalidate();
+        this.revalidate();
     }
     
     private void onComboControlChanged(JComboBox combo, int tabIdx, int ctlIdx) {
@@ -473,6 +476,7 @@ public class VerCamaras extends javax.swing.JFrame {
         
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         this.roomTabs.revalidate();
+        this.revalidate();
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
