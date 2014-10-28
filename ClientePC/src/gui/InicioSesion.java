@@ -21,6 +21,20 @@ package gui;
 import control.DatosNino;
 import java.awt.Color;
 import java.awt.Toolkit;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.Socket;
+import java.security.Security;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.swing.JOptionPane;
 
 /**
  * Formulario de inicio de sesión.
@@ -126,11 +140,138 @@ public class InicioSesion extends javax.swing.JFrame {
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
         // TODO: Inicio de sesión en servidor
-        DatosNino[] datos = new DatosNino[1];
-        datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios Sánchez, Beni");
+        ArrayList<DatosNino> datos = new ArrayList<>();
+        //DatosNino[] datos = new DatosNino[1];
+        //datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios Sánchez, Beni");
         //datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
-        this.onSuccessLogin(datos);
+        
+        String pw = new String(txtPassword.getPassword());
+        String usuario = txtUser.getText();
+        
+        String [] datosNuevos;
+        Socket socket = creaSocketSeguro("localhost", 6556);
+        
+        System.out.println("ME CONECTO");
+        /*
+        InputStream inStream = null;
+        try {
+            DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
+            inStream = socket.getInputStream();
+            DataInputStream reader = new DataInputStream(inStream);
+
+  
+            System.out.println("ME VOY A ESCRIBIR");
+            writer.writeUTF("autentificar padre "+usuario+" "+pw);
+             System.out.println("VOY A LEER");
+            String respuesta = reader.readUTF();
+            
+            if(respuesta.equals("No autentificado")){
+                JOptionPane.showMessageDialog(null, "Hubo algún problema en la autentificación");
+            }
+            else{
+                
+                do{
+                    datosNuevos = respuesta.split(" ");
+                    datos.add(DatosNino.FromSummary(datosNuevos[0]+datosNuevos[2]+datosNuevos[2]));
+                    
+                    respuesta = reader.readUTF();
+                }while(!respuesta.equals("fin"));
+            }
+
+           
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+*/
+   
+            InputStreamReader leer = new InputStreamReader(System.in);
+            BufferedReader buff = new BufferedReader(leer);
+            
+            DataInputStream reader = null;
+            
+            DataOutputStream writer = null;
+        try {
+            writer = new DataOutputStream(socket.getOutputStream());
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            InputStream inStream;
+        try {
+            inStream = socket.getInputStream();
+            reader = new DataInputStream(inStream);
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        try {
+            writer.writeUTF("autentificar padre "+usuario+" "+pw);
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+                String respuesta = null;
+              
+ 
+        try {
+            respuesta = reader.readUTF();
+            
+            while(!respuesta.equals("fin")){
+                String [] comando = respuesta.split(" ");
+                System.out.println(comando[0]+","+comando[1]+","+comando[2]);
+                datos.add(DatosNino.FromSummary(comando[0]+","+comando[1]+","+comando[2]));
+                respuesta = reader.readUTF();
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        try {
+            socket.close();
+            
+        } catch (IOException ex) {
+            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      
+        System.out.println("HOLA VAMOS");
+        
+        DatosNino[] data = new DatosNino[datos.size()];
+        for(int i=0;i<datos.size();i++){
+            data[i] = datos.get(i);
+        }
+        
+        
+        System.out.println(data[0].getApodo());
+        
+        
+        
+        this.onSuccessLogin(data);
+        
+        
     }//GEN-LAST:event_btnConnectActionPerformed
+    
+    private static Socket creaSocketSeguro(final String host, final int puerto) {
+        SSLSocket socket = null;
+        
+        try {
+            // Le indicamos de qué anillo obtener las claves públicas fiables
+            // de autoridades de certificación:
+            System.setProperty(
+                    "javax.net.ssl.trustStore",
+                    "cacerts.jks"
+            );
+            
+          
+            Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+            SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+            socket = (SSLSocket)factory.createSocket(host, puerto);
+
+            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+        } catch (IOException ex) {
+            System.out.println("ERROR: " + ex.getMessage());
+        }
+        
+        return socket;
+    }
+    
     
     /**
      * Se llama por la subventana de inicio de sesión cuando se realiza con
