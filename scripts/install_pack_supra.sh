@@ -4,7 +4,7 @@
 # Configura la obtención de datos de los sensores
 sudo cp locaviewer_blue /etc/init.d/
 sudo chmod +x /etc/init.d/locaviewer_blue
-sudo update-rc.d locaviewer_blue.sh defaults
+sudo update-rc.d locaviewer_blue defaults
 
 # Configura la publicación de los datos de los sensores
 sudo cp locaviewer_sensors /etc/init.d/
