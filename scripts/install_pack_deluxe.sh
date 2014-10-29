@@ -2,16 +2,16 @@
 # Configura para publicación de cámara y sensor
 
 # Configura la obtención de datos de los sensores
-sudo cp locaviewer_blue.sh /etc/init.d/
-sudo chmod +x /etc/init.d/locaviewer_blue.sh
-sudo update-rc.d locaviewer_blue.sh defaults
+sudo cp locaviewer_blue /etc/init.d/
+sudo chmod +x /etc/init.d/locaviewer_blue
+sudo update-rc.d locaviewer_blue defaults
 
 # Configura la publicación de los datos de los sensores
-sudo cp locaviewer_sensors.sh /etc/init.d/
-sudo chmod +x /etc/init.d/locaviewer_sensors.sh
-sudo update-rc.d locaviewer_sensors.sh defaults
+sudo cp locaviewer_sensors /etc/init.d/
+sudo chmod +x /etc/init.d/locaviewer_sensors
+sudo update-rc.d locaviewer_sensors defaults
 
 # Configura la publicación de vídeo
-sudo cp locaviewer_cams.sh /etc/init.d/
-sudo chmod +x /etc/init.d/locaviewer_cams.sh
-sudo update-rc.d locaviewer_cams.sh defaults
+sudo cp locaviewer_cams /etc/init.d/
+sudo chmod +x /etc/init.d/locaviewer_cams
+sudo update-rc.d locaviewer_cams defaults
