@@ -139,54 +139,15 @@ public class InicioSesion extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
-        // TODO: Inicio de sesión en servidor
+
         ArrayList<DatosNino> datos = new ArrayList<>();
-        //DatosNino[] datos = new DatosNino[1];
-        //datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios Sánchez, Beni");
-        //datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
-        
+
         String pw = new String(txtPassword.getPassword());
         String usuario = txtUser.getText();
         
-        String [] datosNuevos;
-        Socket socket = creaSocketSeguro("localhost", 6556);
+        Socket socket = creaSocketSeguro("37.252.96.104", 6556);
         
-        System.out.println("ME CONECTO");
-        /*
-        InputStream inStream = null;
-        try {
-            DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
-            inStream = socket.getInputStream();
-            DataInputStream reader = new DataInputStream(inStream);
-
-  
-            System.out.println("ME VOY A ESCRIBIR");
-            writer.writeUTF("autentificar padre "+usuario+" "+pw);
-             System.out.println("VOY A LEER");
-            String respuesta = reader.readUTF();
-            
-            if(respuesta.equals("No autentificado")){
-                JOptionPane.showMessageDialog(null, "Hubo algún problema en la autentificación");
-            }
-            else{
-                
-                do{
-                    datosNuevos = respuesta.split(" ");
-                    datos.add(DatosNino.FromSummary(datosNuevos[0]+datosNuevos[2]+datosNuevos[2]));
-                    
-                    respuesta = reader.readUTF();
-                }while(!respuesta.equals("fin"));
-            }
-
-           
-        } catch (IOException ex) {
-            Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
-        }
-*/
-   
-            InputStreamReader leer = new InputStreamReader(System.in);
-            BufferedReader buff = new BufferedReader(leer);
-            
+       
             DataInputStream reader = null;
             
             DataOutputStream writer = null;
@@ -204,11 +165,13 @@ public class InicioSesion extends javax.swing.JFrame {
         }
             
         try {
-            writer.writeUTF("autentificar padre "+usuario+" "+pw);
+            writer.writeUTF("autentificar padre "+usuario+" "+pw+" prometheus");
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-                String respuesta = null;
+       
+        
+        String respuesta = null;
               
  
         try {
@@ -231,23 +194,22 @@ public class InicioSesion extends javax.swing.JFrame {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
       
-        System.out.println("HOLA VAMOS");
         
         DatosNino[] data = new DatosNino[datos.size()];
         for(int i=0;i<datos.size();i++){
             data[i] = datos.get(i);
         }
         
-        
-        System.out.println(data[0].getApodo());
-        
-        
-        
-        this.onSuccessLogin(data);
-        
-        
+
+        if(data.length==0){
+            JOptionPane.showMessageDialog(null,"Los datos no están bien");
+        }
+        else{
+            this.onSuccessLogin(data);
+        }
     }//GEN-LAST:event_btnConnectActionPerformed
     
+       
     private static Socket creaSocketSeguro(final String host, final int puerto) {
         SSLSocket socket = null;
         
@@ -256,7 +218,7 @@ public class InicioSesion extends javax.swing.JFrame {
             // de autoridades de certificación:
             System.setProperty(
                     "javax.net.ssl.trustStore",
-                    "cacerts.jks"
+                    "./cert/cacerts.jks"
             );
             
           
@@ -271,6 +233,7 @@ public class InicioSesion extends javax.swing.JFrame {
         
         return socket;
     }
+    
     
     
     /**
