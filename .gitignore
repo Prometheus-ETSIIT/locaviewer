@@ -15,9 +15,9 @@
 /Tests/FakeChild/build/
 /Tests/FakeChild/dist/
 
-/Tests/CentroInfantil/nbproject/private/
-/Tests/CentroInfantil/build/
-/Tests/CentroInfantil/dist/
+/CentroInfantil/nbproject/private/
+/CentroInfantil/build/
+/CentroInfantil/dist/
 
 /Gava/nbproject/private/
 /Gava/build/
