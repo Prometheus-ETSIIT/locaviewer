@@ -2,6 +2,7 @@
 cd build/classes
 cp ../../src/control/USER_QOS_PROFILES.xml ./
 cp ../../../rti_license.dat ./
+cp ../../src/cert/* ./
 
 if [ $IS_RASPBERRY_PI ]; then
   export RTI_ARCH=armv6vfphLinux3.xgcc4.7.2jdk

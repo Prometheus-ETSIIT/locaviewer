@@ -103,7 +103,7 @@ public class ServidorLauncher extends Thread {
         for (DiscoveryData d : this.topico.getParticipanteControl().getDiscoveryWriterData())
             onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
         
-        if (this.pubList.first() < this.prioridad)
+        if (!this.pubList.isEmpty() && this.pubList.first() < this.prioridad)
             this.servidor.suspender();
         else
             this.servidor.reanudar();
@@ -137,8 +137,10 @@ public class ServidorLauncher extends Thread {
             return;
         
         // En los publicadores de nuestra sala
-        String infoSala = userData.split("|")[0];
-        int infoPrio = Integer.parseInt(userData.split("|")[1]);
+        String[] fields = userData.split("#");
+        System.out.printf("[ServidorLauncher] %s -> %s\n", userData, status.name());
+        String infoSala = fields[0];
+        int infoPrio = Integer.parseInt(fields[1]);
         if (!infoSala.equals(this.sala))
             return;
         
@@ -165,7 +167,7 @@ public class ServidorLauncher extends Thread {
         
         @Override
         public void run() {
-            System.out.println("Parando. . .");
+            System.out.println("[ServidorLauncher] Parando. . .");
             this.servidor.dispose();
             try { this.servidor.join(5000); }
             catch (InterruptedException e) { }

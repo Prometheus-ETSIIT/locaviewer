@@ -59,6 +59,7 @@ public class Servidor extends Thread {
     private TopicoControl controlSensor;
     private LectorBase lectorSensor;
     
+    private boolean pausado;
     private boolean triangulando;
     
     public Servidor(final String sala, double ancho, double largo, int prio) {
@@ -67,6 +68,7 @@ public class Servidor extends Thread {
         this.largo = largo;
         this.prioridad = prio;
         this.triangulando = false;
+        this.pausado = false;
     }
         
     /**
@@ -119,22 +121,34 @@ public class Servidor extends Thread {
     }
     
     public synchronized void suspender() {
+        if (this.pausado)
+            return;
+        
+        this.pausado = true;
         while (this.lectorSensor == null) {
             try { this.wait(); }
             catch (InterruptedException ex) { }
         }
         
-        this.lectorSensor.suspender();
+        if (this.pausado) {
+            System.out.println("[Servidor] Suspendiendo");
+            this.lectorSensor.suspender();
+        }
     }
     
     public void reanudar() {
+        if (!this.pausado)
+            return;
+        
+        System.out.println("[Servidor] Reanudando");
         this.lectorSensor.reanudar();
+        this.pausado = false;
     }
     
     /**
      * Inicializa la entidades de DDS.
      */
-    private void iniciaDds() {
+    private synchronized void iniciaDds() {
         // Inicia las entidades del tópico de sensores:
         // Recopilar todos los datos de una sala (filtrado por sala).
         this.controlSensor = TopicoControlFactoria.crearControlDinamico(
@@ -153,7 +167,7 @@ public class Servidor extends Thread {
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
                 "MisParticipantes::ParticipanteServidor",
                 "ChildDataTopic");
-        String user_data  = this.sala + "|" + this.prioridad;
+        String user_data  = this.sala + "#" + this.prioridad;
         this.escritorNino = new Escritor(this.controlNino, user_data.getBytes());
         this.escritorData = this.escritorNino.creaDatos();
         this.lectorSensor.iniciar();
@@ -236,7 +250,7 @@ public class Servidor extends Thread {
         }
         
         this.triangulando = true;
-        System.out.println("¡Dato de sensor!");
+        System.out.println("[Servidor] ¡Dato de sensor!");
         DatosSensor dato = DatosSensor.FromDds(sample);
         
         // Si el dato es de algún niño que no tiene suscriptor interesado, paso
@@ -248,7 +262,7 @@ public class Servidor extends Thread {
         
         // Si ya tenemos datos del niño...
         if (this.datosNinos.containsKey(dato.getIDNino())) {
-            System.out.println("\t" + dato.getID());
+            System.out.println("[Servidor] Añadiendo datos: " + dato.getID());
             // Busco si ya tenemos un dato de este sensor, y lo elimino
             ArrayList<DatosSensor> datosSensores = this.datosNinos.get(dato.getIDNino());
             for (int k = 0; k < datosSensores.size(); k++)
@@ -262,7 +276,7 @@ public class Servidor extends Thread {
             long date = new Date().getTime();
             for (int j = 0; j < datosSensores.size(); j++) {
                 if (date - datosSensores.get(j).getCreacion() > MAX_TIME) {
-                    System.out.println("\tExpirado: " + dato.getID());
+                    System.out.println("[Servidor] Dato expirado: " + dato.getID());
                     datosSensores.remove(j);
                     j--;
                 }
@@ -271,7 +285,7 @@ public class Servidor extends Thread {
             // Con más de 3 datos se puede triangular
             if (datosSensores.size() >= 4) {
                 // Triangula
-                System.out.print("Triangulando: ");
+                System.out.print("[Servidor] Triangulando: ");
                 String camId = this.triangulacion.triangular(datosSensores);
                 System.out.println(camId);
                 if (camId == null) {
@@ -310,7 +324,7 @@ public class Servidor extends Thread {
             }
         // No teníamos datos de este niño
         } else {
-            System.out.println("Nuevos datos: " + dato.getIDNino());
+            System.out.println("[Servidor] Nuevos datos: " + dato.getIDNino());
             ArrayList<DatosSensor> nuevo = new ArrayList<>();
             nuevo.add(dato);
             this.datosNinos.put(dato.getIDNino(), nuevo);
@@ -362,7 +376,7 @@ public class Servidor extends Thread {
             }
         }
         
-        System.out.println("Suscriptores: " + this.ninoSubs.size());
+        System.out.println("[Servidor] Suscriptores: " + this.ninoSubs.size());
         for (DiscoveryData d : this.ninoSubs)
             System.out.println("\t" + d.getFilterParams().get(0));
     }
@@ -379,7 +393,7 @@ public class Servidor extends Thread {
         
         @Override
         public void run() {
-            System.out.println("Parando. . .");
+            System.out.println("[Servidor] Parando. . .");
             this.servidor.dispose();
             try { this.servidor.join(5000); }
             catch (InterruptedException e) { }
