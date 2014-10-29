@@ -139,11 +139,11 @@ public class InicioSesion extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
-        // TODO: Inicio de sesión en servidor
+        // TODO: Inicio de sesi��n en servidor
         ArrayList<DatosNino> datos = new ArrayList<>();
         //DatosNino[] datos = new DatosNino[1];
-        //datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios Sánchez, Beni");
-        //datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios Sánchez, Alber");
+        //datos[0] = DatosNino.FromSummary("20:14:04:11:34:37,Benito Palacios S��nchez, Beni");
+        //datos[1] = DatosNino.FromSummary("42049184,Alberto Palacios S��nchez, Alber");
         
         String pw = new String(txtPassword.getPassword());
         String usuario = txtUser.getText();
@@ -151,7 +151,7 @@ public class InicioSesion extends javax.swing.JFrame {
         String [] datosNuevos;
         Socket socket = creaSocketSeguro("localhost", 6556);
         
-        System.out.println("ME CONECTO");
+       
         /*
         InputStream inStream = null;
         try {
@@ -166,7 +166,7 @@ public class InicioSesion extends javax.swing.JFrame {
             String respuesta = reader.readUTF();
             
             if(respuesta.equals("No autentificado")){
-                JOptionPane.showMessageDialog(null, "Hubo algún problema en la autentificación");
+                JOptionPane.showMessageDialog(null, "Hubo alg��n problema en la autentificaci��n");
             }
             else{
                 
@@ -184,8 +184,6 @@ public class InicioSesion extends javax.swing.JFrame {
         }
 */
    
-            InputStreamReader leer = new InputStreamReader(System.in);
-            BufferedReader buff = new BufferedReader(leer);
             
             DataInputStream reader = null;
             
@@ -204,11 +202,13 @@ public class InicioSesion extends javax.swing.JFrame {
         }
             
         try {
-            writer.writeUTF("autentificar padre "+usuario+" "+pw);
+            writer.writeUTF("autentificar padre "+usuario+" "+pw+" prometheus");
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-                String respuesta = null;
+       
+        
+        String respuesta = null;
               
  
         try {
@@ -242,12 +242,16 @@ public class InicioSesion extends javax.swing.JFrame {
         System.out.println(data[0].getApodo());
         
         
+     
+        
+        
+        
         
         this.onSuccessLogin(data);
         
-        
     }//GEN-LAST:event_btnConnectActionPerformed
     
+       
     private static Socket creaSocketSeguro(final String host, final int puerto) {
         SSLSocket socket = null;
         
@@ -256,7 +260,7 @@ public class InicioSesion extends javax.swing.JFrame {
             // de autoridades de certificación:
             System.setProperty(
                     "javax.net.ssl.trustStore",
-                    "cacerts.jks"
+                    "./cert/cacerts.jks"
             );
             
           
@@ -271,6 +275,7 @@ public class InicioSesion extends javax.swing.JFrame {
         
         return socket;
     }
+    
     
     
     /**
