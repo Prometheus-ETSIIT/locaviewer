@@ -35,6 +35,7 @@ class BluezInquiry:
 
     def __init__(self, dev_id, mac, port):
         self.addr_nino = "20:14"  # El prefijo de la MAC de la pulsera.
+	self.addr_nino1 = "00:14"
         self.dev_id = dev_id      # El número del bluetooth (si hay más de uno)
         self.mac = mac
         self.inquiring = False
@@ -153,7 +154,7 @@ class BluezInquiry:
                 # - 1106.35595941215
                 # print r
                 rssi = float(rssi)
-                if addr[0:5] == self.addr_nino:
+                if addr[0:5] == self.addr_nino or addr[0:5] == self.addr_nino1:
                     # Organiza los valores recividos,eliminar errores,
                     # y envia un valor RSSI
                     self.procesamiento(addr, rssi)
