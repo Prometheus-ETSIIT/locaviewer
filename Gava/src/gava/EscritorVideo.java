@@ -215,14 +215,17 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     private Element[] getEncVp8() {
         // Codec VP8 (WebM)
         Element codec = ElementFactory.make("vp8enc", null);
+	//codec.set("bitrate", 4096*1024);
 	codec.set("threads", 5);
-        codec.set("max-keyframe-distance", 30);
+        codec.set("max-keyframe-distance", 20);
+        codec.set("speed", 5);
+        //codec.set("lag-in-frames", 4);
 
         // Caps del nuevo formato
         Element capsDst = ElementFactory.make("capsfilter", null);
         capsDst.setCaps(Caps.fromString("video/x-vp8 profile=(string)2"));
         
-        return new Element[] { codec, capsDst };
+        return new Element[] { codec };
     }
     
     /**
