@@ -50,6 +50,7 @@ public class Servidor extends Thread {
     private final String sala;
     private final double ancho;
     private final double largo;
+    private final int prioridad;
     
     private TriangulacionOctave triangulacion;
     private TopicoControl controlNino;
@@ -60,10 +61,11 @@ public class Servidor extends Thread {
     
     private boolean triangulando;
     
-    public Servidor(final String sala, double ancho, double largo) {
+    public Servidor(final String sala, double ancho, double largo, int prio) {
         this.sala  = sala;
         this.ancho = ancho;
         this.largo = largo;
+        this.prioridad = prio;
         this.triangulando = false;
     }
         
@@ -73,15 +75,17 @@ public class Servidor extends Thread {
      * @param args Uno: el nombre de la sala.
      * Dos: Ancho de la sala.
      * Tres: Largo de la sala.
+     * Cuatro: Prioridad del dispositivo.
      */
     public static void main(String[] args) {
-        if (args.length != 3)
+        if (args.length != 4)
             return;
         
         // Creamos el comunicador de sensor
-        double ancho = Double.parseDouble(args[1]);
-        double largo = Double.parseDouble(args[2]);
-        Servidor servidor = new Servidor(args[0], ancho, largo);
+        double ancho  = Double.parseDouble(args[1]);
+        double largo  = Double.parseDouble(args[2]);
+        int prioridad = Integer.parseInt(args[3]);
+        Servidor servidor = new Servidor(args[0], ancho, largo, prioridad);
         servidor.start();
         
         // Creamos una hebra para salidas forzosas (Control+C).
@@ -114,6 +118,19 @@ public class Servidor extends Thread {
         this.triangulacion.close();
     }
     
+    public synchronized void suspender() {
+        while (this.lectorSensor == null) {
+            try { this.wait(); }
+            catch (InterruptedException ex) { }
+        }
+        
+        this.lectorSensor.suspender();
+    }
+    
+    public void reanudar() {
+        this.lectorSensor.reanudar();
+    }
+    
     /**
      * Inicializa la entidades de DDS.
      */
@@ -136,7 +153,8 @@ public class Servidor extends Thread {
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
                 "MisParticipantes::ParticipanteServidor",
                 "ChildDataTopic");
-        this.escritorNino = new Escritor(this.controlNino);
+        String user_data  = this.sala + "|" + this.prioridad;
+        this.escritorNino = new Escritor(this.controlNino, user_data.getBytes());
         this.escritorData = this.escritorNino.creaDatos();
         this.lectorSensor.iniciar();
         
@@ -167,6 +185,8 @@ public class Servidor extends Thread {
                     onReaderDiscovered(ch.getData(), ch.getStatus());
             }
         });
+        
+        this.notifyAll();
     }
     
     /**

@@ -80,6 +80,18 @@
             </topic>
             
         </domain_participant>
+        
+        <!-- Participante de tópico de niños -->
+        <domain_participant name="ParticipanteLauncher" domain_ref="BibliotecaDominios::DominioLocaviewer" >
+            
+            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
+            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
+            <topic name="ChildDataTopic" register_type_ref="ChildDataType" >
+                <topic_qos base_name="qosLibrary::MyProfile"/>
+            </topic>
+            
+        </domain_participant>
+        
     </participant_library>
 
 </dds>
