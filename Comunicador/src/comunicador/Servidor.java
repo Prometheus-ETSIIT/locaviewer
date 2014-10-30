@@ -80,8 +80,10 @@ public class Servidor extends Thread {
      * Cuatro: Prioridad del dispositivo.
      */
     public static void main(String[] args) {
-        if (args.length != 4)
+        if (args.length != 4) {
+            System.err.println("[Servidor] Número de argumentos inválido.");
             return;
+        }
         
         // Creamos el comunicador de sensor
         double ancho  = Double.parseDouble(args[1]);
@@ -211,13 +213,12 @@ public class Servidor extends Thread {
      * @param status Estado del publicador descubierto.
      */
     private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
-        String userData = new String(data.getUserData().toArrayByte(null));
-        
         // Nos centramos en las cámaras
         if (!data.getTopicName().equals(VIDEO_TOPIC_NAME))
             return;
-        
+
         // En las cámaras de nuestra sala
+        String userData = new String(data.getUserData().toArrayByte(null));
         DatosCamara info = DatosCamara.FromStringSummary(userData);    
         if (!info.getSala().equals(this.sala))
             return;

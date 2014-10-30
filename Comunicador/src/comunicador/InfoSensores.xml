@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infoSensores>
     <sensor>
+        <id>00:1A:7D:DA:71:01</id>
+        <sala>Salón de Grados</sala>
+        <posX>3.0</posX>
+        <posY>0.0</posY>
+    </sensor>
+    <sensor>
         <id>00:1A:7D:DA:71:02</id>
-        <sala>Sotano</sala>
-        <posX>3.7</posX>
+        <sala>Salón de Grados</sala>
+        <posX>0.0</posX>
+        <posY>3.0</posY>
+    </sensor>
+    <sensor>
+        <id>00:1A:7D:DA:71:03</id>
+        <sala>Salón de Grados</sala>
+        <posX>3.0</posX>
+        <posY>3.0</posY>
+    </sensor>
+    <sensor>
+        <id>00:1A:7D:DA:71:04</id>
+        <sala>Salón de Grados</sala>
+        <posX>0.0</posX>
         <posY>0.0</posY>
     </sensor>
 </infoSensores>

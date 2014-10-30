@@ -58,8 +58,10 @@ public class ServidorLauncher extends Thread {
      * Cuatro: Prioridad.
      */
     public static void main(String[] args) {
-        if (args.length != 4)
+        if (args.length != 4) {
+            System.err.println("[ServidorLauncher] Número de argumentos inválido.");
             return;
+        }
         
         // Creamos el comunicador de sensor
         double ancho = Double.parseDouble(args[1]);
