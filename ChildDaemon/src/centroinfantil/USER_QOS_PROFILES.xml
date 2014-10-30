@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="/home/benito/Programas/RTI/ndds.5.1.0/qos_profiles_5.1.0/resource/schema/rti_dds_profiles.xsd" 
+     version="5.1.0">
+    
+    <!-- Qos Library -->
+    <qos_library name="qosLibrary">
+        <qos_profile name="ChildProfile" />
+    </qos_library>
+
+    <!-- Tipos de datos de tópico. Definido en 3.4 del manual. -->
+    <types>
+        <const name="MAX_ID_SIZE"     type="long" value="32" />
+        <const name="MAX_STRING_SIZE" type="long" value="32" />
+          
+        <!-- Estructura con los datos de posición del niño -->
+        <struct name="ChildData">
+            <member name="calidad" type="double" key="true" />
+            <member name="id"      type="string" key="true" stringMaxLength="MAX_ID_SIZE" />
+            <member name="camId"   type="string" stringMaxLength="MAX_ID_SIZE" />
+            <member name="sala"    type="string" />
+            <member name="salaW"   type="double" />
+            <member name="salaL"   type="double" />
+            <member name="posX"    type="double" />
+            <member name="posY"    type="double" />              
+            <member name="nombre"  type="string" stringMaxLength="MAX_STRING_SIZE" />
+            <member name="apodo"   type="string" stringMaxLength="MAX_STRING_SIZE" />
+        </struct>
+    </types>
+
+    <!-- Biblioteca de dominios -->
+    <domain_library name="BibliotecaDominios" >
+        <domain name="DominioLocaviewer" domain_id="0" />
+    </domain_library>
+
+    <!-- Biblioteca de participantes en el dominio -->
+    <participant_library name="MisParticipantes">
+        <!-- Participante -->
+        <domain_participant name="ParticipanteDaemon" domain_ref="BibliotecaDominios::DominioLocaviewer"> 
+
+            <!-- Registro el tipo de datos de niño y creo un tópico para él. -->
+            <register_type name="ChildDataType" kind="dynamicData" type_ref="ChildData" />
+            <topic name="ChildDataTopic" register_type_ref="ChildDataType" >
+                <topic_qos name="ChildData_qos" base_name="qosLibrary::ChildProfile" />
+            </topic>
+    
+        </domain_participant>
+    </participant_library>
+
+</dds>
