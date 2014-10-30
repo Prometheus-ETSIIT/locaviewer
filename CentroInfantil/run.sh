@@ -2,6 +2,7 @@
 cd build/classes
 cp ../../../rti_license.dat ./
 cp ../../src/centroinfantil/USER_QOS_PROFILES.xml ./
+cp ../../historial.xml ./
 
 if [ $IS_RASPBERRY_PI ]; then
   export RTI_ARCH=armv6vfphLinux3.xgcc4.7.2jdk
@@ -14,4 +15,4 @@ fi
 source $RTI_CONNEXT_PATH/rti_set_bash_5.1.0
 export PATH=$RTI_CONNEXT_PATH/openssl-1.0.1g/$RTI_ARCH_WAN/bin:$PATH
 export LD_LIBRARY_PATH=$NDDSHOME/lib/$RTI_ARCH:$NDDSHOME/lib/$RTI_ARCH_WAN:$RTI_CONNEXT_PATH/openssl-1.0.1g/$RTI_ARCH_WAN/lib:$LD_LIBRARY_PATH
-java -cp ../../../Libs/gstreamer-java/gstreamer-java-1.6.jar:../../../Libs/JNA/jna-4.1.0.jar:../../../Libs/JNA/jna-platform-4.1.0.jar:../../../DDStheus/dist/DDStheus.jar:$NDDSHOME/class/nddsjavad.jar:./ centroinfantil.CentroInfantil $@
+java -cp ../../jdom-2.0.5/jdom-2.0.5-contrib.jar:../../jdom-2.0.5/jdom-2.0.5.jar:../../jdom-2.0.5/jdom-2.0.5-junit.jar:../../../Libs/gstreamer-java/gstreamer-java-1.6.jar:../../../Libs/JNA/jna-4.1.0.jar:../../../Libs/JNA/jna-platform-4.1.0.jar:../../../DDStheus/dist/DDStheus.jar:$NDDSHOME/class/nddsjavad.jar:./ centroinfantil.CentroInfantil $@
