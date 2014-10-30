@@ -1,5 +1,6 @@
 #!/bin/bash
 # Configura para publicación de sensores y servidor
+touch ~/locaviewer.log
 
 # Configura la obtención de datos de los sensores
 sudo cp locaviewer_blue /etc/init.d/

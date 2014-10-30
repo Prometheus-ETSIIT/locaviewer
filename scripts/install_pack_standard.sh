@@ -1,5 +1,6 @@
 #!/bin/bash
 # Configura la publicación de vídeo.
+touch ~/locaviewer.log
 
 # Configura la publicación de vídeo
 sudo cp locaviewer_cams /etc/init.d/

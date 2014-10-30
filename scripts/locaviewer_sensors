@@ -1,95 +1,61 @@
 #!/bin/sh
+
 ### BEGIN INIT INFO
 # Provides:          locaviewer_sensors
 # Required-Start:    $local_fs $network $remote_fs $syslog $time
 # Required-Stop:     $local_fs $network $remote_fs $syslog $time
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Locaviewer - Publicador sensores.
+# Short-Description: Locaviewer - Sensores
 # Description:       Recibe datos de los Bluetooth y lo publica.
 ### END INIT INFO
 
-dir="/home/pi/locaviewer/Comunicador/"
-user="pi"
-cmd="RTI_CONNEXT_PATH=/home/pi/RTI IS_RASPBERRY_PI=true PATH=/home/pi/apps/jdk1.8.0/bin:$PATH ./run_sensor.sh"
+# Daemon paths
+DIR=/home/pi/locaviewer/Comunicador
+DAEMON="env RTI_CONNEXT_PATH=/home/pi/RTI IS_RASPBERRY_PI=true PATH=/home/pi/apps/jdk1.8.0/bin:$PATH ./run_sensor.sh"
+DAEMON_NAME=locaviewer_sensors
 
-name=`basename $0`
-pid_file="/var/run/$name.pid"
-stdout_log="/var/log/$name.log"
-stderr_log="/var/log/$name.err"
+# Daemon options
+DAEMON_ARGS=""
 
-get_pid() {
-    cat "$pid_file"
+# User to run it.
+DAEMON_USER=pi
+
+# The process ID of the script when it runs is stored here:
+PIDFILE=/var/run/$DAEMON_NAME.pid
+
+. /lib/lsb/init-functions
+
+do_start () {
+    log_daemon_msg "Starting system $DAEMON_NAME daemon"
+    start-stop-daemon --start --quiet --chdir $DIR --user $DAEMON_USER --chuid $DAEMON_USER --make-pidfile --pidfile $PIDFILE --background --startas /bin/bash -- -c "exec $DAEMON $DAEMON_ARGS >> /home/pi/locaviewer.log 2>&1"
+    log_end_msg $?
 }
-
-is_running() {
-    [ -f "$pid_file" ] && ps `get_pid` > /dev/null 2>&1
+do_stop () {
+    log_daemon_msg "Stopping system $DAEMON_NAME daemon"
+    start-stop-daemon --stop --pidfile $PIDFILE --retry 10
+    log_end_msg $?
 }
 
 case "$1" in
-    start)
-    if is_running; then
-        echo "Already started"
-    else
-        echo "Starting $name"
-        cd "$dir"
-        sudo -u "$user" $cmd >> "$stdout_log" 2>> "$stderr_log" &
-        echo $! > "$pid_file"
-        if ! is_running; then
-            echo "Unable to start, see $stdout_log and $stderr_log"
-            exit 1
-        fi
-    fi
-    ;;
-    stop)
-    if is_running; then
-        echo -n "Stopping $name.."
-        kill `get_pid`
-        for i in {1..10}
-        do
-            if ! is_running; then
-                break
-            fi
 
-            echo -n "."
-            sleep 1
-        done
-        echo
+    start|stop)
+        do_${1}
+        ;;
 
-        if is_running; then
-            echo "Not stopped; may still be shutting down or shutdown may have failed"
-            exit 1
-        else
-            echo "Stopped"
-            if [ -f "$pid_file" ]; then
-                rm "$pid_file"
-            fi
-        fi
-    else
-        echo "Not running"
-    fi
-    ;;
-    restart)
-    $0 stop
-    if is_running; then
-        echo "Unable to stop, will not attempt to start"
-        exit 1
-    fi
-    $0 start
-    ;;
+    restart|reload|force-reload)
+        do_stop
+        do_start
+        ;;
+
     status)
-    if is_running; then
-        echo "Running"
-    else
-        echo "Stopped"
-        exit 1
-    fi
-    ;;
+        status_of_proc "$DAEMON_NAME" "$DAEMON" && exit 0 || exit $?
+        ;;
     *)
-    echo "Usage: $0 {start|stop|restart|status}"
-    exit 1
-    ;;
-esac
+        echo "Usage: /etc/init.d/$DAEMON_NAME {start|stop|restart|status}"
+        exit 1
+        ;;
 
+esac
 exit 0
 

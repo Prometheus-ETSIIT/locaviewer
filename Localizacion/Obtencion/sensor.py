@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Se le indica el puerto de envío y lo inicia para cada Bluetooth.
