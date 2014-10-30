@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<basedatos>
+    <child>
+        <id>20:14:04:11:34:37</id>
+        <name>Benito Palacios Sánchez</name>
+        <apodo>Benii</apodo>
+        <historial>
+            <fecha>17 - abril - 2004</fecha>
+            <sala> Aula 1 </sala>
+            <camara> Camara 1</camara>
+            <posicionX>1</posicionX>
+            <posicionY>2</posicionY>
+        </historial>
+    </child>
+</basedatos>

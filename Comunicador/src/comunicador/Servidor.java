@@ -272,6 +272,7 @@ public class Servidor extends Thread {
 
             // Añado el nuevo dato del sensor
             datosSensores.add(dato);
+            System.out.println("[Servidor] Número de datos: " + datosSensores.size());
 
             // Si algún dato tiene más de MAX_TIME, se borra
             long date = new Date().getTime();
@@ -284,7 +285,7 @@ public class Servidor extends Thread {
             }
 
             // Con más de 3 datos se puede triangular
-            if (datosSensores.size() >= 4) {
+            if (datosSensores.size() >= 3) {
                 // Triangula
                 System.out.print("[Servidor] Triangulando: ");
                 String camId = this.triangulacion.triangular(datosSensores);
