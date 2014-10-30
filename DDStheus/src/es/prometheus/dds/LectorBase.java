@@ -26,6 +26,7 @@ import com.rti.dds.infrastructure.Duration_t;
 import com.rti.dds.infrastructure.RETCODE_NO_DATA;
 import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
+import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
 import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.WaitSet;
@@ -212,7 +213,9 @@ public abstract class LectorBase {
             this.waitset   = new WaitSet();
             
             // Le añado el StatusCondition de condición
-            this.waitset.attach_condition(reader.get_statuscondition());
+            StatusCondition condicion = reader.get_statuscondition();
+            condicion.set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
+            this.waitset.attach_condition(condicion);
         }
         
         @Override
@@ -232,7 +235,7 @@ public abstract class LectorBase {
                 catch (RETCODE_TIMEOUT e) { continue; }
                 
                 // Compruebo que se haya disparado por la condición que queremos
-                if ((this.reader.get_status_changes() & this.mask) == 0)
+		if (activadas.size() == 0 || (reader.get_status_changes() & StatusKind.DATA_AVAILABLE_STATUS) == 0)
                     continue;
                 
                 // Procesamos los datos recibidos.
