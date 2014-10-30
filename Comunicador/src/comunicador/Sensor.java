@@ -86,7 +86,8 @@ public class Sensor extends Thread {
             if (datos == null)
                 continue;
             
-            System.out.printf("[Sensor] %s -> %.2f\n", datos.getID(), datos.getIntensidad());
+            System.out.printf("[Sensor] (%s) -> %s | %.2f\n", 
+                    datos.getID(), datos.getIDNino(), datos.getIntensidad());
             datos.escribeDds(this.data);
             this.escritor.escribeDatos(this.data);
         }
