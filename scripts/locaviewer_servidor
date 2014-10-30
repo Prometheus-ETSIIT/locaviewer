@@ -16,7 +16,7 @@ DAEMON="env LANG=es_ES.UTF-8 RTI_CONNEXT_PATH=/home/pi/RTI IS_RASPBERRY_PI=true 
 DAEMON_NAME=locaviewer_servidor
 
 # Daemon options
-DAEMON_ARGS="'Salón de Grados' 3 3 1"
+DAEMON_ARGS="'Salón de Grados' 3 3 2"
 
 # User to run it.
 DAEMON_USER=pi
