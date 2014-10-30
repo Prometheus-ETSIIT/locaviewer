@@ -139,7 +139,7 @@ public class VerCamaras extends javax.swing.JFrame {
             
             // Actualiza los combobox de todas las pestañas
             for (TabComponents c : this.tabComp) {
-                boolean thisRoom = c.getComboRoom().getSelectedItem() == info.getSala();
+                boolean thisRoom = c.getComboRoom().getSelectedItem().equals(info.getSala());
                 if (removeRoom)
                     c.getComboRoom().removeItem(info.getSala());
                 
@@ -162,7 +162,7 @@ public class VerCamaras extends javax.swing.JFrame {
             
             this.cams.get(info.getSala()).add(info.getCamId());
             for (TabComponents c : this.tabComp) {
-                boolean thisRoom = c.getComboRoom().getSelectedItem() == info.getSala();
+                boolean thisRoom = c.getComboRoom().getSelectedItem().equals(info.getSala());
                 for (int i = 0; i < c.getControlsNum() && thisRoom; i++) {
                     c.getComboControl(i).addItem(info.getCamId());
                 }
