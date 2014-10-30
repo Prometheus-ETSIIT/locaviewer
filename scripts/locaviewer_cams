@@ -12,7 +12,7 @@
 
 # Daemon paths
 DIR=/home/pi/locaviewer/Gava
-DAEMON="env RTI_CONNEXT_PATH=/home/pi/RTI IS_RASPBERRY_PI=true PATH=/home/pi/apps/jdk1.8.0/bin:$PATH ./run_publicador.sh"
+DAEMON="env LANG=es_ES.UTF-8 RTI_CONNEXT_PATH=/home/pi/RTI IS_RASPBERRY_PI=true PATH=/home/pi/apps/jdk1.8.0/bin:$PATH ./run_publicador.sh"
 DAEMON_NAME=locaviewer_cams
 
 # Daemon options
