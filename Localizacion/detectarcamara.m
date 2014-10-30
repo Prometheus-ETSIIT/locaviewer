@@ -14,7 +14,7 @@ tini=tic;
 %angulo_pos=[pi/1.7,-pi/2.5,-pi/9,3*pi/3.3] %angulo de la posicion de la camara. pi/2
 %radianes seria cuando la camara está perpendicular a la pared. 0 radianes cuando la camara esta girada totalmente hacia la izquierda y pi rad cuando esta totalmente girada a la derecha 
 %-------------------------------------------------------
-angulo_vision=42*pi/180;%en grados
+angulo_vision=65*pi/180;%en grados
 %%
 %Calculamos la distancia 
 rssi_min=-37.785166889;
