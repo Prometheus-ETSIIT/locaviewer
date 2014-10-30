@@ -161,8 +161,8 @@ public class RealTimePanel extends javax.swing.JComponent {
         final double ANGULO    = Math.toRadians(65.0);  // Ángulo de visión
 
         // Ángulo de la cámara (en sentido contrario a las agujas del reloj).
-        double camAngle = cam.getAngle();
-        
+        double camAngle = 2*Math.PI - cam.getAngle();
+
         // Dimensiones de la sala
         double width    = this.childData.getSalaW();
         double length   = this.childData.getSalaL();
