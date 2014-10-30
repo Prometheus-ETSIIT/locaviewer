@@ -48,7 +48,7 @@ import org.xml.sax.SAXException;
  * Cada cierto tiempo pregunta por la localización de todos los niños.
  */
 public class Daemon {
-    private static final int INTERVAL = 60 * 60 * 1000; // 1 hora
+    private static final int INTERVAL =  1 * 60 * 1000; // 1 hora
     private static final int TIMEOUT  =  1 * 60 * 1000; // 1 minuto
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipanteDaemon";
     private static final String CHILD_TOPIC_NAME = "ChildDataTopic";
