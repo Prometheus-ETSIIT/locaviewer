@@ -105,7 +105,7 @@ public class TriangulacionOctave {
             script = new String(Files.readAllBytes(path), Charset.forName("ISO-8859-15"));
         } catch (IOException ex) {
             System.err.printf(
-                    "[JAVA] Error al leer el archivo: %s\n",
+                    "[Triangulación] Error al leer el archivo: %s\n",
                     scriptPath
             );
             return false;
@@ -116,7 +116,7 @@ public class TriangulacionOctave {
             this.octave.eval(script);
         } catch (OctaveEvalException ex) {
             System.err.printf(
-                    "[JAVA] Error al evaluar el script\n%s\n",
+                    "[Triangulación] Error al evaluar el script\n%s\n",
                     ex.getMessage()
             );
             return false;
@@ -215,7 +215,7 @@ public class TriangulacionOctave {
      */
     public String triangular(final List<DatosSensor> datos) {
         if (!this.alive) {
-            System.err.println("[JAVA] Error ¡el sistema está muerto!");
+            System.err.println("[Triangulación] Error ¡el sistema está muerto!");
             return null;
         }
         
@@ -241,7 +241,7 @@ public class TriangulacionOctave {
             this.octave.eval(funcCall);
         } catch (OctaveEvalException ex) {
             System.err.printf(
-                    "[JAVA] Error al evaluar el script\n%s\n",
+                    "[Triangulación] Error al evaluar el script\n%s\n",
                     ex.getMessage()
             );
             return null;

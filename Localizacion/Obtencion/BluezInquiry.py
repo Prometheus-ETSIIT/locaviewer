@@ -126,7 +126,7 @@ class BluezInquiry:
             if len(potencias[addr]) >= tam_vect:
                 rssi_bueno = self.optimizar(potencias[addr])
                 potencias[addr] = []  # Vaciado
-                print str(addr) + " -> " + str(rssi_bueno)
+                print "[Bluetooth]" + str(addr) + " -> " + str(rssi_bueno)
                 self.sendSocket.sendto(self.mac + " " + str(addr) + " " + str(rssi_bueno), (self.host, self.port))
         else:
             potencias[addr] = [rssi]
@@ -168,7 +168,7 @@ class BluezInquiry:
         elif event == bluez.EVT_CMD_STATUS:
             status, ncmd, opcode = struct.unpack("BBH", pkt[:4])
             if status != 0:
-                print "Dispositivo ocupado"
+                print "[Bluetooth] Dispositivo ocupado"
                 self.socket.close()
                 self.socket = None
                 self.inquiring = False
@@ -181,13 +181,13 @@ class BluezInquiry:
             nrsp = struct.unpack("B", pkt[0])[0]    # Número de respuestas
             for i in range(nrsp):
                 addr = bluez.ba2str(pkt[1+6*i:1+6*i+6])
-                print "%s (no RRSI)" % addr
+                print "[Bluetooth] %s (no RRSI)" % addr
 
         else:
             self.inquiring = False
             self.socket = None
             self.socket.close()
-            print "Evento desconocido: ", event
+            print "[Bluetooth] Evento desconocido: ", event
 
     def write_inquiry_mode(self, mode):
         """returns 0 on success, -1 on failure"""
