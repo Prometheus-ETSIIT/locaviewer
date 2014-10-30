@@ -117,7 +117,7 @@ public class ServidorLauncher extends Thread {
                 for (DiscoveryChange ch : changes)
                     onWriterDiscovered(ch.getData(), ch.getStatus());
                 
-                if (pubList.first() < prioridad)
+                if (!pubList.isEmpty() && pubList.first() < prioridad)
                     servidor.suspender();
                 else
                     servidor.reanudar();
