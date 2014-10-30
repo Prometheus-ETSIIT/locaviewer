@@ -86,7 +86,7 @@ public class Sensor extends Thread {
             if (datos == null)
                 continue;
             
-            System.out.println("[" + datos.getID() + "]: " + datos.getIntensidad());
+            System.out.printf("[Sensor] %s -> %.2f\n", datos.getID(), datos.getIntensidad());
             datos.escribeDds(this.data);
             this.escritor.escribeDatos(this.data);
         }
@@ -192,7 +192,7 @@ public class Sensor extends Thread {
         
         @Override
         public void run() {
-            System.out.println("Parando. . .");
+            System.out.println("[Sensor] Parando. . .");
             this.sensor.parar();
             try { this.sensor.join(5000); }
             catch (InterruptedException e) { }

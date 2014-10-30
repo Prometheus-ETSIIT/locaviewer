@@ -33,7 +33,7 @@ for dev in hci_out:
     
     dev_id = opts[0][3:]
     mac = opts[1]
-    print("Soy " + mac + " (" + dev_id + ")")
+    print("[Bluetooth] Soy " + mac + " (" + dev_id + ")")
 
     # Inicia el inquiry para este Bluetooth
     inquirier = BluezInquiry(int(dev_id), mac, port)
