@@ -1,7 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Prometheus
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package centroinfantil.gui;
@@ -20,7 +38,6 @@ import javax.swing.JOptionPane;
 
 /**
  *
- * @author iblancasa
  */
 public class EditarPadre extends javax.swing.JFrame {
 
@@ -122,10 +139,10 @@ public class EditarPadre extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    
+
     private static Socket creaSocketSeguro(final String host, final int puerto) {
         SSLSocket socket = null;
-        
+
         try {
             // Le indicamos de qué anillo obtener las claves públicas fiables
             // de autoridades de certificación:
@@ -133,8 +150,8 @@ public class EditarPadre extends javax.swing.JFrame {
                     "javax.net.ssl.trustStore",
                     "./src/cert/cacerts.jks"
             );
-            
-          
+
+
             Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
             SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
             socket = (SSLSocket)factory.createSocket(host, puerto);
@@ -143,7 +160,7 @@ public class EditarPadre extends javax.swing.JFrame {
         } catch (IOException ex) {
             System.out.println("ERROR: " + ex.getMessage());
         }
-        
+
         return socket;
     }
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -152,7 +169,7 @@ public class EditarPadre extends javax.swing.JFrame {
         try {
             String pw = new String(password.getPassword());
             String pw2= new String(password2.getPassword());
-            
+
             if(!pw.equals(pw2)){
                JOptionPane.showMessageDialog(null,"Las contraseñas no coinciden");
             }
@@ -160,32 +177,32 @@ public class EditarPadre extends javax.swing.JFrame {
                 DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
                 inStream = socket.getInputStream();
                 DataInputStream reader = new DataInputStream(inStream);
-                
+
                 String  idNinoNueva = null,keyText = null,apodoText = null;
-                
+
                 if(idNinoNueva.equals("")){
                     idNinoNueva="null";
                 }
                 else{
                     idNinoNueva=idninonueva.getText();
                 }
-                
+
                 if(keyText.equals("")){
                     keyText=idninonueva.getText();
                 }
                 else{
                     keyText=key.getText();
                 }
-                
+
                 if(apodoText.equals("")){
                     apodoText="null";
                 }
                 else{
                     apodoText=apodo.getText();
                 }
-                
-                
-                
+
+
+
                 writer.writeUTF("modificar "+idpadre.getText()+" "+idnino.getText()+" "+keyText+" "+idNinoNueva+" "+apodoText);
                 String respuesta = reader.readUTF();
 
@@ -193,9 +210,9 @@ public class EditarPadre extends javax.swing.JFrame {
                 if(!respuesta.equals("No se pudo modificar")){
                     reset();
                     JOptionPane.showMessageDialog(null,"No se pudo modificar");
-                }    
+                }
             }
-            
+
         } catch (IOException ex) {
             Logger.getLogger(NuevoPadre.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -211,7 +228,7 @@ public class EditarPadre extends javax.swing.JFrame {
         reset();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    
+
     public void reset(){
         idnino.setText("");
         idninonueva.setText("");
@@ -220,7 +237,7 @@ public class EditarPadre extends javax.swing.JFrame {
         password.setText("");
         password2.setText("");
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField apodo;
     private javax.swing.JTextField idnino;

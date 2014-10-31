@@ -1,21 +1,27 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
-
+ 
 package es.prometheus.dds;
 
 import com.rti.dds.domain.DomainParticipant;
@@ -55,7 +61,7 @@ import java.util.Map;
 public class Participante {
     private final static Map<String, Participante> Instancias = new HashMap<>();
     private final static Map<Participante, Integer> CountInstancias = new HashMap<>();
-    
+
     private DomainParticipant participante;
     private final DataReader discovReader;
     private final DiscoveryReaders discovReaderListener;
@@ -63,10 +69,10 @@ public class Participante {
     private final DataReader discovWriter;
     private final DiscoveryWriters discovWriterListener;
     private final Thread discovWriterThread;
-    
+
     /**
      * Crea una nueva instancia de participante en tópico.
-     * 
+     *
      * @param partName Nombre del participante en el XML
      *  (BibliotecaParticipantes::NombreParticipante).
      */
@@ -77,15 +83,15 @@ public class Participante {
         String simpleName = name.substring(name.indexOf("::") + 2);
         this.participante = DomainParticipantFactory.get_instance()
                 .lookup_participant_by_name(simpleName);
-        
+
         // No ha sido creado previamente -> Crea un participante de dominio.
-        if (this.participante == null) {        
+        if (this.participante == null) {
             // Lo creamos deshabilitado para que a los listener lleguen todos los datos.
             DomainParticipantFactoryQos qos = new DomainParticipantFactoryQos();
             DomainParticipantFactory.get_instance().get_qos(qos);
             qos.entity_factory.autoenable_created_entities = false;
             DomainParticipantFactory.get_instance().set_qos(qos);
-                        
+
             // Creamos el participante
             this.participante = DomainParticipantFactory.get_instance()
                         .create_participant_from_config(name);
@@ -100,46 +106,46 @@ public class Participante {
             // y configurar RTI WAN Server.
             DomainParticipantQos partQos = new DomainParticipantQos();
             this.participante.get_qos(partQos);
-            
+
             // Aumentamos el tamaño para USER_DATA
             partQos.resource_limits.participant_user_data_max_length = 256;
             partQos.resource_limits.reader_user_data_max_length = 256;
             partQos.resource_limits.writer_user_data_max_length = 256;
-            
-            // Configura RTI WAN Server   
+
+            // Configura RTI WAN Server
             String activate_wan = System.getenv("ACTIVATE_RTI_WAN_SERVER");
             if (activate_wan != null && activate_wan.equals("true")) {
                 System.out.println("Activando RTI WAN Server");
                 ConfiguraRtiWanServer(partQos);
             }
-            
+
             this.participante.set_qos(partQos);
-            
+
             // Volvemos a habilitarlo para dejarlo en su valor por defecto.
             qos.entity_factory.autoenable_created_entities = true;
             DomainParticipantFactory.get_instance().set_qos(qos);
         }
-        
+
         // Establece los discovery listener
         Subscriber spSubs = this.participante.get_builtin_subscriber();
-        
+
         this.discovWriter = spSubs.lookup_datareader(PublicationBuiltinTopicDataTypeSupport.PUBLICATION_TOPIC_NAME);
         this.discovWriterListener = new DiscoveryWriters(this.discovWriter);
         this.discovWriterThread = new Thread(this.discovWriterListener);
         this.discovWriterThread.start();
-        
+
         this.discovReader = spSubs.lookup_datareader(SubscriptionBuiltinTopicDataTypeSupport.SUBSCRIPTION_TOPIC_NAME);
         this.discovReaderListener = new DiscoveryReaders(this.discovReader);
         this.discovReaderThread = new Thread(this.discovReaderListener);
         this.discovReaderThread.start();
-        
+
         // Finalmente ya lo podemos habilitar
         this.participante.enable();
     }
-    
+
     /**
      * Configura RTI WAN Server sobre el QoS de un participante.
-     * 
+     *
      * @param qos QoS para configurar.
      */
     private static void ConfiguraRtiWanServer(DomainParticipantQos qos) {
@@ -147,60 +153,60 @@ public class Participante {
         String WAN_PORT = "5555";
         String WAN_ID = String.valueOf((int)(Math.random() * 10000));
         String archName = System.getProperty("os.name").toLowerCase();
-        String WAN_LIB = archName.contains("win") ? 
+        String WAN_LIB = archName.contains("win") ?
                 "nddstransportwan.dll" : "libnddstransportwan.so";
 
         /* Set up property QoS to load plugin */
-        PropertyQosPolicyHelper.add_property(qos.property, 
+        PropertyQosPolicyHelper.add_property(qos.property,
             "dds.transport.load_plugins", "dds.transport.wan_plugin.wan", false);
 
         /* library */
-        PropertyQosPolicyHelper.add_property(qos.property, 
+        PropertyQosPolicyHelper.add_property(qos.property,
             "dds.transport.wan_plugin.wan.library",
             WAN_LIB, false);
 
         /* create function */
-        PropertyQosPolicyHelper.add_property(qos.property, 
+        PropertyQosPolicyHelper.add_property(qos.property,
             "dds.transport.wan_plugin.wan.create_function", "NDDS_Transport_WAN_create", false);
 
         /* plugin properties */
-        PropertyQosPolicyHelper.add_property(qos.property, 
+        PropertyQosPolicyHelper.add_property(qos.property,
             "dds.transport.wan_plugin.wan.server", WAN_SERVER, false);
 
         PropertyQosPolicyHelper.add_property(qos.property,
                 "dds.transport.wan_plugin.wan.server_port", WAN_PORT, false);
-        
-        PropertyQosPolicyHelper.add_property(qos.property, 
+
+        PropertyQosPolicyHelper.add_property(qos.property,
             "dds.transport.wan_plugin.wan.transport_instance_id", WAN_ID, false);
     }
-    
+
     /**
      * Devuelve la instancia asociada a ese nombre.
-     * 
+     *
      * @param name Nombre del participante.
      * @return Instancia de participante.
      */
     public static Participante GetInstance(final String name) {
         if (!Instancias.containsKey(name))
             Instancias.put(name, new Participante(name));
-          
+
         // Obtiene la instancia
         Participante p = Instancias.get(name);
-        
+
         // Añade un uso
         int num = CountInstancias.containsKey(p) ? CountInstancias.get(p) : 0;
         CountInstancias.put(p, num + 1);
-        
+
         return p;
     }
-    
+
     /**
      * Libera recursos del sistema.
      */
     public void dispose() {
         int num = CountInstancias.get(this);
         CountInstancias.put(this, --num);
-        
+
         // Si ya nadie lo está usando, lo eliminamos
         // TODO: Esto está fallando
         if (num == 0) {
@@ -208,13 +214,13 @@ public class Participante {
             try {
                 this.discovWriterListener.terminar();
                 this.discovWriterThread.join(5000);
-                
+
                 this.discovReaderListener.terminar();
                 this.discovReaderThread.join(5000);
-            } catch (InterruptedException e) { 
+            } catch (InterruptedException e) {
                 System.err.println("TimeOver!");
             }
-            
+
             this.discovReader.delete_contained_entities();
             this.discovWriter.delete_contained_entities();
             this.participante.get_builtin_subscriber().delete_datareader(discovReader);
@@ -224,88 +230,88 @@ public class Participante {
             DomainParticipantFactory.get_instance().delete_participant(this.participante);
         }
     }
-    
+
     /**
      * Obtiene el objeto participante de DDS.
-     * 
+     *
      * @return Participante DDS.
      */
     public DomainParticipant getParticipante() {
         return this.participante;
     }
-    
+
     /**
      * Obtiene los lectores en acción.
-     * 
+     *
      * @return Lectores descubiertas.
      */
     public DiscoveryData[] getDiscoveryReaderData() {
         return this.discovReaderListener.getData();
     }
-    
+
     /**
      * Añade un listener de cambio al descubridor de lectores.
-     * 
+     *
      * @param l Listener de cambio en descubrimiento.
      */
     public void addDiscoveryReaderListener(DiscoveryListener l) {
         this.discovReaderListener.addListener(l);
     }
-    
+
     /**
      * Elimina un listener de cambio al descubridor de lectores.
-     * 
+     *
      * @param l Listener de cambio en descubrimiento.
      */
     public void removeDiscoveryReaderListener(DiscoveryListener l) {
         this.discovReaderListener.removeListener(l);
     }
-    
+
     /**
      * Obtiene los escritores en acción.
-     * 
+     *
      * @return Escritores descubiertos.
      */
     public DiscoveryData[] getDiscoveryWriterData() {
         return this.discovWriterListener.getData();
     }
-    
+
     /**
      * Añade un listener de cambio al descubridor de escritores.
-     * 
+     *
      * @param l Listener de cambio en descubrimiento.
      */
     public void addDiscoveryWriterListener(DiscoveryListener l) {
         this.discovWriterListener.addListener(l);
     }
-    
+
     /**
      * Elimina un listener de cambio al descubridor de escritores.
-     * 
+     *
      * @param l Listener de cambio en descubrimiento.
      */
     public void removeDiscoveryWriterListener(DiscoveryListener l) {
         this.discovWriterListener.removeListener(l);
     }
-    
+
     /**
      * Listener de descubridor genérico de entidades T.
-     * 
+     *
      * @param <T> Entidad a descubrir.
      */
     private static abstract class DiscoveryAdapter<T> implements Runnable {
         private static final int MAX_TIME_SEC  = 3;
         private static final int MAX_TIME_NANO = 0;
-       
+
         protected final DataReader reader;
         private final WaitSet waitset;
         private final Duration_t duracion;
         private boolean terminar;
-        
+
         protected final List<DiscoveryListener> listeners = new ArrayList<>();
         protected final List<DiscoveryData> data = new ArrayList<>();
         protected final List<DiscoveryChange> changes = new ArrayList<>();
-        
+
         protected DiscoveryAdapter(final DataReader reader) {
             this.terminar = false;
             this.reader   = reader;
@@ -313,7 +319,7 @@ public class Participante {
             this.waitset  = new WaitSet();
             this.waitset.attach_condition(reader.get_statuscondition());
         }
-        
+
         @Override
         public void run() {
             while (!this.terminar) {
@@ -321,53 +327,53 @@ public class Participante {
                 ConditionSeq activadas = new ConditionSeq();
                 try { this.waitset.wait(activadas, duracion); }
                 catch (RETCODE_TIMEOUT e) { continue; }
-                
+
                 // Procesamos los datos recibidos.
                 this.processData();
             }
         }
-        
+
         /**
          * Termina la ejecución en la próxima iteración.
          */
         public void terminar() {
             this.terminar = true;
         }
-        
+
         /**
          * Procesa los datos obtenidos de DDS.
          */
         protected abstract void processData();
-        
+
         /**
          * Obtiene las entidades en acción.
-         * 
+         *
          * @return Entidades en acción.
          */
         public DiscoveryData[] getData() {
             return this.data.toArray(new DiscoveryData[0]);
         }
-        
+
         /**
          * Añade un listener de cambio en descubrimiento.
-         * 
+         *
          * @param l Listener de cambio en descubrimiento.
          */
-        public synchronized void addListener(DiscoveryListener l) {            
+        public synchronized void addListener(DiscoveryListener l) {
             if (!this.listeners.contains(l))
                 this.listeners.add(l);
         }
-        
+
         /**
          * Elimina un listener de cambio en descubrimiento.
-         * 
+         *
          * @param l Listener de cambio en descubrimiento.
          */
         public synchronized void removeListener(DiscoveryListener l) {
             if (this.listeners.contains(l))
                 this.listeners.remove(l);
         }
-        
+
         /**
          * Notifica a todos los listener un cambio.
          */
@@ -377,37 +383,37 @@ public class Participante {
                 listener.onChange(ch);
             this.changes.clear();
         }
-        
+
         /**
          * Añade una entidad a la lista.
-         * 
+         *
          * @param datum Datos de la entidad.
          * @param info Información de la muestra de la entidad.
          */
-        protected void addElement(T datum, SampleInfo info) {            
+        protected void addElement(T datum, SampleInfo info) {
             DiscoveryData dd = this.convertData(datum, info);
             if (dd.getTopicName().startsWith("rti/"))   // Fuera estadísticas de RTI
                 return;
-            
+
             // Comprueba si ya existe
             int idx = -1;
             for (int i = 0; i < this.data.size() && idx == -1; i++)
                 if (data.get(i).getHandle().equals(dd.getHandle()))
                     idx = i;
-            
-            // Si existe lo 
+
+            // Si existe lo
             if (idx != -1) {
                 this.data.set(idx, dd);
                 this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.CAMBIADO));
-            } else {            
+            } else {
                 this.data.add(dd);
                 this.changes.add(new DiscoveryChange(dd, DiscoveryChangeStatus.ANADIDO));
             }
         }
-        
+
         /**
          * Elimina una entidad de la lista.
-         * 
+         *
          * @param info Información de la muestra de la entidad.
          */
         protected void removeElement(SampleInfo info) {
@@ -416,38 +422,38 @@ public class Participante {
                 if (dd.getHandle().equals(info.instance_handle))
                     toRemove = dd;
             }
-            
+
             if (toRemove == null)
                 return;
-            
+
             this.data.remove(toRemove);
             this.changes.add(new DiscoveryChange(toRemove, DiscoveryChangeStatus.ELIMINADO));
         }
-        
+
         /**
          * Convierte de muestra e información a DiscoveryData.
          * Es dependiente del tipo de entidad.
-         * 
+         *
          * @param datum Muestra.
          * @param info Información de la muestra.
          * @return DiscoveryData con valores.
          */
         protected abstract DiscoveryData convertData(T datum, SampleInfo info);
     }
-    
+
     /**
      * Listener de descubridor de lectores.
      */
     private static class DiscoveryReaders extends DiscoveryAdapter<SubscriptionBuiltinTopicData> {
         /**
          * Crea una nueva instancia a partir del lector dado.
-         * 
+         *
          * @param reader Lector a usar.
          */
         public DiscoveryReaders(final DataReader reader) {
             super(reader);
         }
-        
+
         @Override
         protected DiscoveryData convertData(SubscriptionBuiltinTopicData datum,
                 SampleInfo info) {
@@ -457,16 +463,16 @@ public class Participante {
                    datum.content_filter_property.expression_parameters,
                    info.instance_handle);
         }
-        
+
         @Override
         public void processData() {
             SampleInfoSeq infoSeq = new SampleInfoSeq();
-            SubscriptionBuiltinTopicDataSeq sampleSeq = 
+            SubscriptionBuiltinTopicDataSeq sampleSeq =
                     new SubscriptionBuiltinTopicDataSeq();
-            
-            SubscriptionBuiltinTopicDataDataReader builtinReader = 
+
+            SubscriptionBuiltinTopicDataDataReader builtinReader =
                     (SubscriptionBuiltinTopicDataDataReader)this.reader;
-            
+
             try {
                 // Lee las muestras
                 builtinReader.take(
@@ -481,7 +487,7 @@ public class Participante {
                 // Procesa cada muestra
                 for (int i = 0; i < sampleSeq.size(); i++) {
                     SampleInfo info = (SampleInfo)infoSeq.get(i);
-                    SubscriptionBuiltinTopicData sample = 
+                    SubscriptionBuiltinTopicData sample =
                             (SubscriptionBuiltinTopicData)sampleSeq.get(i);
 
                     if (!info.valid_data)
@@ -498,20 +504,20 @@ public class Participante {
             }
         }
     }
-    
+
     /**
      * Listener de descubridor de escritores.
      */
     private static class DiscoveryWriters extends DiscoveryAdapter<PublicationBuiltinTopicData> {
         /**
          * Crea una nueva instancia a partir del lector dado.
-         * 
+         *
          * @param reader Lector a usar.
          */
         public DiscoveryWriters(final DataReader reader) {
             super(reader);
         }
-        
+
         @Override
         protected DiscoveryData convertData(PublicationBuiltinTopicData datum,
                 SampleInfo info) {
@@ -521,19 +527,19 @@ public class Participante {
                    null,
                    info.instance_handle);
         }
-        
+
         @Override
         public void processData() {
             SampleInfoSeq infoSeq = new SampleInfoSeq();
-            PublicationBuiltinTopicDataSeq sampleSeq = 
+            PublicationBuiltinTopicDataSeq sampleSeq =
                     new PublicationBuiltinTopicDataSeq();
-            
-            PublicationBuiltinTopicDataDataReader builtinReader = 
+
+            PublicationBuiltinTopicDataDataReader builtinReader =
                     (PublicationBuiltinTopicDataDataReader)reader;
-            
+
             try {
                 // Lee las muestras
-                builtinReader.take(                 
+                builtinReader.take(
                         sampleSeq,
                         infoSeq,
                         ResourceLimitsQosPolicy.LENGTH_UNLIMITED,
@@ -545,7 +551,7 @@ public class Participante {
                 // Procesa cada muestra
                 for (int i = 0; i < sampleSeq.size(); i++) {
                     SampleInfo info = (SampleInfo)infoSeq.get(i);
-                    PublicationBuiltinTopicData sample = 
+                    PublicationBuiltinTopicData sample =
                             (PublicationBuiltinTopicData)sampleSeq.get(i);
 
                     if (!info.valid_data)

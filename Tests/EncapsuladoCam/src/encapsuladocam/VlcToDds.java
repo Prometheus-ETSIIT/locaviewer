@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package encapsuladocam;
@@ -35,14 +41,14 @@ import java.net.Socket;
  * Clase para redireccionar un streaming HTTP de vídeo por DDS.
  */
 public class VlcToDds {
-    
+
     private final String srcHost;
     private final int srcPort;
     private BytesDataWriter writer;
-    
+
     /**
      * Crea una nueva instancia con los datos de redirección.
-     * 
+     *
      * @param srcHost Host del servidor de streaming.
      * @param srcPort Puerto del servidor de streaming.
      */
@@ -51,7 +57,7 @@ public class VlcToDds {
         this.srcPort = srcPort;
         this.iniciaDds();
     }
-    
+
     /**
      * Comienza a redireccionar los datos del streaming.
      */
@@ -59,7 +65,7 @@ public class VlcToDds {
         try {
             // Crea el socket.
             Socket conn = new Socket(this.srcHost, this.srcPort);
-            
+
             // Envía la petición GET
             PrintWriter socketWriter = new PrintWriter(conn.getOutputStream());
             socketWriter.append("GET / HTTP/1.1\r\n");
@@ -84,12 +90,12 @@ public class VlcToDds {
             System.out.println(ex.getMessage());
         }
     }
-    
+
     private void iniciaDds() {
         //Dominio 1
         DomainParticipant participant = DomainParticipantFactory.get_instance().create_participant(
                 1, // Domain ID = 0
-                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT, 
+                DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
         if (participant == null) {
@@ -99,18 +105,18 @@ public class VlcToDds {
 
        //Creación del tópico
         Topic topic = participant.create_topic(
-                "test_cam", 
+                "test_cam",
                 BytesTypeSupport.get_type_name(),
-                DomainParticipant.TOPIC_QOS_DEFAULT, 
+                DomainParticipant.TOPIC_QOS_DEFAULT,
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);
         if (topic == null) {
             System.err.println("Unable to create topic.");
             return;
         }
-        
+
         writer = (BytesDataWriter)participant.create_datawriter(
-                topic, 
+                topic,
                 Publisher.DATAWRITER_QOS_DEFAULT,
                 null, // listener
                 StatusKind.STATUS_MASK_NONE);

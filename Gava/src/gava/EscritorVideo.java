@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package gava;
@@ -48,10 +54,10 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     private final String device;
     private final DatosCamara info;
     private final List<DiscoveryData> dataSubs = new ArrayList<>();
-    
+
     private boolean pausar;
     private boolean parar;
-    
+
     private TopicoControl topico;
     private String topicName;
     private Escritor writer;
@@ -64,7 +70,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     /**
      * Crea una nueva instancia para obtener vídeo y publicarlo de la cámara
      * especificada.
-     * 
+     *
      * @param device Ruta a la cámara deseada (Ej: /dev/video0).
      * @param info  Información de la cámara.
      */
@@ -79,20 +85,20 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     public synchronized void run() {
         // Inicia GStreamer
         this.iniciaGStreamer();
-        
+
         // Inicia DDS y obtiene el escritor
         this.iniciaDds();
 
         // Mientras no se acabe, coje cada frame y lo envía.
         while (!appsink.isEOS() && !this.parar)
             this.transmite();
-        
+
         // Una vez terminado, paramos de transmitir.
         if (this.pipe.isPlaying()) {
             this.pipe.stop();
             this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
         }
-        
+
         this.topico.dispose();
     }
 
@@ -104,28 +110,28 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         this.topico = TopicoControlFactoria.crearControlDinamico(
                 "MyParticipantLibrary::PublicationParticipant",
                 "VideoDataTopic");
-        
+
         // Obtiene el nombre de tópico
         this.topicName = this.topico.getTopicDescription().get_name();
-        
+
         // Obtiene todos los lectores suscriptos a este escritor.
         for (DiscoveryData data : this.topico.getParticipanteControl().getDiscoveryReaderData())
             this.updateNumSubs(data, DiscoveryChangeStatus.ANADIDO);
-        
+
         // Añade el listener (este clase) al descubridor
         this.topico.getParticipanteControl().addDiscoveryReaderListener(this);
-        
+
         // Si no tenemos ningún suscriptor paramos de coger vídeo.
         if (this.dataSubs.isEmpty())
             this.pausar();
-        
+
         // Crea el escritor con QOS.
         DataWriterQos qos = new DataWriterQos();
         this.topico.getParticipante().get_default_datawriter_qos(qos);
         qos.user_data.value.clear();
         qos.user_data.value.addAllByte(this.info.getSummary().getBytes());
         this.writer = new Escritor(this.topico, qos);
-        
+
         // Crea una estructura de datos como la que hemos definido en el XML.
         this.dynData = this.writer.creaDatos();
         this.info.escribeDds(this.dynData);
@@ -138,33 +144,33 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     private void iniciaGStreamer() {
         // Crea los elementos de la tubería
         List<Element> elements = new ArrayList<>();
-        
+
         // 1º Origen de vídeo, del códec v4l2
         Element videosrc = ElementFactory.make("v4l2src", null);
         videosrc.set("device", device);
         elements.add(videosrc);
-        
+
         // 2º Datos de captura de vídeo: establecemos tamaño y framerate
         Element videorate = ElementFactory.make("videorate", null);
         elements.add(videorate);
-        
+
         //Element videoscale = ElementFactory.make("videoscale", null);
         //elements.add(videoscale);
-        
+
         Element capsSrc = ElementFactory.make("capsfilter", null);
         capsSrc.setCaps(Caps.fromString("video/x-raw-yuv,width=320,height=240,framerate=15/1"));
         elements.add(capsSrc);
-        
+
         // 3º Cola que elimina paquetes en lugar de acumular
         Queue queue = (Queue)ElementFactory.make("queue", null);
         queue.set("leaky", 2);  // Drops old buffer
         queue.set("max-size-time", 50*1000*1000);   // 50 ms
         elements.add(queue);
-        
+
         // 4º Conversor de vídeo
         Element videoconvert = ElementFactory.make("ffmpegcolorspace", null);
         elements.add(videoconvert);
-        
+
         // 5º Codecs
         Element[] codecs = null;
         switch (this.info.getCodecInfo()) {
@@ -172,7 +178,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             case "VP8":  codecs = this.getEncVp8();  break;
         }
         elements.addAll(Arrays.asList(codecs));
-        
+
         // 6º Salida de vídeo
         this.appsink = (AppSink) ElementFactory.make("appsink", null);
         this.appsink.setQOSEnabled(true);
@@ -196,20 +202,20 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
 
     /**
      * Obtiene los elementos de la tubería para la codiciación en formato JPEG.
-     * 
+     *
      * @return Codificadores JPEG.
      */
-    private Element[] getEncJpeg() {        
+    private Element[] getEncJpeg() {
         // Codec JPEG
         Element codec = ElementFactory.make("jpegenc", null);
         Element mux   = ElementFactory.make("multipartmux", null);
-        
+
         return new Element[] { codec, mux };
     }
-    
+
     /**
      * Obtiene los elementos de la tubería para la codiciación en formato VP8.
-     * 
+     *
      * @return Codificadores VP8.
      */
     private Element[] getEncVp8() {
@@ -224,14 +230,14 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         // Caps del nuevo formato
         Element capsDst = ElementFactory.make("capsfilter", null);
         capsDst.setCaps(Caps.fromString("video/x-vp8 profile=(string)2"));
-        
+
         return new Element[] { codec };
     }
-    
+
     /**
      * Obtiene un buffer y lo transmite por DDS.
      */
-    private void transmite() {     
+    private void transmite() {
         // Obtiene el siguiente buffer a enviar
         Buffer buffer = appsink.pullBuffer();
         if (buffer == null)
@@ -253,7 +259,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             System.out.println("¡Aumentar recursos! -> " + tmp.length);
             return;
         }
-        
+
         // Publica la estructura de datos generada en DDS
         try {
             this.writer.escribeDatos(this.dynData, this.instance);
@@ -270,14 +276,14 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         this.pipe.stop();
         this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
     }
-    
+
     /**
      * Pausa la obtención de vídeo.
      */
     public void pausar() {
         if (this.pausar)
             return;
-        
+
         this.pausar = true;
         this.pipe.pause();
         org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
@@ -286,14 +292,14 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         else
             System.out.println("[" + this.info.getCamId() + "]: Pausado");
     }
-    
+
     /**
      * Reanuda la obtención de vídeo.
      */
     public void reanudar() {
         if (!this.pausar)
             return;
-        
+
         this.pausar = false;
         this.pipe.play();
         org.gstreamer.State retState = this.pipe.getState(ClockTime.fromSeconds(5).toSeconds());
@@ -307,17 +313,17 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
     public void onChange(DiscoveryChange[] changes) {
         for (DiscoveryChange change : changes)
             this.updateNumSubs(change.getData(), change.getStatus());
-        
+
         if (!this.dataSubs.isEmpty())
             this.reanudar();
         else
             this.pausar();
     }
-    
+
     /**
      * Actualiza el número de suscriptores de este escritor según los datos
      * recibidos en el descubridor.
-     * 
+     *
      * @param data Datos del lector.
      * @param status Estado de descubrimiento.
      */
@@ -337,16 +343,16 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
         // parámetro en la expresión del filtro.
         String camId = (String)data.getFilterParams().get(0);
         camId = camId.replaceAll("'", "");
-        
+
         //System.out.println("[" + info.getCamId() + "]: " + camId);
         //System.out.println("[" + info.getCamId() + "]: " + status.name());
-        
+
         // Busca si ya está en la lista
         int idx = -1;
         for (int i = 0; i < this.dataSubs.size() && idx == -1; i++)
             if (this.dataSubs.get(i).getHandle().equals(data.getHandle()))
                 idx = i;
-        
+
         // Comprueba que coincida el filtro.
         if (!this.info.getCamId().equals(camId)) {
             // Si no coinciden pero estaba en la lista, es porque se ha cambiado
@@ -362,7 +368,7 @@ public class EscritorVideo extends Thread implements DiscoveryListener {
             if (idx != -1)
                 this.dataSubs.remove(idx);
         }
-        
+
         //System.out.println(data.getHandle());
         //System.out.println("[" + info.getCamId() + "]: " + this.dataSubs.size());
         //System.out.println();

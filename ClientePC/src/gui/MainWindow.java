@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package gui;
@@ -43,12 +49,12 @@ public class MainWindow extends javax.swing.JFrame {
     private static final String CHILD_TOPIC_NAME = "ChildDataTopic";
     private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipantePC";
-    
+
     private LectorNino lectorNino;
     private LectorCamara lectorCam;
     private TopicoControl controlNino;
     private TopicoControl controlCamaras;
-    
+
     private final List<DatosCamara> camData = new ArrayList<>();
     private DatosNino[] childData;
     private RealTimePanel rtpanel;
@@ -59,29 +65,29 @@ public class MainWindow extends javax.swing.JFrame {
      */
     public MainWindow() {
         initComponents();
-        
+
         this.setBackground(Color.white);
         this.getContentPane().setBackground(Color.white);
         this.setIconImage(Toolkit.getDefaultToolkit().getImage(MainWindow.class.getResource("icon.png")));
         this.panelVideo.setLayout(new GridLayout(1, 1));
-        
+
         // Inicia GStreamer
         org.gstreamer.Gst.init();
     }
 
     /**
      * Crea una nueva ventana que participa en un dominio.
-     * 
+     *
      * @param children Niños a seguir.
      */
     public MainWindow(final DatosNino[] children) {
         this();
-        
+
         // Añadimos los niños que podemos seguir
         this.childData = children;
         for (DatosNino d : children)
             this.comboNino.addItem(d.getApodo());
-        
+
         // Crea los dos controles de tópicos (niños y vídeo).
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
                 PARTICIPANT_NAME,
@@ -89,21 +95,21 @@ public class MainWindow extends javax.swing.JFrame {
         this.controlCamaras = TopicoControlFactoria.crearControlDinamico(
                 PARTICIPANT_NAME,
                 VIDEO_TOPIC_NAME);
-        
+
         // Crea el lector de vídeo.
         this.lectorNino = new LectorNino(controlNino, children[0].getId(), controlCamaras);
         this.lectorCam  = this.lectorNino.getSuscriptorCamara();
         this.panelVideo.add(this.lectorCam.getVideoComponent());
-        
+
         this.rtpanel = new RealTimePanel(this.camData);
         this.rtpanel.setShowCams(true);
         this.rtpanel.setSize(this.panelLoc.getWidth() - 10, this.panelLoc.getHeight() - 10);
         this.panelLoc.add(this.rtpanel);
-        
+
         // Actualizamos las listas por cada publicador ya existente
         for (DiscoveryData d : this.controlNino.getParticipanteControl().getDiscoveryWriterData())
             onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
-        
+
         // Listener para cuando se descubra un publicador nuevo.
         this.controlNino.getParticipanteControl().addDiscoveryWriterListener(new DiscoveryListener() {
             @Override
@@ -112,7 +118,7 @@ public class MainWindow extends javax.swing.JFrame {
                     onWriterDiscovered(ch.getData(), ch.getStatus());
             }
         });
-        
+
         // Listener para cuando se reciba un dato nuevo del niño.
         this.lectorNino.setExtraListener(new ActionListener() {
             @Override
@@ -120,7 +126,7 @@ public class MainWindow extends javax.swing.JFrame {
                 onNinoDataReceived(lectorNino.getUltimoDato());
             }
         });
-        
+
         // Listener para cuando se reciba un dato nuevo de la cámara
         this.lectorCam.setExtraListener(new ActionListener() {
             @Override
@@ -128,12 +134,12 @@ public class MainWindow extends javax.swing.JFrame {
                 onCamDataReceived(lectorCam.getUltimoDato());
             }
         });
-        
+
         // Le decimos que no procese las muestras de cámara y lo iniciamos.
         this.lectorNino.setAuto(false);
         this.lectorNino.iniciar();
     }
-    
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -347,18 +353,18 @@ public class MainWindow extends javax.swing.JFrame {
     /**
      * Actualiza las listas de cámaras a partir de los publicadores
      * descubiertos.
-     * 
+     *
      * @param data Datos del publicador descubierto.
      * @param status Estado del publicador descubierto.
      */
     private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
         String userData = new String(data.getUserData().toArrayByte(null));
-        
+
         // Solo nos centramos en las cámaras, los datos de los niños
         // nos lo da el servidor
         if (!data.getTopicName().equals(VIDEO_TOPIC_NAME))
             return;
-            
+
         // Busca si ya está en la lista
         DatosCamara info = DatosCamara.FromStringSummary(userData);
         int idx = -1;
@@ -376,27 +382,27 @@ public class MainWindow extends javax.swing.JFrame {
             this.camData.add(info);
         }
     }
-    
+
     /**
      * Se llama cuando se recibe un dato nuevo del niño.
-     * 
+     *
      * @param data Último del niño.
      */
     private void onNinoDataReceived(DatosNino data) {
         this.lblPlace.setText(data.getSala());
         this.rtpanel.setChild(data);
     }
-    
+
     /**
      * Se llama cuando se recibe un dato nuevo de la cámara.
-     * 
+     *
      * @param data Último de la cámara.
      */
     private void onCamDataReceived(DatosCamara data) {
         if (this.checkManual.isSelected() || this.btnCam.isSelected())
             this.rtpanel.setCurrentCamaraId(data.getCamId());
     }
-    
+
     private void btnCamClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCamClick
         // Si el botón está desactivado, borrar la pantalla.
         if (!this.btnCam.isSelected()) {
@@ -406,11 +412,11 @@ public class MainWindow extends javax.swing.JFrame {
             this.lectorCam.cambioParametros(new String[] { "'-1'" });
             return;
         }
-        
+
         // Reanudamos la toma de datos.
         this.lectorNino.setAuto(true);
         this.lectorCam.getVideoComponent().setVisible(true);
-        
+
         // Actualiza
         this.panelVideo.revalidate();
     }//GEN-LAST:event_btnCamClick
@@ -418,7 +424,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void comboNinoSelected(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboNinoSelected
         if (this.lectorNino == null)
             return;
-            
+
         // Cambia la clave en el lector de niños
         int idx = this.comboNino.getSelectedIndex();
         this.lectorNino.cambiarNinoId(this.childData[idx].getId());
@@ -428,7 +434,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.comboIdCam.setEnabled(this.checkManual.isSelected());
         this.comboNino.setEnabled(!this.checkManual.isSelected());
         this.btnCam.setEnabled(!this.checkManual.isSelected());
-        
+
         // Volvemos al modo automático, comprobar si el botón está pulsado
         if (!this.checkManual.isSelected()) {
             this.btnCamClick(evt);
@@ -442,13 +448,13 @@ public class MainWindow extends javax.swing.JFrame {
     private void updateManualView(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateManualView
         if (!this.checkManual.isSelected())
             return;
-        
+
         // Cambia a la nueva clave
         int idx = this.comboIdCam.getSelectedIndex();
         String newKey = "'" + this.camData.get(idx).getCamId() + "'";
         this.lectorCam.cambioParametros(new String[] { newKey });
         this.lectorCam.getVideoComponent().setVisible(true);
-        
+
         // Actualiza
         this.panelVideo.revalidate();
     }//GEN-LAST:event_updateManualView
@@ -458,7 +464,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.controlCamaras.dispose();
         this.controlNino.dispose();
     }//GEN-LAST:event_formWindowClosing
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnCam;
     private javax.swing.JCheckBox checkManual;

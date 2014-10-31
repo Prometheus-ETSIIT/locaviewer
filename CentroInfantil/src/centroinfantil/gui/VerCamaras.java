@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package centroinfantil.gui;
@@ -59,37 +65,37 @@ import org.gstreamer.swing.VideoComponent;
 public class VerCamaras extends javax.swing.JFrame {
     private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
     private static final String PARTICIPANT_NAME = "MisParticipantes::ParticipanteCI";
-    
+
     private final Map<String, List<String>> cams = new HashMap<>();
     private final List<TabComponents> tabComp = new ArrayList<>();
-    
+
     private final List<LectorCamara[]> lectores = new ArrayList<>();
     private final TopicoControl controlCamaras;
-    
+
     /**
      * Crea una nueva instancia.
      */
     public VerCamaras() {
         initComponents();
-        
+
         this.setTitle("Videovigilancia de Centro Infantil");
         // TODO: Poner icono
         this.setBackground(Color.white);
         this.getContentPane().setBackground(Color.white);
-        
+
         // Inicia GStreamer
         if (!org.gstreamer.Gst.isInitialized())
             org.gstreamer.Gst.init();
-        
+
                 // Creo el control del tópico de las cámaras
         this.controlCamaras = TopicoControlFactoria.crearControlDinamico(
                 PARTICIPANT_NAME,
                 VIDEO_TOPIC_NAME);
-                        
+
         // Actualizamos las listas por cada publicador ya existente
         for (DiscoveryData d : this.controlCamaras.getParticipanteControl().getDiscoveryWriterData())
             onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
-        
+
         // Listener para cuando se descubra un publicador nuevo.
         this.controlCamaras.getParticipanteControl().addDiscoveryWriterListener(new DiscoveryListener() {
             @Override
@@ -98,25 +104,25 @@ public class VerCamaras extends javax.swing.JFrame {
                     onWriterDiscovered(ch.getData(), ch.getStatus());
             }
         });
-        
+
         this.addTab();
     }
-    
+
     /**
      * Actualiza las listas de cámaras a partir de los publicadores
      * descubiertos.
-     * 
+     *
      * @param data Datos del publicador descubierto.
      * @param status Estado del publicador descubierto.
      */
     private void onWriterDiscovered(DiscoveryData data, DiscoveryChangeStatus status) {
         String userData = new String(data.getUserData().toArrayByte(null));
-        
+
         // Solo nos centramos en las cámaras, los datos de los niños
         // nos lo da el servidor
         if (!data.getTopicName().equals(VIDEO_TOPIC_NAME))
             return;
-            
+
         // Busca si ya está en la lista
         DatosCamara info = DatosCamara.FromStringSummary(userData);
         int idx = -1;
@@ -132,22 +138,22 @@ public class VerCamaras extends javax.swing.JFrame {
             // TODO: Enviar notificación
             System.out.println("Fuera cámara: " + info.getCamId());
             this.cams.get(info.getSala()).remove(idx);
-            
+
             boolean removeRoom = this.cams.get(info.getSala()).isEmpty();
             if (removeRoom)
                 this.cams.remove(info.getSala());
-            
+
             // Actualiza los combobox de todas las pestañas
             for (TabComponents c : this.tabComp) {
                 boolean thisRoom = c.getComboRoom().getSelectedItem().equals(info.getSala());
                 if (removeRoom)
                     c.getComboRoom().removeItem(info.getSala());
-                
+
                 // Actualiza los controles de cámaras
                 for (int i = 0; i < c.getControlsNum() && thisRoom; i++) {
                     if (c.getComboControl(i).getSelectedItem().equals(info.getCamId()))
                         c.getCheckControl(i).setSelected(false);
-                    
+
                     c.getComboControl(i).removeItem(info.getCamId());
                 }
             }
@@ -159,7 +165,7 @@ public class VerCamaras extends javax.swing.JFrame {
                 for (TabComponents c : this.tabComp)
                     c.getComboRoom().addItem(info.getSala());
             }
-            
+
             this.cams.get(info.getSala()).add(info.getCamId());
             for (TabComponents c : this.tabComp) {
                 boolean thisRoom = c.getComboRoom().getSelectedItem().equals(info.getSala());
@@ -206,20 +212,20 @@ public class VerCamaras extends javax.swing.JFrame {
         for (LectorCamara[] lectoresTab : this.lectores)
             for (LectorCamara lector : lectoresTab)
                 lector.dispose();
-        
+
         this.controlCamaras.dispose();
     }//GEN-LAST:event_formWindowClosing
 
     private void addTab() {
         final int tabIdx = this.roomTabs.getTabCount();
-        
+
         JPanel panel = new JPanel();
         GridBagLayout layout = new GridBagLayout();
         layout.columnWidths = new int[] { 170, 170, 170, 170, 210 };
         layout.rowHeights   = new int[] {  30, 130, 130, 130, 130 };
-        panel.setLayout(layout); 
+        panel.setLayout(layout);
         GridBagConstraints con = new GridBagConstraints();
-        
+
         // Componentes de selección de habitación.
         JLabel label = new JLabel("Seleccione habitación:");
         con.gridx = 0;
@@ -234,7 +240,7 @@ public class VerCamaras extends javax.swing.JFrame {
         con.weightx = 0;
         con.weighty = 0;
         panel.add(label, con);
-        
+
         final JComboBox combo = new JComboBox(new String[] { "Desactivar" });
         for (String room : this.cams.keySet())
             combo.addItem(room);
@@ -256,7 +262,7 @@ public class VerCamaras extends javax.swing.JFrame {
         con.weightx = 1;
         con.weighty = 0;
         panel.add(combo, con);
-        
+
         // Botones para añadir o quitar pestañas
         JButton btnAnadir = new JButton("Añadir habitación");
         btnAnadir.addMouseListener(new MouseAdapter() {
@@ -277,7 +283,7 @@ public class VerCamaras extends javax.swing.JFrame {
         con.weightx = 0;
         con.weighty = 0;
         panel.add(btnAnadir, con);
-        
+
         JButton btnEliminar = new JButton("Eliminar habitación");
         btnEliminar.setEnabled(roomTabs.getTabCount() >= 1);
         btnEliminar.addMouseListener(new MouseAdapter() {
@@ -298,7 +304,7 @@ public class VerCamaras extends javax.swing.JFrame {
         con.weightx = 0;
         con.weighty = 0;
         panel.add(btnEliminar, con);
-        
+
         // Cámaras
         TabComponents comps = new TabComponents(combo);
         LectorCamara[] lectoresCam = new LectorCamara[4];
@@ -306,7 +312,7 @@ public class VerCamaras extends javax.swing.JFrame {
         for (int y = 0; y < 2; y++) {
             for (int x = 0; x < 2; x++) {
                 final int idCam = x + y * 2;
-                
+
                 // Crea el panel de vídeo
                 JPanel panelVideo = new JPanel();
                 panelVideo.setBackground(Color.black);
@@ -324,7 +330,7 @@ public class VerCamaras extends javax.swing.JFrame {
                 con.weightx = 0.5;
                 con.weighty = 0.5;
                 panel.add(panelVideo, con);
-                
+
                 // Crea el lector
                 VideoComponent videoComp = new VideoComponent();
                 videoComp.setVisible(false);
@@ -333,7 +339,7 @@ public class VerCamaras extends javax.swing.JFrame {
                 lectoresCam[idCam] = new LectorCamara(controlCamaras, "'-1'", videoComp);
                 lectoresCam[idCam].suspender();
                 lectoresCam[idCam].iniciar();
-                
+
                 // Crea el controlador de la cámara
                 JPanel panelControl = new JPanel();
                 panelControl.setBorder(new TitledBorder("Cámara " + (idCam + 1)));
@@ -350,10 +356,10 @@ public class VerCamaras extends javax.swing.JFrame {
                 con.anchor = GridBagConstraints.CENTER;
                 con.weightx = 0;
                 con.weighty = 0.5;
-                
+
                 // Añade los controles
                 panelControl.setLayout(new BoxLayout(panelControl, BoxLayout.Y_AXIS));
-                
+
                 final JCheckBox checkControl = new JCheckBox("Activar", false);
                 checkControl.setName(String.valueOf(idCam));
                 checkControl.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -365,16 +371,16 @@ public class VerCamaras extends javax.swing.JFrame {
                     }
                 });
                 panelControl.add(checkControl);
-                
+
                 Dimension minFill = new Dimension(0, 20);
                 Dimension maxFill = new Dimension(0, 60);
                 panelControl.add(new Box.Filler(minFill, minFill, maxFill));
-                
+
                 JLabel lblControl = new JLabel("Cámara ID:");
                 lblControl.setAlignmentX(Component.LEFT_ALIGNMENT);
                 lblControl.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                 panelControl.add(lblControl);
-                
+
                 final JComboBox comboControl = new JComboBox();
                 comboControl.setName(String.valueOf(idCam));
                 comboControl.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -386,52 +392,52 @@ public class VerCamaras extends javax.swing.JFrame {
                     }
                 });
                 panelControl.add(comboControl);
-                
+
                 PanelEnabled(panelControl, false);
                 panel.add(panelControl, con);
                 comps.addControl(panelVideo, panelControl, checkControl, comboControl);
             }
         }
-        
+
         roomTabs.addTab("Desactivar", panel);
         this.tabComp.add(comps);
     }
-    
+
     private static void PanelEnabled(JPanel panel, boolean enabled) {
         panel.setEnabled(enabled);
         for (Component c : panel.getComponents())
             c.setEnabled(enabled);
     }
-    
+
     private void removeTab() {
         int currTab = roomTabs.getSelectedIndex();
         roomTabs.removeTabAt(currTab);
         this.tabComp.remove(currTab);
-        
+
         for (LectorCamara lector : this.lectores.get(currTab)) {
             lector.cambioParametros(new String[] { "'-1'" });
             lector.dispose();
         }
         this.lectores.remove(currTab);
     }
-    
+
     private void onComboRoomChanged(JComboBox combo, int tabIdx) {
         boolean activate = combo.getSelectedIndex() > 0;
         this.roomTabs.setTitleAt(tabIdx, (String)combo.getSelectedItem());
-        
+
         // Busca los componentes correspondientes a esa pestaña
         TabComponents currTab = this.tabComp.get(tabIdx);
-        
+
         // Activa o deshabilita los paneles
         for (int i = 0; i < currTab.getControlsNum(); i++)
             PanelEnabled(currTab.getPanelControl(i), activate);
-                
+
         // Actualiza los combobox
         for (int i = 0; i < currTab.getControlsNum(); i++) {
             // Primero deshabilito todo
             currTab.getComboControl(i).removeAllItems();
             currTab.getCheckControl(i).setSelected(false);
-            
+
             // Añado los nuevos elementos si no es "Deshabilitar"
             if (activate) {
                 for (String camId : this.cams.get((String)combo.getSelectedItem()))
@@ -439,18 +445,18 @@ public class VerCamaras extends javax.swing.JFrame {
             }
         }
     }
-    
+
     private void onCheckControlChanged(JCheckBox check, int tabIdx, int ctlIdx) {
         LectorCamara lector = this.lectores.get(tabIdx)[ctlIdx];
         if (tabIdx >= this.tabComp.size())
             return;
-        
+
         if (check.isSelected()) {
             // Comienza vídeo
             JComboBox combo = this.tabComp.get(tabIdx).getComboControl(ctlIdx);
             if (combo.getSelectedIndex() == -1)
                 return;
-            
+
             lector.getVideoComponent().setVisible(true);
             lector.cambioParametros(new String[] { "'" + combo.getSelectedItem() + "'" });
             lector.reanudar();
@@ -459,26 +465,26 @@ public class VerCamaras extends javax.swing.JFrame {
             lector.cambioParametros(new String[] { "'-1'" });
             lector.suspender();
         }
-        
+
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         this.roomTabs.revalidate();
         this.revalidate();
     }
-    
+
     private void onComboControlChanged(JComboBox combo, int tabIdx, int ctlIdx) {
         if (!this.tabComp.get(tabIdx).getCheckControl(ctlIdx).isSelected())
             return;
-        
+
         LectorCamara lector = this.lectores.get(tabIdx)[ctlIdx];
         lector.cambioParametros(new String[] { "'" + combo.getSelectedItem() + "'" });
         lector.getVideoComponent().setVisible(true);
         lector.reanudar();
-        
+
         this.tabComp.get(tabIdx).getVideoPanel(ctlIdx).revalidate();
         this.roomTabs.revalidate();
         this.revalidate();
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane roomTabs;
     // End of variables declaration//GEN-END:variables
@@ -489,11 +495,11 @@ public class VerCamaras extends javax.swing.JFrame {
         private final List<JPanel> panelsControl = new ArrayList<>();
         private final List<JCheckBox> checksControl = new ArrayList<>();
         private final List<JComboBox> combosControl = new ArrayList<>();
-        
+
         public TabComponents(JComboBox comboRoom) {
             this.comboRoom = comboRoom;
         }
-        
+
         public void addControl(JPanel videoPanel, JPanel controlPanel, JCheckBox check,
                 JComboBox combo) {
             this.panelsVideo.add(videoPanel);
@@ -501,27 +507,27 @@ public class VerCamaras extends javax.swing.JFrame {
             this.checksControl.add(check);
             this.combosControl.add(combo);
         }
-        
+
         public JComboBox getComboRoom() {
             return this.comboRoom;
         }
-        
+
         public int getControlsNum() {
             return this.panelsControl.size();
         }
-        
+
         public JPanel getVideoPanel(int i) {
             return this.panelsVideo.get(i);
         }
-        
+
         public JPanel getPanelControl(int i) {
             return this.panelsControl.get(i);
         }
-        
+
         public JCheckBox getCheckControl(int i) {
             return this.checksControl.get(i);
         }
-        
+
         public JComboBox getComboControl(int i) {
             return this.combosControl.get(i);
         }

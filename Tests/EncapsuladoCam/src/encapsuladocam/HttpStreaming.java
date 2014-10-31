@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package encapsuladocam;
@@ -30,11 +36,11 @@ public class HttpStreaming {
 
     private static final int DELAY = 20000;
     private static final int PORT  = 5555;
-    
+
     /**
      * Inicia el programa.
-     * 
-     * @param args MRL al medio que se va a transmitir (v4l2:///dev/video0). 
+     *
+     * @param args MRL al medio que se va a transmitir (v4l2:///dev/video0).
      */
     public static void main(String[] args) {
         // Comprueba los argumentos.
@@ -48,7 +54,7 @@ public class HttpStreaming {
         // Crea el reproductor
         MediaPlayerFactory mediaPlayerFactory = new MediaPlayerFactory();
         HeadlessMediaPlayer mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer();
-        
+
         // Crea la opciones y comienza a reproducir (capturar y streaming).
         String options = formatHttpStream("127.0.0.1", PORT);
         mediaPlayer.playMedia(media, options);
@@ -59,11 +65,11 @@ public class HttpStreaming {
         } catch (InterruptedException ex) {
             Logger.getLogger(HttpStreaming.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         // Redirección
         VlcToDds redireccion = new VlcToDds("127.0.0.1", PORT);
         redireccion.start();
-        
+
         try {
             // Don't exit
             Thread.currentThread().join();
@@ -74,7 +80,7 @@ public class HttpStreaming {
 
     /**
      * Crea una cadena de caracteres con opciones de streaming HTTP.
-     * 
+     *
      * @param serverAddress Dirección del servidor.
      * @param serverPort Puerto del servidor.
      * @return Opciones con streaming HTTP.
@@ -82,13 +88,13 @@ public class HttpStreaming {
     private static String formatHttpStream(String serverAddress, int serverPort) {
         StringBuilder sb = new StringBuilder(60);
         sb.append(":sout=#");
-        
+
         // Añade la codificación del video
         sb.append("transcode{");
         sb.append("vcodec=mp4v,vb=4096,scale=1,acodec=mpga,ab=128,");
         sb.append("channels=2,samplerate=44100,fps=59.9");
         sb.append("}");
-        
+
         // Añade la transmisión por streaming HTTP.
         sb.append(":duplicate{dst=std{access=http,mux=ts,");
         sb.append("dst=");

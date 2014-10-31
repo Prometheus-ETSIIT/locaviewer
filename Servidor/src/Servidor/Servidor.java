@@ -1,4 +1,26 @@
-
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Prometheus
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 package Servidor;
 
@@ -27,21 +49,21 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 
-public class Servidor {   
+public class Servidor {
 
     public static void main(String[] args) {
 
         char[] password = "Prometheus".toCharArray();
-                
+
         int puerto  =6556;
         System.out.println("Iniciando servicio en puerto " + puerto);
-        
+
         iniciarServicio(puerto, password);
     }
 
     private static void iniciarServicio(final int puerto, final char[] password) {
         try {
-         
+
             SSLContext context = SSLContext.getInstance("SSL");
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 
@@ -64,25 +86,25 @@ public class Servidor {
             }
 
         } catch (NoSuchAlgorithmException | KeyStoreException |
-                CertificateException | UnrecoverableKeyException | 
+                CertificateException | UnrecoverableKeyException |
                 KeyManagementException | IOException ex) {
             System.out.println("ERROR: " + ex.getMessage());
         }
     }
-    
+
     private static class Servicio extends Thread {
 
         private final Socket socket;
         private DataInputStream reader;
-        
+
         boolean isAdmin;
         boolean isFather;
 
-        
+
         public Servicio(final Socket socket) {
             this.socket = socket;
             this.isAdmin=this.isFather=false;
-            
+
             InputStream inStream;
             try {
                 inStream = this.socket.getInputStream();
@@ -129,9 +151,9 @@ public class Servidor {
                         break;
                     }
                 }
-                
-                
-                
+
+
+
                 // Cierra la conexión
                 try {
                     this.socket.close();
@@ -151,7 +173,7 @@ public class Servidor {
            * get  [clave]
            */
           public String commands(String[] command){
-              if(isAdmin){   
+              if(isAdmin){
                   switch(command[0]){
                       case "registrar":
                           return registrarPadre(command[1],command[2],command[3],command[4],command[5]);
@@ -175,33 +197,33 @@ public class Servidor {
               return null;
           }
 
-          
+
         public String getNino(String clave){
             try {
                 BaseDatos conexion = new BaseDatos();
-                
+
                 String query = "SELECT nino FROM padres where clave = ?";
                 PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
                 consulta.setString(1, clave);
-                
+
                 ResultSet res = consulta.executeQuery();
-                
+
                 if(res.next()){
-                    return res.getString("key");  
+                    return res.getString("key");
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             return "No encontrado";
-            
+
         }
 
           public String autentificarPadre(String IDPadre, String password,DataOutputStream writer ){
-           
+
             try {
                 BaseDatos conexion = new BaseDatos();
-                
+
                 String query = "SELECT * FROM padres where padre = ? ";
                 PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
                 consulta.setString(1, IDPadre);
@@ -209,9 +231,9 @@ public class Servidor {
                 ResultSet res = consulta.executeQuery();
                 System.out.println(query);
                 System.out.println(consulta.toString());
-                
+
                 String pw = cifrarPass(password);
-                
+
                 while(res.next()){
                     if(res.getString("pass").equals(pw)){
                         isFather=true;
@@ -223,13 +245,13 @@ public class Servidor {
                         }
                     }
                 }
-                
-                
+
+
                 } catch (SQLException ex) {
                 Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
             }
             return "fin";
-            
+
           }
 
 
@@ -239,7 +261,7 @@ public class Servidor {
                   return "Bienvenido administrador";
               }
               System.out.println(usuario.equals("administrador"));
- 
+
               return "No tiene privilegios";
           }
 
@@ -263,7 +285,7 @@ public class Servidor {
           private String cifrarPass(String pass){
               MessageDigest mDigest = null;
 
-           
+
             try {
                 mDigest = MessageDigest.getInstance("SHA1");
             } catch (NoSuchAlgorithmException ex) {
@@ -281,19 +303,19 @@ public class Servidor {
           }
 
           public String borrarPadre(String padre,String nino){
-          
+
             try {
                 BaseDatos conexion = new BaseDatos();
                 String query ="DELETE FROM padres WHERE padre = ? AND nino = ?";
-                
+
                 PreparedStatement consulta = conexion.getConnection().prepareStatement(query);
                 consulta.setString(1, padre);
                 consulta.setString(2, nino);
                 System.out.println(consulta.toString());
                 consulta.executeUpdate();
-                
+
                 conexion.desconectar();
-                
+
                 return "Padre borrado correctamente";
             } catch (SQLException ex) {
                 Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
@@ -307,7 +329,7 @@ public class Servidor {
                 BaseDatos conexion = new BaseDatos();
                 String query;
                 PreparedStatement consulta = null;
-                 
+
                 if(!pass.equals("") || !clave.equals("") || !nuevoIDnino.equals("")){
                    if(!clave.equals("")){
                           query= "UPDATE padres SET  `key` =  ? WHERE padre = ? AND nino= ? ";
@@ -315,7 +337,7 @@ public class Servidor {
                           consulta.setString(1, clave);
                           consulta.setString(2,padreID);
                           consulta.setString(3,nino);
-                          consulta.executeUpdate(); 
+                          consulta.executeUpdate();
                    }
                    if(!nuevoIDnino.equals("")){
                           query= "UPDATE padres SET  `nino` =  ? WHERE padre = ? AND nino= ? ";
@@ -323,7 +345,7 @@ public class Servidor {
                           consulta.setString(1, nuevoIDnino);
                           consulta.setString(2,padreID);
                           consulta.setString(3,nino);
-                          consulta.executeUpdate(); 
+                          consulta.executeUpdate();
                    }
                    if(!pass.equals("")){
                           query= "UPDATE padres SET  `pass` =  ? WHERE padre = ? AND nino= ? ";
@@ -331,7 +353,7 @@ public class Servidor {
                           consulta.setString(1,clave);
                           consulta.setString(2,padreID);
                           consulta.setString(3,nino);
-                          consulta.executeUpdate(); 
+                          consulta.executeUpdate();
                    }
                    if(!pass.equals("")){
                           query= "UPDATE padres SET  `apodo` =  ? WHERE padre = ? AND nino= ? ";
@@ -339,11 +361,11 @@ public class Servidor {
                           consulta.setString(1,clave);
                           consulta.setString(2,padreID);
                           consulta.setString(3,apodo);
-                          consulta.executeUpdate(); 
-                   } 
+                          consulta.executeUpdate();
+                   }
 
                 conexion.desconectar();
-                
+
                 return "Padre modificado";
                 }
                 else{
@@ -356,10 +378,10 @@ public class Servidor {
             }
 
           }
-        
+
     }
-    
-    
-    
+
+
+
 
 }

@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package gava;
@@ -45,41 +51,41 @@ public class Publicador {
     public static void main(String[] args) {
         // Inicializa GStreamer
         args = Gst.init("Gava", args);
-        
+
         // Añade un listener que se ejecute al finalizar la aplicación (Ctl + C)
         Runtime.getRuntime().addShutdownHook(Shutdown);
-        
+
         if (args.length > 0)
             for (String arg : args)
                 CreaPublicador("/dev/video" + arg);
         else
             StartAll();
     }
-    
+
     /**
      * Crea un publicador de vídeo en una nueva hebra.
      * Lo añade al listener de shutdown, para que elimine el participante.
-     * 
+     *
      * @param dev Archivo de vídeo (ej: /dev/video0)
      */
     private static void CreaPublicador(String dev) {
         DatosCamara info = BuscaInfo(dev);
         System.out.println("Iniciando: " + dev + " | " + info.getCamId());
         EscritorVideo p = new EscritorVideo(dev, info);   // Crea un escritor
-        
+
         Shutdown.addPublicador(p); // Lo añade al listener
         p.start();                 // Lo inica.
     }
-    
+
     /**
      * Busca y devuelve la información sobre la cámara referida.
-     * 
+     *
      * @param dev Archivo del sistema de la cámara (ej: /dev/video).
      * @return Datos de la cámara o null si no se han encontrado.
      * @throws Exception Las gilipolleces de Java y eso.
      */
     private static DatosCamara BuscaInfo(String dev) {
-        try {        
+        try {
             // Abrimos y procesamos el XML
             File fXmlFile = new File("InfoCamaras.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -88,7 +94,7 @@ public class Publicador {
             doc.getDocumentElement().normalize();
 
             // Por cada entrada de información
-            NodeList nList = doc.getElementsByTagName("camara"); 
+            NodeList nList = doc.getElementsByTagName("camara");
             for (int i = 0; i < nList.getLength(); i++) {
                 Element element = (Element)nList.item(i);
 
@@ -103,14 +109,14 @@ public class Publicador {
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
-        
+
         return null;
     }
 
     /**
      * Inicia un escritor por cada cámara conectada.
      */
-    private static void StartAll() {        
+    private static void StartAll() {
         // Obtiene una lista de cámaras conectadas (/dev/video*)
         String[] cams = new File("/dev/").list(new FilenameFilter() {
             @Override
@@ -124,14 +130,14 @@ public class Publicador {
         for (String cam : cams)
             CreaPublicador("/dev/" + cam);
     }
-    
+
     /**
      * Listener llamado cuando se finaliza la aplicación.
      * Termina los thread de publicación de vídeo para eliminar el participante.
      */
     private static class ShutdownThread extends Thread {
         List<EscritorVideo> publicadores = new ArrayList<>();
-        
+
         @Override
         public void run() {
             System.out.println("Parando. . .");
@@ -140,16 +146,16 @@ public class Publicador {
                 try { p.join(5000); }
                 catch (InterruptedException ex) { System.err.println("TimeOver!"); }
             }
-            
+
         }
-        
+
         /**
          * Añade un publicador al listener.
-         * 
+         *
          * @param p Publicador.
          */
         public void addPublicador(final EscritorVideo p) {
             this.publicadores.add(p);
         }
     }
-}   
+}

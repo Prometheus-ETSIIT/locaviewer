@@ -1,21 +1,26 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
-
 package comunicador;
 
 import com.rti.dds.dynamicdata.DynamicData;
@@ -42,26 +47,26 @@ public class Servidor extends Thread {
     private static final String VIDEO_TOPIC_NAME = "VideoDataTopic";
     private static final String CHILD_TOPIC_NAME = "ChildDataTopic";
     private static final int MAX_TIME = 30*1000;
-    
+
     private final Map<String, ArrayList<DatosSensor>> datosNinos = new HashMap<>();
     private final List<DiscoveryData> ninoSubs = new ArrayList<>();
     private final List<DatosCamara> camaraPubs = new ArrayList<>();
-    
+
     private final String sala;
     private final double ancho;
     private final double largo;
     private final int prioridad;
-    
+
     private TriangulacionOctave triangulacion;
     private TopicoControl controlNino;
     private Escritor escritorNino;
     private DynamicData escritorData;
     private TopicoControl controlSensor;
     private LectorBase lectorSensor;
-    
+
     private boolean pausado;
     private boolean triangulando;
-    
+
     public Servidor(final String sala, double ancho, double largo, int prio) {
         this.sala  = sala;
         this.ancho = ancho;
@@ -70,10 +75,10 @@ public class Servidor extends Thread {
         this.triangulando = false;
         this.pausado = false;
     }
-        
+
     /**
      * Inicia el programa.
-     * 
+     *
      * @param args Uno: el nombre de la sala.
      * Dos: Ancho de la sala.
      * Tres: Largo de la sala.
@@ -84,20 +89,20 @@ public class Servidor extends Thread {
             System.err.println("[Servidor] Número de argumentos inválido.");
             return;
         }
-        
+
         // Creamos el comunicador de sensor
         double ancho  = Double.parseDouble(args[1]);
         double largo  = Double.parseDouble(args[2]);
         int prioridad = Integer.parseInt(args[3]);
         Servidor servidor = new Servidor(args[0], ancho, largo, prioridad);
         servidor.start();
-        
+
         // Creamos una hebra para salidas forzosas (Control+C).
-    	Runtime.getRuntime().addShutdownHook(new ShutdownThread(servidor));     
+    	Runtime.getRuntime().addShutdownHook(new ShutdownThread(servidor));
     }
 
     @Override
-    public void run() {        
+    public void run() {
         // Inicializa la triangulación
         this.triangulacion = new TriangulacionOctave(
                 SCRIPT_PATH,
@@ -107,11 +112,11 @@ public class Servidor extends Thread {
                 this.largo,
                 false
         );
-        
+
         // Inicializa DDS
         this.iniciaDds();
     }
-    
+
     /**
      * Libera recursos.
      */
@@ -121,32 +126,32 @@ public class Servidor extends Thread {
         this.controlNino.dispose();
         this.triangulacion.close();
     }
-    
+
     public synchronized void suspender() {
         if (this.pausado)
             return;
-        
+
         this.pausado = true;
         while (this.lectorSensor == null) {
             try { this.wait(); }
             catch (InterruptedException ex) { }
         }
-        
+
         if (this.pausado) {
             System.out.println("[Servidor] Suspendiendo");
             this.lectorSensor.suspender();
         }
     }
-    
+
     public void reanudar() {
         if (!this.pausado)
             return;
-        
+
         System.out.println("[Servidor] Reanudando");
         this.lectorSensor.reanudar();
         this.pausado = false;
     }
-    
+
     /**
      * Inicializa la entidades de DDS.
      */
@@ -163,7 +168,7 @@ public class Servidor extends Thread {
                 onSensorDataReceived(sample);
             }
         };
-        
+
         // Inicia las entidades del tópico de niños:
         // Publicar datos de triangulación de cada niño.
         this.controlNino = TopicoControlFactoria.crearControlDinamico(
@@ -173,12 +178,12 @@ public class Servidor extends Thread {
         this.escritorNino = new Escritor(this.controlNino, user_data.getBytes());
         this.escritorData = this.escritorNino.creaDatos();
         this.lectorSensor.iniciar();
-        
+
         // Añade un listener de descubridor de cámaras, filtradas por sala.
         // Actualizamos las listas por cada publicador ya existente
         for (DiscoveryData d : this.controlNino.getParticipanteControl().getDiscoveryWriterData())
             onWriterDiscovered(d, DiscoveryChangeStatus.ANADIDO);
-        
+
         // Listener para cuando se descubra un publicador nuevo.
         this.controlNino.getParticipanteControl().addDiscoveryWriterListener(new DiscoveryListener() {
             @Override
@@ -187,12 +192,12 @@ public class Servidor extends Thread {
                     onWriterDiscovered(ch.getData(), ch.getStatus());
             }
         });
-        
+
         // Añade un listener de descubridor de lectores de niños.
         // Obtiene todos los lectores suscriptos a este escritor.
         for (DiscoveryData data : this.controlNino.getParticipanteControl().getDiscoveryReaderData())
             this.onReaderDiscovered(data, DiscoveryChangeStatus.ANADIDO);
-        
+
         // Añade el listener para los lectores.
         this.controlNino.getParticipanteControl().addDiscoveryReaderListener(new DiscoveryListener() {
             @Override
@@ -201,14 +206,14 @@ public class Servidor extends Thread {
                     onReaderDiscovered(ch.getData(), ch.getStatus());
             }
         });
-        
+
         this.notifyAll();
     }
-    
+
     /**
      * Actualiza las listas de cámaras a partir de los publicadores
      * descubiertos.
-     * 
+     *
      * @param data Datos del publicador descubierto.
      * @param status Estado del publicador descubierto.
      */
@@ -219,10 +224,10 @@ public class Servidor extends Thread {
 
         // En las cámaras de nuestra sala
         String userData = new String(data.getUserData().toArrayByte(null));
-        DatosCamara info = DatosCamara.FromStringSummary(userData);    
+        DatosCamara info = DatosCamara.FromStringSummary(userData);
         if (!info.getSala().equals(this.sala))
             return;
-        
+
         // Busca si ya está en la lista
         int idx = -1;
         for (int i = 0; i < this.camaraPubs.size() && idx == -1; i++)
@@ -238,10 +243,10 @@ public class Servidor extends Thread {
             this.triangulacion.setCamaras(this.camaraPubs);
         }
     }
-    
+
     /**
      * Se llama cuando se recibe un dato de un sensor de la sala.
-     * 
+     *
      * @param sample Dato del sensor.
      */
     private synchronized void onSensorDataReceived(DynamicData sample) {
@@ -249,25 +254,25 @@ public class Servidor extends Thread {
             try { this.wait(); }
             catch (InterruptedException ex) { return; }
         }
-        
+
         this.triangulando = true;
         System.out.println("[Servidor] ¡Dato de sensor!");
         DatosSensor dato = DatosSensor.FromDds(sample);
-        
+
         // Si el dato es de algún niño que no tiene suscriptor interesado, paso
         if (!this.existeSuscriptor(dato.getIDNino())) {
             this.triangulando = false;
             this.notifyAll();
             return;
         }
-        
+
         // Si ya tenemos datos del niño...
         if (this.datosNinos.containsKey(dato.getIDNino())) {
             System.out.println("[Servidor] Añadiendo datos: " + dato.getID());
             // Busco si ya tenemos un dato de este sensor, y lo elimino
             ArrayList<DatosSensor> datosSensores = this.datosNinos.get(dato.getIDNino());
             for (int k = 0; k < datosSensores.size(); k++)
-                if (datosSensores.get(k).getID().equals(dato.getID())) 
+                if (datosSensores.get(k).getID().equals(dato.getID()))
                     datosSensores.remove(k);
 
             // Añado el nuevo dato del sensor
@@ -296,19 +301,19 @@ public class Servidor extends Thread {
                     this.notifyAll();
                     return;
                 }
-                
+
                 double[] pos = this.triangulacion.getLastPosition();
-                
+
                 // Obtiene el valor de RSSI más alto (más cercano a 0) como
                 // parámetro de calidad
                 double calidad = Double.MIN_VALUE;
                 for (DatosSensor s : datosSensores)
                     if (s.getIntensidad() > calidad)
                         calidad = s.getIntensidad();
-                                
+
                 // Eliminamos los datos usados
                 datosSensores.clear();
-                
+
                 // Crea la estructura de localización y la envía
                 DatosNino nino = new DatosNino();
                 nino.setCalidad(calidad);
@@ -331,14 +336,14 @@ public class Servidor extends Thread {
             nuevo.add(dato);
             this.datosNinos.put(dato.getIDNino(), nuevo);
         }
-        
+
         this.triangulando = false;
         this.notifyAll();
     }
-    
+
     /**
      * Comprueba si existe algún lector interesado en este niño.
-     * 
+     *
      * @param id Id del niño.
      * @return Si hay algún lector interesado.
      */
@@ -349,13 +354,13 @@ public class Servidor extends Thread {
             if (currId.equals(id))
                 return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Acutaliza la lista de suscriptores de niños.
-     * 
+     *
      * @param data Datos del lector.
      * @param status Estado del lector.
      */
@@ -363,7 +368,7 @@ public class Servidor extends Thread {
         // Compara si coincide el tópico.
         if (!CHILD_TOPIC_NAME.equals(data.getTopicName()))
             return;
-        
+
         // Actualizo la lista de suscriptores
         if (status == DiscoveryChangeStatus.ANADIDO)
             this.ninoSubs.add(data);
@@ -377,22 +382,22 @@ public class Servidor extends Thread {
                 }
             }
         }
-        
+
         System.out.println("[Servidor] Suscriptores: " + this.ninoSubs.size());
         for (DiscoveryData d : this.ninoSubs)
             System.out.println("\t" + d.getFilterParams().get(0));
     }
-    
+
     /**
      * Listener llamado cuando se finaliza la aplicación.
      */
     private static class ShutdownThread extends Thread {
         private final Servidor servidor;
-        
+
         public ShutdownThread(final Servidor servidor) {
             this.servidor = servidor;
         }
-        
+
         @Override
         public void run() {
             System.out.println("[Servidor] Parando. . .");

@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package comunicador;
@@ -39,15 +45,15 @@ public class TriangulacionOctave {
     private List<DatosCamara> cams;
     private final double width;
     private final double length;
-    
+
     private boolean alive;
     private double[] lastPosition;
     private int lastCamIdx;
-    
-    
+
+
     /**
      * Crea una nueva instancia inicializando el engine.
-     * 
+     *
      * @param scriptPath Ruta al script con las funciones de triangulación.
      * @param funcName Nombre de la función a ejecutar. Esta función tendrá
      * los siguientes argumentos en el siguiente orden:
@@ -68,18 +74,18 @@ public class TriangulacionOctave {
         this.length    = length;
         this.cams      = cams;
         this.alive     = this.initialize(scriptPath, width, length);
-        
+
     }
-    
+
     /**
      * Obtiene si el sistema está en funcionamiento.
-     * 
+     *
      * @return Estado de vida del sistema.
      */
     public boolean isAlive() {
         return this.alive;
     }
-    
+
     /**
      * Apaga el sistema...
      */
@@ -87,17 +93,17 @@ public class TriangulacionOctave {
         this.octave.close();
         this.alive = false;
     }
-    
+
     /**
      * Inicializa el sistema poniendo el script en memoria.
-     * 
+     *
      * @param scriptPath Ruta al archivo con el script de triangulación.
      * @return Devuelve si la operación se llevó a cabo con éxito.
      */
-    private boolean initialize(final String scriptPath, final double width, 
+    private boolean initialize(final String scriptPath, final double width,
             final double length) {
         // Información sobre los métodos: http://goo.gl/1kbd4y
-        
+
         // Lee las funciones
         String script;
         try {
@@ -110,7 +116,7 @@ public class TriangulacionOctave {
             );
             return false;
         }
-        
+
         // Las carga en memoria
         try {
             this.octave.eval(script);
@@ -136,27 +142,27 @@ public class TriangulacionOctave {
         this.octave.put("angulos", angulos);
         this.octave.put("ancho", Octave.scalar(width));
         this.octave.put("largo", Octave.scalar(length));
-        
+
         return true;
     }
-    
+
     /**
      * Obtiene la lista de cámaras disponibles.
-     * 
+     *
      * @return Cámaras disponibles.
      */
     public List<DatosCamara> getCamaras() {
         return this.cams;
     }
-    
+
     /**
      * Establece la lista de cámaras disponibles.
-     * 
+     *
      * @param nuevasCamaras Cámaras disponibles.
      */
     public void setCamaras(final List<DatosCamara> nuevasCamaras) {
         this.cams = nuevasCamaras;
-        
+
         // Obtiene un array con la posición de las cámaras
         OctaveDouble camPos = new OctaveDouble(this.cams.size(), 2);
         OctaveDouble angulos = new OctaveDouble(1, this.cams.size());
@@ -165,51 +171,51 @@ public class TriangulacionOctave {
             camPos.set(this.cams.get(i).getPosY(), i + 1, 2);
             angulos.set(this.cams.get(i).getAngle(), 1, i + 1);
         }
-        
+
         this.octave.put("camaras", camPos);
         this.octave.put("angulos", angulos);
     }
-    
+
     /**
      * Obtiene el ancho de la habitación.
-     * 
+     *
      * @return Ancho de la habitación.
      */
     public double getWidth() {
         return this.width;
     }
-    
+
     /**
      * Obtiene el largo de la habitación.
-     * 
+     *
      * @return Largo de la habitación.
      */
     public double getLength() {
         return this.length;
     }
-    
+
     /**
      * Obtiene el último índice de la cámara elegida.
-     * 
+     *
      * @return Índice de la cámara elegida.
      */
     public int getLastCamIndex() {
         return this.lastCamIdx;
     }
-    
+
     /**
      * Obtiene la última posición triangulada.
-     * 
+     *
      * @return Posición triangulada.
      */
     public double[] getLastPosition() {
         return this.lastPosition;
     }
-    
+
     /**
      * Realiza una triangulación a partir de la señal recibida en los sensores
      * y de su posición.
-     * 
+     *
      * @param datos Conjunto de sensores con valores de RSSI.
      * @return Posición X e Y de la triangulación.
      */
@@ -218,7 +224,7 @@ public class TriangulacionOctave {
             System.err.println("[Triangulación] Error ¡el sistema está muerto!");
             return null;
         }
-        
+
         // Crea una array con la posición de los sensores y los RSSI
         OctaveDouble bluePos = new OctaveDouble(datos.size(), 2);
         OctaveDouble rssi    = new OctaveDouble(1, datos.size());
@@ -227,7 +233,7 @@ public class TriangulacionOctave {
             bluePos.set(datos.get(i).getPosicionSensor().getSegundo(), i + 1, 2);
             rssi.set(datos.get(i).getIntensidad(), 1, i + 1);
         }
-        
+
         // Lo pone en memoria
         this.octave.put("bluePos", bluePos);
         this.octave.put("rssi", rssi);
@@ -246,13 +252,13 @@ public class TriangulacionOctave {
             );
             return null;
         }
- 
+
         // Obtiene el resultado
         OctaveDouble idxCam = octave.get(OctaveDouble.class, "idxCam");
         if (idxCam != null && idxCam.size(1) == 1 && idxCam.get(1) != -1) {
             this.lastCamIdx = (int)idxCam.get(1) - 1;
             this.lastPosition = octave.get(OctaveDouble.class, "ninoPos").getData();
-            return this.cams.get(this.lastCamIdx).getCamId();    
+            return this.cams.get(this.lastCamIdx).getCamId();
         } else {
             return null;
         }

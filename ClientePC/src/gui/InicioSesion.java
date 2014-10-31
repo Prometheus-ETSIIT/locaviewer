@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package gui;
@@ -40,13 +46,13 @@ import javax.swing.JOptionPane;
  * Formulario de inicio de sesión.
  */
 public class InicioSesion extends javax.swing.JFrame {
-    
+
     /**
      * Crea el formulario de inicio de sesión.
      */
     public InicioSesion() {
         initComponents();
-        
+
         this.setBackground(Color.white);
         this.getContentPane().setBackground(Color.white);
         this.setIconImage(Toolkit.getDefaultToolkit().getImage(InicioSesion.class.getResource("icon.png")));
@@ -144,12 +150,12 @@ public class InicioSesion extends javax.swing.JFrame {
 
         String pw = new String(txtPassword.getPassword());
         String usuario = txtUser.getText();
-        
+
         Socket socket = creaSocketSeguro("37.252.96.104", 6556);
-        
-       
+
+
             DataInputStream reader = null;
-            
+
             DataOutputStream writer = null;
         try {
             writer = new DataOutputStream(socket.getOutputStream());
@@ -163,20 +169,20 @@ public class InicioSesion extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-            
+
         try {
             writer.writeUTF("autentificar padre "+usuario+" "+pw+" prometheus");
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-       
-        
+
+
         String respuesta = null;
-              
- 
+
+
         try {
             respuesta = reader.readUTF();
-            
+
             while(!respuesta.equals("fin")){
                 String [] comando = respuesta.split(" ");
                 System.out.println(comando[0]+","+comando[1]+","+comando[2]);
@@ -186,20 +192,20 @@ public class InicioSesion extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-            
+
         try {
             socket.close();
-            
+
         } catch (IOException ex) {
             Logger.getLogger(InicioSesion.class.getName()).log(Level.SEVERE, null, ex);
         }
-      
-        
+
+
         DatosNino[] data = new DatosNino[datos.size()];
         for(int i=0;i<datos.size();i++){
             data[i] = datos.get(i);
         }
-        
+
 
         if(data.length==0){
             JOptionPane.showMessageDialog(null,"Los datos no están bien");
@@ -208,11 +214,11 @@ public class InicioSesion extends javax.swing.JFrame {
             this.onSuccessLogin(data);
         }
     }//GEN-LAST:event_btnConnectActionPerformed
-    
-       
+
+
     private static Socket creaSocketSeguro(final String host, final int puerto) {
         SSLSocket socket = null;
-        
+
         try {
             // Le indicamos de qué anillo obtener las claves públicas fiables
             // de autoridades de certificación:
@@ -220,8 +226,8 @@ public class InicioSesion extends javax.swing.JFrame {
                     "javax.net.ssl.trustStore",
                     "./cert/cacerts.jks"
             );
-            
-          
+
+
             Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
             SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
             socket = (SSLSocket)factory.createSocket(host, puerto);
@@ -230,27 +236,27 @@ public class InicioSesion extends javax.swing.JFrame {
         } catch (IOException ex) {
             System.out.println("ERROR: " + ex.getMessage());
         }
-        
+
         return socket;
     }
-    
-    
-    
+
+
+
     /**
      * Se llama por la subventana de inicio de sesión cuando se realiza con
      * éxito el login.
-     * 
+     *
      * @param children ID de los niños a los que conectarse.
      */
     public void onSuccessLogin(final DatosNino[] children) {
         // Turno de la ventana principal
         new MainWindow(children).setVisible(true);
-        
+
         // Cerramos esta ventana
         this.setVisible(false);
         this.dispose();
     }
-    
+
     /**
      * @param args Sin argumentos.
      */

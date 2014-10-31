@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package centroinfantil;
@@ -44,13 +50,13 @@ public class LectorCamara extends LectorBase {
     private static final String EXPRESION = "camId = %0";
     private final VideoComponent videocomp;
     private DatosCamara ultDatos;
-    
+
     private Pipeline pipe;
     private AppSrc appsrc;
-    
+
     /**
      * Crea una nueva instancia del suscriptor de cámara.
-     * 
+     *
      * @param control Control de tópico.
      * @param key Clave para discernir los datos en el tópico.
      * @param videocomp Componente de vídeo a actualizar.
@@ -60,14 +66,14 @@ public class LectorCamara extends LectorBase {
         super(control, EXPRESION, new String[] { "'" + key + "'" });
         this.videocomp = videocomp;
     }
-    
+
     /**
      * Crea la tubería de GStreamer.
      */
     private void iniciaGStreamer() {
         // Crea los elementos de la tubería
         List<Element> elements = new ArrayList<>();
-        
+
         // 1º Origen de vídeo, simulado porque se inyectan datos.
         this.appsrc = (AppSrc)ElementFactory.make("appsrc", null);
         this.appsrc.setLive(true);
@@ -76,12 +82,12 @@ public class LectorCamara extends LectorBase {
         this.appsrc.setFormat(Format.TIME);
         this.appsrc.setStreamType(AppSrc.Type.STREAM);
         elements.add(this.appsrc);
-    
+
         Queue queue = (Queue)ElementFactory.make("queue", null);
         queue.set("leaky", 2);  // Drops old buffer
         queue.set("max-size-time", 50*1000*1000);   // 50 ms
         elements.add(queue);
-        
+
         // 2º Códec
         Element[] codecs = null;
         switch (this.ultDatos.getCodecInfo()) {
@@ -89,17 +95,17 @@ public class LectorCamara extends LectorBase {
             case "VP8":  codecs = this.getDecVp8();  break;
         }
         elements.addAll(Arrays.asList(codecs));
-        
+
         // 3º Salida de vídeo
         Element videosink = this.videocomp.getElement();
         elements.add(videosink);
-        
+
         // Crea la tubería
         this.pipe = new Pipeline();
         this.pipe.addMany(elements.toArray(new Element[0]));
         Element.linkMany(elements.toArray(new Element[0]));
         //GstDebugUtils.gstDebugBinToDotFile(pipe, 0, "suscriptor"); // DEBG
-        
+
         // Play!
         // Cambiar el estado puede tomar hasta 5 segundos. Comprueba errores.
         this.pipe.play();
@@ -112,19 +118,19 @@ public class LectorCamara extends LectorBase {
 
     /**
      * Obtiene los elementos de la tubería para la decodiciación en formato JPEG.
-     * 
+     *
      * @return Decodificadores JPEG.
      */
     private Element[] getDecJpeg() {
         // Codec JPEG
         Element codec = ElementFactory.make("jpegdec", null);
-        
+
         return new Element[] { codec };
     }
-    
+
     /**
      * Obtiene los elementos de la tubería para la decodiciación en formato VP8.
-     * 
+     *
      * @return Decodificadores VP8.
      */
     private Element[] getDecVp8() {
@@ -132,20 +138,20 @@ public class LectorCamara extends LectorBase {
         String caps = "video/x-vp8, width=(int)320, height=(int)240, framerate=15/1";
         Element capsSrc = ElementFactory.make("capsfilter", null);
         capsSrc.setCaps(Caps.fromString(caps));
-        
+
         Element queue = ElementFactory.make("queue2", null);
-        
+
         Element codec = ElementFactory.make("vp8dec", null);
-        
+
         Element convert = ElementFactory.make("ffmpegcolorspace", null);
-        
+
         return new Element[] { capsSrc, queue, codec, convert };
     }
-    
+
     @Override
     public void dispose() {
         super.dispose();
-        
+
         if (this.pipe != null) {
             StateChangeReturn retState = this.pipe.stop();
             if (retState == StateChangeReturn.FAILURE)
@@ -155,31 +161,31 @@ public class LectorCamara extends LectorBase {
             this.appsrc.dispose();
         }
     }
-    
+
     /**
      * Obtiene el último dato recibido en el tópico.
-     * 
+     *
      * @return Dato recibido.
      */
     public DatosCamara getUltimoDato() {
         return this.ultDatos;
     }
-    
+
     /**
      * Obtiene el componente para ver el vídeo.
-     * 
+     *
      * @return Componente de vídeo.
      */
     public VideoComponent getVideoComponent() {
         return this.videocomp;
     }
-    
+
     @Override
     protected void getDatos(DynamicData sample) {
         this.ultDatos = DatosCamara.FromDds(sample);
         if (this.pipe == null)
             this.iniciaGStreamer();
-        
+
         Buffer buffer = new Buffer(this.ultDatos.getBuffer().length);
         buffer.getByteBuffer().put(this.ultDatos.getBuffer());
 

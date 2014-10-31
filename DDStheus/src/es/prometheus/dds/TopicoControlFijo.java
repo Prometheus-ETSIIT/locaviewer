@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2014 Prometheus
+ * The MIT License (MIT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Copyright (c) 2014 Prometheus
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package es.prometheus.dds;
@@ -37,16 +43,16 @@ import java.util.Map;
 public class TopicoControlFijo extends TopicoControl {
     private final Subscriber suscriptor;
     private final Map<DynamicDataReader, Boolean> lectores;
-    
+
     private final Publisher publicador;
     private final Map<DynamicDataWriter, Boolean> escritores;
-    
+
     private Topic topic;
-    
+
     /**
      * Crea una nueva instancia del control de tópico a partir de los nombres
      * del XML del participante, suscriptor y publicador.
-     * 
+     *
      * @param partName Nombre del participante en el XML
      *  (BibliotecaParticipantes::NombreParticipante).
      * @param suscripName Nombre del suscriptor en el XML
@@ -57,13 +63,13 @@ public class TopicoControlFijo extends TopicoControl {
     protected TopicoControlFijo(final String partName, final String suscripName,
             final String publiName) {
         super(partName);
-        
+
         // Obtiene los lectores del XML.
         this.lectores = new HashMap<>();
         if (suscripName != null) {
             // Primero obtiene el suscriptor que los contiene.
             this.suscriptor = this.getParticipante().lookup_subscriber_by_name(suscripName);
-            
+
             DataReaderSeq lectoresSeq = new DataReaderSeq();
             this.suscriptor.get_all_datareaders(lectoresSeq);
             for (Object reader : lectoresSeq.toArray()) {
@@ -74,13 +80,13 @@ public class TopicoControlFijo extends TopicoControl {
         } else {
             this.suscriptor = null;
         }
-       
+
         // Obtiene los escritores del XML.
         this.escritores = new HashMap<>();
         if (publiName != null) {
             // Primer obtiene el publicador que los contiene.
             this.publicador = this.getParticipante().lookup_publisher_by_name(publiName);
-            
+
             DataWriterSeq escritoresSeq = new DataWriterSeq();
             this.publicador.get_all_datawriters(escritoresSeq);
             for (Object writer : escritoresSeq) {
@@ -97,7 +103,7 @@ public class TopicoControlFijo extends TopicoControl {
     public Topic getTopicDescription() {
         return this.topic;
     }
-    
+
     @Override
     public DynamicDataReader creaLector(final DataReaderQos qos) {
         // Buscamos un lector que no esté en uso
@@ -108,17 +114,17 @@ public class TopicoControlFijo extends TopicoControl {
                 return reader;
             }
         }
-        
+
         System.err.println("No hay suficiente lectores definidos en el XML.");
         return null;
     }
-    
+
     @Override
     public void eliminaLector(final DynamicDataReader reader) {
         // Nos aseguramos de que no tenga listener ni condición
         reader.set_listener(null, StatusKind.STATUS_MASK_NONE);
         reader.delete_contained_entities();
-        
+
         // Marca el lector como disponible
         for (DynamicDataReader mapReader : this.lectores.keySet()) {
             if (mapReader == reader) {
@@ -138,7 +144,7 @@ public class TopicoControlFijo extends TopicoControl {
                 return writer;
             }
         }
-        
+
         System.err.println("No hay suficiente escritores definidos en el XML.");
         return null;
     }
@@ -147,7 +153,7 @@ public class TopicoControlFijo extends TopicoControl {
     public void eliminaEscritor(final DynamicDataWriter writer) {
         // Nos aseguramos de que no tenga listener
         writer.set_listener(null, StatusKind.STATUS_MASK_NONE);
-        
+
         // Marca el lector como disponible
         for (DynamicDataWriter mapWriter : this.escritores.keySet()) {
             if (mapWriter == writer) {
