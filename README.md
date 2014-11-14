@@ -1,4 +1,4 @@
-![Logo Locaviewer](https://sourceforge.net/p/locaviewer/code/ci/master/tree/logo.png "Logo Locaviewer")
+![Logo Locaviewer](logo.png "Logo Locaviewer")
 
 **Locaviewer** es un sistema de vídeo distribuido creado por estudiantes de *Grado en Ingenería Informática* y *Grado en Ingenería de Tecnologías de Telecomunicación* de la Universidad de Granada (UGR), España. Este proyecto se llevó a cabo con motivo del [**IV Desafío Tecnológico organizado**](http://etsiit.ugr.es/pages/IV_desafio_tecnologico) en la ETSIIT de la UGR.
 
