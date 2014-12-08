@@ -1,0 +1,41 @@
+digraph server2 {
+    graph [splines = ortho];
+    node [fontsize = 10]
+    edge [fontsize = 10]
+
+    subgraph cluster_0 {
+        label = "Room server"
+        //rank = "same";
+        style = "dashed";
+
+        node [shape = box]
+            initTriang   [label = "Setup triangulation"];
+            initDDS      [label = "Init DDS\nCreate publisher"];
+            onCamPub     [label = "On camera publisher\ndiscovery change"];
+            updateCam    [label = "Update triangulation\ncamera list using\nUSER_DATA"];
+            onParentSub  [label = "On parent publisher\ndiscovery change"];
+            updatePar    [label = "Update parent list\nusing filter CFT"];
+            onDataSensor [label = "On data sensor received"];
+            checkParent  [label = "Check if there is\na parent interested"];
+            updateData   [label = "Update child sensor\ndata list\nRemove expired values"];
+            checkData    [label = "Check if data list\n length >= 3"];
+            triangulate  [label = "Run triangulation\nscript"];
+            clearData    [label = "Clear child sensor data"]
+            pubData      [label = "Publish child data"];
+
+        serv_width [style = "invisible", label = "", height = "0", width = "0"];
+
+        initTriang -> initDDS;
+        initDDS -> onCamPub [style = "invisible", arrowhead = none];
+        initDDS -> onParentSub [style = "invisible", arrowhead = none];
+        initDDS -> onDataSensor [style = "invisible", arrowhead = none];
+        onCamPub -> updateCam;
+        onParentSub -> updatePar;
+        onDataSensor -> checkParent;
+        checkParent -> updateData [xlabel = "Yes "];
+        {rank=same;updateData -> checkData;
+        checkData -> triangulate [xlabel = "Yes "]; }
+        triangulate -> clearData;
+        { rank=same; pubData -> clearData [dir=back]; }
+    }
+}

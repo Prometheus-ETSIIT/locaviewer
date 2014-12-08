@@ -1,0 +1,68 @@
+digraph sensors {
+    graph [nodesep = 0.35, rankdir = LR, splines = ortho, fontsize = 10];
+    node [fontsize = 10]
+    edge [fontsize = 10]
+
+    subgraph cluster_0 {
+        label = "Bluetooth Script";
+        rank = same;
+        style = "dashed";
+
+        node [shape = circle]
+            //startScript [label = "Bluetooth\nScript"];
+
+        node [shape = box]
+            # Script nodes
+            //scr_openSocket [label = "Open socket\nto Java App"];
+            //scr_openHci    [label = "Configure Bluetooth device"];
+            scr_startList  [label = "Start to listen\nfor Bluetooth devices"];
+            scr_waitPacket [label = "Wait for\nDiscovery Packet"];
+            scr_macPrefix  [label = "Does MAC prefix matches?", shape = diamond];
+            scr_addBuffer  [label = "Add to buffer"];
+            scr_bufferCompleted [label = "Has buffer 10 values?", shape = diamond];
+            scr_optimization    [label = "Optimizate values"];
+            scr_sendJava   [label = "Send to Java"];
+
+        scr_width [style = "invisible", label = "", height = "0", width = "3.3"];
+
+        # Script logic
+        edge [constraint = false];
+        scr_startList -> scr_waitPacket;
+        scr_waitPacket -> scr_macPrefix;
+        scr_macPrefix -> scr_waitPacket [xlabel = "No "];
+        scr_macPrefix -> scr_addBuffer [xlabel = "Yes    "];
+        scr_addBuffer -> scr_bufferCompleted;
+        scr_bufferCompleted -> scr_waitPacket [xlabel = "No "];
+        scr_bufferCompleted -> scr_optimization [xlabel = "Yes    "];
+        scr_optimization -> scr_sendJava;
+        scr_sendJava -> scr_waitPacket;
+    }
+
+    subgraph cluster_1 {
+        label = "Java Application";
+        rank = same;
+        style = "dashed";
+
+        node [shape = circle]
+            //startJava [label = "Java\nApplication"];
+
+        node [shape = box]
+            java_dds [label = "Start DDS\nCreate publisher"];
+            java_config [label = "Read Bluetooth\nconfig from XML"];
+            //java_openSocket [label = "Open socket\nfor script"];
+            java_waitPacket [label = "Wait script data"];
+            java_createStruct [label = "Create SensorData Structure"];
+            java_sendDDS [label = "Publish to SensorData"];
+
+        java_width [style = "invisible", label = "", height = "0", width = "2"];
+
+        # Java logic
+        edge [constraint = false]
+        java_dds -> java_config -> java_waitPacket;
+        java_waitPacket -> java_createStruct;
+        java_createStruct -> java_sendDDS
+        java_sendDDS -> java_waitPacket;
+    }
+
+    scr_width -> java_width [style="invisible", arrowhead=none];
+}

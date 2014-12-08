@@ -1,0 +1,23 @@
+digraph server1 {
+    graph [splines = ortho];
+    node [fontsize = 10]
+    edge [fontsize = 10]
+
+    subgraph cluster_0 {
+        label = "Laucher"
+        style = "dashed";
+
+        node [shape = box]
+            lan_start [label = "Init DDS\nCreate publisher with\npriority ID"];
+            lan_onPub [label = "On publisher discovery change"];
+            lan_stop [label = "Stop application"];
+            lan_init [label = "Start application"];
+
+        lan_width [style = "invisible", label = "", height = "0", width = "3"];
+
+        lan_start -> lan_onPub [style = invisible, arrowhead = none];
+        lan_onPub -> lan_stop [xlabel = "Pub ID < My ID"];
+        lan_onPub -> lan_init [xlabel = "All pub ID > My ID"];
+        lan_stop -> lan_width [style = invisible, arrowhead = none];
+    }
+}

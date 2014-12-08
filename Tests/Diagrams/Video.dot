@@ -1,0 +1,21 @@
+digraph video {
+    graph [nodesep = 0.4, rankdir = LR, splines = ortho, fontsize = 10];
+    node [fontsize = 10]
+    edge [fontsize = 10]
+
+    {
+        rank = same;
+
+        node [shape = box]
+            start [label = "Start instance\nfor each camera"];
+            initGStreamer [label = "Start and configure\nGStreamer"];
+            initDDS [label = "Init DDS\nCreate publisher"];
+            waitSubs [label = "Wait for subscribers\nwith same ID Camera\nin CFT filter"];
+            startPub [label = "Start to capture\ncode and publish"];
+
+        edge [constraint = false];
+        start -> initGStreamer -> initDDS -> waitSubs;
+        waitSubs -> startPub;
+        startPub -> waitSubs [xlabel = "    [async] On all interested\nsubscribers quit"];
+    }
+}
